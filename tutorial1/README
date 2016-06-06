@@ -1,0 +1,28 @@
+In the following tutorial we demonstrate the following:
+(1) How to represent/create input/output data
+(1a) How to prioritize the data
+(2) How to operate on data with an ITask
+(3) How to add an ITask to a TaskGraph
+(4) How to add data to the graph
+(5) How to process data from a graph
+
+
+data/InputData.h - shows the input data
+data/OutputData.h - shows the output data
+
+tasks/SimpleAdd.h - Implements our add functionality: input type: InputData; output type: OutputData
+
+API used:
+htgs/api/IData
+htgs/api/ITask
+htgs/api/TaskGraph
+htgs/api/Runtime
+
+Lessons learned:
+
+Functions to implement for defining a Task:
+1) initialize - Called when a thread binds to a Task
+2) shutdown - Called after isTerminated evaluates to true
+3) executeTask - Execute function that processes data, and produces output data
+4) copy - Creates a copy of the Task
+5) isTerminated - Checks whether the Task is ready to be terminated or not.
