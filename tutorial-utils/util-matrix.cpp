@@ -285,3 +285,21 @@ bool checkMatrixBlockFiles(std::string path, MatrixType type, int totalWidth, in
 
   return true;
 }
+
+
+void checkAndValidateMatrixBlockFiles(std::string directory, int width, int height, int blockSize)
+{
+  bool checkA = checkMatrixBlockFiles(directory, MatrixType::MatrixA, width, height, blockSize);
+
+  if (!checkA) {
+    if (generateMatrixBlockFiles(directory, MatrixType::MatrixA, width, height, blockSize))
+      exit(-1);
+  }
+
+  bool checkB = checkMatrixBlockFiles(directory, MatrixType::MatrixB, width, height, blockSize);
+
+  if (!checkB) {
+    if (generateMatrixBlockFiles(directory, MatrixType::MatrixB, width, height, blockSize) != 0)
+      exit(-1);
+  }
+}

@@ -69,20 +69,11 @@ int main(int argc, char *argv[])
     }
   }
 
+
+
   // Check directory for matrix files based on the given file size
-  bool checkA = checkMatrixBlockFiles(directory, MatrixType::MatrixA, width, height, blockSize);
+  checkAndValidateMatrixBlockFiles(directory, width, height, blockSize);
 
-  if (!checkA) {
-    if (generateMatrixBlockFiles(directory, MatrixType::MatrixA, width, height, blockSize))
-      exit(-1);
-  }
-
-  bool checkB = checkMatrixBlockFiles(directory, MatrixType::MatrixB, width, height, blockSize);
-
-  if (!checkB) {
-    if (generateMatrixBlockFiles(directory, MatrixType::MatrixB, width, height, blockSize) != 0)
-      exit(-1);
-  }
 
   ReadMatrixTask *readMatTask = new ReadMatrixTask(numReadThreads, blockSize, width, height, directory);
   MatrixMulBlkTask *prodTask = new MatrixMulBlkTask(numProdThreads);
@@ -148,6 +139,6 @@ int main(int argc, char *argv[])
   clk.stopAndIncrement();
 
   std::cout << "width: " << width << ", height: " << height << ", blocksize: " << blockSize << ", time: " << clk.getAverageTime(TimeVal::MILLI) << " ms" << std::endl;
-  
+
   delete runtime;
 }
