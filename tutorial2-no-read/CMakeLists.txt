@@ -1,0 +1,10 @@
+add_executable(tutorial2-no-read
+        tutorial2-no-read.cpp
+        data/MatrixRequestData.h
+        data/MatrixBlockData.h
+        data/MatrixBlockMulData.h
+        tasks/GenMatrixTask.h
+        memory/MatrixMemoryRule.h
+        memory/MatrixAllocator.h
+        rules/MatrixLoadRule.h
+        tasks/HadamardProductTask.h)
