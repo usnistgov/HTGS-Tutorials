@@ -8,5 +8,6 @@ Adds two numbers together, purely for demonstration purposes of HTGS. (Note: Com
 ## [**tutorial2**](https://pages.nist.gov/HTGS/doxygen/tutorial2.html)
 Computes the Hadamard product. Provided are two versions:
 
-1) hadamard-product - writes blocks of matrices to disk and processes them overlapping I/O with the Hadamard product computation
-2) hadamard-produce-no-read - generates blocks of matrices (no disk reading) and computes the Hadamard product
+1. hadamard-product - writes blocks of matrices to disk and processes them overlapping I/O with the Hadamard product computation
+2. hadamard-produce-no-read - generates blocks of matrices (no disk reading) and computes the Hadamard product
+
