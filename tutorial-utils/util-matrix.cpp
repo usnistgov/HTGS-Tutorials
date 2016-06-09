@@ -238,9 +238,7 @@ size_t readMatrix(std::string path,
 }
 
 bool checkMatrixBlockFiles(std::string path, MatrixType type, int totalWidth, int totalHeight, int blockSize) {
-  std::string blkDir = std::string(
-      path + "/" + std::to_string(totalWidth) + "x" + std::to_string(totalHeight) + "blksize"
-          + std::to_string(blockSize));
+  std::string blkDir = generateDirectoryName(path, totalWidth, totalHeight, blockSize);
   std::string matrixDir = std::string(blkDir + "/" + matrixTypeToString(type));
 
   // check dir path
@@ -287,19 +285,19 @@ bool checkMatrixBlockFiles(std::string path, MatrixType type, int totalWidth, in
 }
 
 
-void checkAndValidateMatrixBlockFiles(std::string directory, int width, int height, int blockSize)
+void checkAndValidateMatrixBlockFiles(std::string directory, int widthA, int heightA, int widthB, int heightB, int blockSize)
 {
-  bool checkA = checkMatrixBlockFiles(directory, MatrixType::MatrixA, width, height, blockSize);
+  bool checkA = checkMatrixBlockFiles(directory, MatrixType::MatrixA, widthA, heightA, blockSize);
 
   if (!checkA) {
-    if (generateMatrixBlockFiles(directory, MatrixType::MatrixA, width, height, blockSize))
+    if (generateMatrixBlockFiles(directory, MatrixType::MatrixA, widthA, heightA, blockSize))
       exit(-1);
   }
 
-  bool checkB = checkMatrixBlockFiles(directory, MatrixType::MatrixB, width, height, blockSize);
+  bool checkB = checkMatrixBlockFiles(directory, MatrixType::MatrixB, widthB, heightB, blockSize);
 
   if (!checkB) {
-    if (generateMatrixBlockFiles(directory, MatrixType::MatrixB, width, height, blockSize) != 0)
+    if (generateMatrixBlockFiles(directory, MatrixType::MatrixB, widthB, heightB, blockSize) != 0)
       exit(-1);
   }
 }

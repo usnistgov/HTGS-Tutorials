@@ -15,8 +15,8 @@ class MatrixLoadRule: public htgs::IRule<MatrixBlockData<MatrixMemoryData_t>, Ma
     this->blockWidth = blockWidth;
     this->blockHeight = blockHeight;
 
-    this->matrixAState = this->allocStateContainer(blockWidth, blockHeight);
-    this->matrixBState = this->allocStateContainer(blockWidth, blockHeight);
+    this->matrixAState = this->allocStateContainer(blockHeight, blockWidth);
+    this->matrixBState = this->allocStateContainer(blockHeight, blockWidth);
   }
 
   ~MatrixLoadRule() {

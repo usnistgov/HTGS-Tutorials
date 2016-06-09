@@ -64,7 +64,7 @@ int main(int argc, char *argv[])
 
     if (argvs == "--help")
     {
-      std::cout << argv[0] << " help: [--width <#>] [--height <#>] [--block-size <#>] [--num-readers <#>] [--num-workers <#>] [--directory <dir>] [--help]" << std::endl;
+      std::cout << argv[0] << " help: [--width <#>] [--height <#>] [--block-size <#>] [--num-readers <#>] [--num-workers <#>] [--dir <dir>] [--help]" << std::endl;
       exit(0);
     }
   }
@@ -72,7 +72,7 @@ int main(int argc, char *argv[])
 
 
   // Check directory for matrix files based on the given file size
-  checkAndValidateMatrixBlockFiles(directory, width, height, blockSize);
+  checkAndValidateMatrixBlockFiles(directory, width, height, width, height, blockSize);
 
 
   ReadMatrixTask *readMatTask = new ReadMatrixTask(numReadThreads, blockSize, width, height, directory);

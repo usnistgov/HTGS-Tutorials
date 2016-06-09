@@ -38,6 +38,6 @@ size_t readMatrix(std::string path,
 
 size_t writeMatrix(std::string file, int matrixWidth, int matrixHeight, double *&matrix, bool silent);
 bool checkMatrixBlockFiles(std::string path, MatrixType type, int totalWidth, int totalHeight, int blockSize);
-void checkAndValidateMatrixBlockFiles(std::string directory, int width, int height, int blockSize);
+void checkAndValidateMatrixBlockFiles(std::string directory, int widthA, int heightA, int widthB, int heightB, int blockSize);
 
 #endif //HTGS_UTIL_MATRIX_H_H
