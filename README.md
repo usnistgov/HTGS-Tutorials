@@ -9,5 +9,5 @@ Adds two numbers together, purely for demonstration purposes of HTGS. (Note: Com
 Computes the Hadamard product. The tutorial uses the tutorial-utils to read/write blocks of matrices. Provided are two versions:
 
 1. hadamard-product - reads blocks of matrices from disk and computes the Hadamard product
-2. hadamard-produce-no-read - generates blocks of matrices (no disk reading) and computes the Hadamard product
+2. hadamard-product-no-read - generates blocks of matrices (no disk reading) and computes the Hadamard product
 
