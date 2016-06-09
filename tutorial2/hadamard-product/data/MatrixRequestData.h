@@ -6,7 +6,7 @@
 #define HTGS_MATRIXREQUESTDATA_H
 
 #include <htgs/api/IData.hpp>
-#include "../../tutorial-utils/enums/MatrixType.h"
+#include "../../../tutorial-utils/enums/MatrixType.h"
 
 class MatrixRequestData : public htgs::IData {
  public:

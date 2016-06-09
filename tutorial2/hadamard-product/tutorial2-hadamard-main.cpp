@@ -10,8 +10,8 @@
 #include "memory/MatrixAllocator.h"
 #include "rules/MatrixLoadRule.h"
 #include "tasks/HadamardProductTask.h"
-#include "../tutorial-utils/SimpleClock.h"
-#include "../tutorial-utils/util-matrix.h"
+#include "../../tutorial-utils/SimpleClock.h"
+#include "../../tutorial-utils/util-matrix.h"
 
 int main(int argc, char *argv[])
 {

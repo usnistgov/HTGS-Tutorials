@@ -9,7 +9,7 @@
 #include "tasks/GenMatrixTask.h"
 #include "rules/MatrixLoadRule.h"
 #include "tasks/HadamardProductTask.h"
-#include "../tutorial-utils/SimpleClock.h"
+#include "../../tutorial-utils/SimpleClock.h"
 
 int main(int argc, char *argv[])
 {

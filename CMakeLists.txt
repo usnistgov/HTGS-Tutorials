@@ -22,7 +22,6 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wl,--no-as-needed ${CMAKE_TH
 
 add_subdirectory(tutorial1)
 add_subdirectory(tutorial2)
-add_subdirectory(tutorial2-no-read)
 #add_subdirectory(tutorial3)
 #add_subdirectory(tutorial3-openblas)
 #add_subdirectory(tutorial3-mmap)
