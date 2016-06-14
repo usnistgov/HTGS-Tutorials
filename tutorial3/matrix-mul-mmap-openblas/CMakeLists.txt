@@ -1,5 +1,14 @@
-add_executable(matrix-mul-mmap-openblas
-        tutorial3-mmap-openblas.cpp
+set(TUTORIAL_UTILS_SRC
+        ../../tutorial-utils/util-matrix.h
+        ../../tutorial-utils/util-matrix.cpp
+        ../../tutorial-utils/util-filesystem.cpp
+        ../../tutorial-utils/util-filesystem.h
+        ../../tutorial-utils/SimpleClock.h
+        ../../tutorial-utils/enums/MatrixType.h
+        ../../tutorial-utils/enums/MatrixType.cpp)
+
+add_executable(matrixMul-mmap-openblas
+        tutorial3-matrix-mul-mmap-openblas-main.cpp
         data/MatrixRequestData.h
         data/MatrixBlockData.h
         data/MatrixBlockMulData.h
@@ -11,6 +20,10 @@ add_executable(matrix-mul-mmap-openblas
         rules/MatrixDistributeRule.h
         rules/MatrixLoopRule.h
         rules/MatrixAccumulateRule.h
-        tasks/MatrixMulBlkTask.h tasks/OutputTask.h)
+        rules/MatrixOutputRule.h
+        tasks/MatrixMulBlkTask.h
+        tasks/MatrixAccumTask.h
+        tasks/OutputTask.h
+        ${TUTORIAL_UTILS_SRC})
 
-target_link_libraries(matrix-mul-mmap-openblas openblas)
+target_link_libraries(matrixMul-mmap-openblas openblas)

@@ -26,17 +26,12 @@ class ReadMatrixTask : public htgs::ITask<MatrixRequestData, MatrixBlockData<dou
   }
   virtual void initialize(int pipelineId,
                           int numPipeline) {
-    std::string matrixName;
-    switch(type)
-    {
-      case MatrixType::MatrixA: matrixName = "matrixA"; break;
-      case MatrixType::MatrixB: matrixName = "matrixB"; break;
-      case MatrixType::MatrixC:matrixName = "matrixC"; break;
-    }
+    std::string matrixName = matrixTypeToString(type);
 
     std::string fileName(directory + "/" + matrixName);
     int fd = -1;
     if ((fd = open(fileName.c_str(), O_RDONLY)) == -1) {
+      std::cerr << "Failed to open file: " << fileName << std::endl;
       err(1, "open failed");
     }
 

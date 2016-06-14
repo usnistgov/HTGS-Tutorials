@@ -5,10 +5,14 @@
 #ifndef HTGS_OUTPUTTASK_H
 #define HTGS_OUTPUTTASK_H
 
+#include "../../../tutorial-utils/util-filesystem.h"
 class OutputTask : public htgs::ITask<MatrixBlockData<double *>, MatrixRequestData> {
  public:
 
-  OutputTask(std::string directory) : directory(directory) { }
+  OutputTask(std::string directory) {
+    this->directory = directory + "/matrixC_HTGS";
+    create_dir(this->directory);
+  }
   virtual ~OutputTask() {
 
   }

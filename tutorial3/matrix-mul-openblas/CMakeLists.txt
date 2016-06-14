@@ -1,18 +1,30 @@
-add_executable(matrix-mul-openblas
-        tutorial3-openblas.cpp
+set(TUTORIAL_UTILS_SRC
+        ../../tutorial-utils/util-matrix.h
+        ../../tutorial-utils/util-matrix.cpp
+        ../../tutorial-utils/util-filesystem.cpp
+        ../../tutorial-utils/util-filesystem.h
+        ../../tutorial-utils/SimpleClock.h
+        ../../tutorial-utils/enums/MatrixType.h
+        ../../tutorial-utils/enums/MatrixType.cpp)
+
+add_executable(matrixMul-openblas
+        tutorial3-matrix-mul-openblas-main.cpp
         data/MatrixRequestData.h
         data/MatrixBlockData.h
         data/MatrixBlockMulData.h
         tasks/ReadMatrixTask.h
         tasks/OutputTask.h
+        tasks/MatrixAccumTask.h
         memory/MatrixMemoryRule.h
         memory/MatrixAllocator.h
         rules/MatrixLoadRule.h
         rules/MatrixDistributeRule.h
         rules/MatrixLoopRule.h
         rules/MatrixAccumulateRule.h
-        tasks/MatrixMulBlkTask.h tasks/OutputTask.h
-        ../matrix-ops/utils/util-matrix.cpp
-        ../matrix-ops/utils/util-matrix.h)
+        rules/MatrixOutputRule.h
+        tasks/MatrixMulBlkTask.h
+        tasks/OutputTask.h
+        ${TUTORIAL_UTILS_SRC}
+        )
 
-target_link_libraries(matrix-mul-openblas openblas)
+target_link_libraries(matrixMul-openblas openblas)

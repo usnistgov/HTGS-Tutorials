@@ -22,37 +22,19 @@
 #include "tasks/MatrixMulBlkTask.h"
 #include "tasks/MatrixAccumTask.h"
 #include "tasks/OutputTask.h"
-#include "../api/SimpleClock.h"
 #include "rules/MatrixAccumulateRule.h"
 #include "rules/MatrixDistributeRule.h"
 #include "rules/MatrixLoopRule.h"
 #include "rules/MatrixOutputRule.h"
+#include "../../tutorial-utils/SimpleClock.h"
+#include "../../tutorial-utils/util-filesystem.h"
+#include "../../tutorial-utils/util-matrix.h"
 
-int create_dir(std::string path) {
-#ifdef __linux__
-  int val = mkdir(path.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-#else
-  std::wstring wpath = std::wstring(path.begin(), path.end());
-  std::wcout << " Creating folder " << wpath << std::endl;
-  int val = _wmkdir(wpath.c_str());
-#endif
-  if (val == 0) {
-    std::cout << path << " created successfully " << std::endl;
-    return 0;
-  }
-  else {
-    if (errno == EEXIST)
-      return 0;
 
-    std::cout << "Unable to create directory " << path <<": " << strerror(errno) << std::endl; // << val << " " << path << std::endl;
-    return val;
-  }
-
-}
 int validateResults(std::string baseDirectory, int fullMatrixAHeight, int fullMatrixBWidth)
 {
   std::string fileName(baseDirectory + "/matrixC");
-  std::string fileNamePar(baseDirectory + "/matrixCPar");
+  std::string fileNamePar(baseDirectory + "/matrixC_HTGS");
 
   double *cMem = new double[fullMatrixAHeight*fullMatrixBWidth];
   double *cMemPar = new double[fullMatrixAHeight*fullMatrixBWidth];
@@ -121,10 +103,10 @@ int validateResults2(std::string baseDirectory, int fullMatrixAHeight, int fullM
   return 0;
 }
 
-void computeSequentialMatMulNoMMap(std::string directory, int fullMatrixAHeight, int fullMatrixAWidth, int fullMatrixBWidth) {
-  std::string matrixCFilename(directory + "/matrixC");
-  std::string matrixAFilename(directory + "/matrixA");
-  std::string matrixBFilename(directory + "/matrixB");
+void computeSequentialMatMulNoMMap(std::string directoryA, std::string directoryB, std::string outputDirectory, int fullMatrixAHeight, int fullMatrixAWidth, int fullMatrixBWidth) {
+  std::string matrixCFilename(outputDirectory + "/matrixC");
+  std::string matrixAFilename(directoryA + "/MatrixA");
+  std::string matrixBFilename(directoryB + "/MatrixB");
 
   std::ifstream matrixAFile(matrixAFilename, std::ios::binary);
   std::ifstream matrixBFile(matrixBFilename, std::ios::binary);
@@ -163,10 +145,10 @@ void computeSequentialMatMulNoMMap(std::string directory, int fullMatrixAHeight,
   matrixCFile.close();
 }
 
-void computeSequentialMatMul(std::string directory, int fullMatrixAHeight, int fullMatrixAWidth, int fullMatrixBWidth) {
-  std::string matrixCFilename(directory + "/matrixC");
-  std::string matrixAFilename(directory + "/matrixA");
-  std::string matrixBFilename(directory + "/matrixB");
+void computeSequentialMatMul(std::string directoryA, std::string directoryB, std::string outputDirectory, int fullMatrixAHeight, int fullMatrixAWidth, int fullMatrixBWidth) {
+  std::string matrixCFilename(outputDirectory + "/matrixC");
+  std::string matrixAFilename(directoryA + "/MatrixA");
+  std::string matrixBFilename(directoryB + "/MatrixB");
 
   int fda = -1;
   int fdb = -1;
@@ -227,84 +209,127 @@ void computeSequentialMatMul(std::string directory, int fullMatrixAHeight, int f
 
 int main(int argc, char *argv[])
 {
-  int dim = 2048;
-  int blockSize = 256;
+  int matrixAHeight = 1024;
+  int matrixBWidth = 1024;
+  int sharedDim = 1024;
+
+  int blockSize = 512;
   int numReadThreads = 1;
-  int numProdThreads = 40;
+  int numProdThreads = 20;
   int numBlasThreads = 40;
   bool runSequential = false;
+  bool validate = false;
+
+  std::string directory("data");
+  std::string outputDirectory(directory);
   std::string runtimeFileStr("runtimes");
+
   int numRetry = 1;
 
   if (argc > 1)
   {
     for (int arg = 1; arg < argc; arg++)
     {
-      std::string argStr(argv[arg]);
+      std::string argvs(argv[arg]);
 
-      if (argStr == "--dim" && arg+1 < argc)
+      if (argvs == "--width-b")
       {
-        dim = atoi(argv[arg+1]);
         arg++;
+        matrixBWidth= atoi(argv[arg]);
       }
 
-      if (argStr == "--seq")
+      if (argvs == "--height-a")
       {
+        arg++;
+        matrixAHeight = atoi(argv[arg]);
+      }
+
+      if (argvs == "--shared-dim")
+      {
+        arg++;
+        sharedDim = atoi(argv[arg]);
+      }
+
+      if (argvs == "--run-sequential") {
         runSequential = true;
       }
 
-      if (argStr == "--num-retry" && arg+1 < argc)
+      if (argvs == "--num-retry" && arg+1 < argc)
       {
-        numRetry = atoi(argv[arg+1]);
         arg++;
+        numRetry = atoi(argv[arg]);
       }
 
-      if (argStr == "--blk-size" && arg+1 < argc)
+      if (argvs == "--block-size")
       {
-        blockSize = atoi(argv[arg+1]);
         arg++;
+        blockSize = atoi(argv[arg]);
       }
 
-      if (argStr == "--num-threads-htgs" && arg+1 < argc)
+      if (argvs == "--num-threads-htgs" && arg+1 < argc)
       {
         numProdThreads = atoi(argv[arg+1]);
         arg++;
       }
 
-      if (argStr == "--num-threads-blas" && arg+1 < argc)
+      if (argvs == "--num-threads-blas" && arg+1 < argc)
       {
         numBlasThreads = atoi(argv[arg+1]);
         arg++;
       }
 
-      if (argStr == "--runtime-file" && arg+1 < argc)
+      if (argvs == "--runtime-file" && arg+1 < argc)
       {
         runtimeFileStr = argv[arg+1];
         arg++;
       }
 
-      if (argStr == "--help")
+      if (argvs == "--dir")
       {
-        std::cout << "Usage: " << argv[0] <<" --dim <n> --seq --num-retry <n> --blk-size <n> --num-threads-htgs <n> --num-thread-blas <n> --runtime-file <file>" << std::endl;
+        arg++;
+        directory = argv[arg];
+      }
+
+      if (argvs == "--output-dir")
+      {
+        arg++;
+        outputDirectory = argv[arg];
+      }
+
+      if (argvs == "--validate-results") {
+        validate = true;
+      }
+
+      if (argvs == "--help")
+      {
+        std::cout << argv[0] << " args: [--width-b <#>] [--height-a <#>] [--shared-dim <#>] [--block-size <#>] [--num-retry <#>] [--num-threads-htgs <#>] [--num-threads-blas <#>] [--runtime-file <filename>] [--dir <dir>] [--output-dir <dir>] [--validate-results] [--run-sequential] [--help]" << std::endl;
         exit(0);
       }
     }
   }
 
-  int matrixAHeight = dim;
-  int matrixBWidth = dim;
-  int matrixCDim = dim;
-  std::string directory("data/tutorial2/" + std::to_string(matrixAHeight) + "x" + std::to_string(matrixCDim));
+  if (!has_dir(outputDirectory))
+    create_dir(outputDirectory);
+
+  checkAndValidateMatrixFiles(directory, sharedDim, matrixAHeight, matrixBWidth, sharedDim);
+
+  std::string inputDirectoryA = generateDirectoryName(directory, sharedDim, matrixAHeight);
+  std::string inputDirectoryB = generateDirectoryName(directory, matrixBWidth, sharedDim);
+  outputDirectory = generateDirectoryName(outputDirectory, matrixBWidth, matrixAHeight);
 
   std::ofstream runtimeFile(runtimeFileStr, std::ios::app);
 
-    for (int numTry = 0; numTry < numRetry; numTry++) {
+
+  if (!has_dir(outputDirectory))
+    create_dir(outputDirectory);
+
+  for (int numTry = 0; numTry < numRetry; numTry++) {
       SimpleClock clk;
       if (runSequential) {
         openblas_set_num_threads(numBlasThreads);
 
         clk.start();
-        computeSequentialMatMul(directory, matrixAHeight, matrixCDim, matrixBWidth);
+        computeSequentialMatMul(inputDirectoryA, inputDirectoryB, outputDirectory, matrixAHeight, sharedDim, matrixBWidth);
         clk.stopAndIncrement();
       }
       else {
@@ -314,23 +339,23 @@ int main(int argc, char *argv[])
             new ReadMatrixTask(numReadThreads,
                                MatrixType::MatrixA,
                                blockSize,
-                               matrixCDim,
+                               sharedDim,
                                matrixAHeight,
-                               directory,
+                               inputDirectoryA,
                                "A");
         ReadMatrixTask *readBMatTask =
             new ReadMatrixTask(numReadThreads,
                                MatrixType::MatrixB,
                                blockSize,
                                matrixBWidth,
-                               matrixCDim,
-                               directory,
+                               sharedDim,
+                               inputDirectoryB,
                                "B");
         MatrixMulBlkTask *mmulTask =
-            new MatrixMulBlkTask(numProdThreads, matrixCDim, matrixAHeight, matrixBWidth, matrixCDim, blockSize);
+            new MatrixMulBlkTask(numProdThreads, sharedDim, matrixAHeight, matrixBWidth, sharedDim, blockSize);
         MatrixAccumTask *accumTask = new MatrixAccumTask((int)ceil((double)numProdThreads / 2.0));
 
-        OutputTask *outputTask = new OutputTask(directory, matrixBWidth, matrixAHeight, blockSize);
+        OutputTask *outputTask = new OutputTask(outputDirectory, matrixBWidth, matrixAHeight, blockSize);
 
         int blkHeightMatB = readBMatTask->getNumBlocksRows();
         int blkWidthMatB = readBMatTask->getNumBlocksCols();
@@ -376,17 +401,22 @@ int main(int argc, char *argv[])
 
         runtime->executeRuntime();
 
-        for (int row = 0; row < std::max(blkHeightMatA, blkHeightMatB); row++) {
-          for (int col = 0; col < std::max(blkWidthMatA, blkWidthMatB); col++) {
-            if (row < blkHeightMatA && col < blkWidthMatA) {
-              MatrixRequestData *matrixA = new MatrixRequestData(row, col, MatrixType::MatrixA);
-              taskGraph->produceData(matrixA);
-            }
+        for (int row = 0; row < blkHeightMatA; row++) {
+          for (int col = 0; col < blkWidthMatA; col++) {
 
-            if (row < blkHeightMatB && col < blkWidthMatB) {
-              MatrixRequestData *matrixB = new MatrixRequestData(row, col, MatrixType::MatrixB);
-              taskGraph->produceData(matrixB);
-            }
+            MatrixRequestData *matrixA = new MatrixRequestData(row, col, MatrixType::MatrixA);
+            taskGraph->produceData(matrixA);
+
+          }
+        }
+
+
+        for (int row = 0; row < blkHeightMatB; row++) {
+          for (int col = 0; col < blkWidthMatB; col++) {
+
+            MatrixRequestData *matrixB = new MatrixRequestData(row, col, MatrixType::MatrixB);
+            taskGraph->produceData(matrixB);
+
           }
         }
 
@@ -400,19 +430,38 @@ int main(int argc, char *argv[])
 
         runtime->waitForRuntime();
         clk.stopAndIncrement();
-        int res = validateResults(directory, matrixAHeight, matrixBWidth);
 
-        if (res != 0)
-        {
-          std::cout << "Error validation test failed!" << std::endl;
-        }
         delete runtime;
 
       }
 
-      std::cout << (runSequential ? "sequential" : "htgs") << ", " << (runSequential ? numBlasThreads : numProdThreads) << ", " << dim << ", " << (runSequential ? 0 : blockSize) << ", " << clk.getAverageTime(TimeVal::MILLI) << std::endl;
-      runtimeFile << (runSequential ? "sequential" : "htgs") << ", " << (runSequential ? numBlasThreads : numProdThreads) << ", " << dim << ", " << blockSize << ", " << clk.getAverageTime(TimeVal::MILLI) << std::endl;
+    if (validate) {
+      int res = validateResults(outputDirectory, matrixAHeight, matrixBWidth);
+      std::cout << "Finished (" << (res != 0 ? "FAILED - must run sequential" : "PASSED") << ") ";
+    }
 
+    if (validate) {
+      int res = validateResults(outputDirectory, matrixAHeight, matrixBWidth);
+      if (res != 0) {
+        std::cout << "Error validating test failed!" << std::endl;
+      }
+      else
+      {
+        std::cout << "Test PASSED" << std::endl;
+      }
 
     }
+
+    std::cout << (runSequential ? "sequential" : "htgs") << ", " << (runSequential ? numBlasThreads : numProdThreads)
+        << ", width-b: " << matrixBWidth << ", height-a: " << matrixAHeight
+        << ", shared-dim: " << sharedDim
+        << ", " << ", blockSize: " << (runSequential ? 0 : blockSize) << ", time:" << clk.getAverageTime(TimeVal::MILLI)
+        << std::endl;
+
+    runtimeFile << (runSequential ? "sequential" : "htgs") << ", " << (runSequential ? numBlasThreads : numProdThreads) << ", "
+        << matrixBWidth << ", " << matrixAHeight
+        << ", " << sharedDim << ", " << blockSize << ", " << clk.getAverageTime(TimeVal::MILLI) << std::endl;
+
+
+  }
 }

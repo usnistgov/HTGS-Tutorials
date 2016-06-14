@@ -18,7 +18,7 @@ class OutputTask : public htgs::ITask<MatrixBlockData<double *>, MatrixBlockData
 
   }
   virtual void initialize(int pipelineId, int numPipeline) {
-    std::string fileName(directory + "/matrixCPar");
+    std::string fileName(directory + "/matrixC_HTGS");
     int fd = -1;
     if ((fd = open(fileName.c_str(), O_RDWR | O_CREAT | O_TRUNC, (mode_t)0600)) == -1) {
       err(1, "write open failed");

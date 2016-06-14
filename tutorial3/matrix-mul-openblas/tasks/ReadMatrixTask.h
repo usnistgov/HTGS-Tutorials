@@ -29,17 +29,15 @@ class ReadMatrixTask : public htgs::ITask<MatrixRequestData, MatrixBlockData<Mat
   }
 
   virtual void executeTask(std::shared_ptr<MatrixRequestData> data) {
-    std::string matrixName;
+    std::string matrixName = matrixTypeToString(data->getType());
 
     int numBlocksC;
     switch (data->getType())
     {
       case MatrixType::MatrixA:
-        matrixName = "matrixA";
         numBlocksC = numBlocksCols;
         break;
       case MatrixType::MatrixB:
-        matrixName = "matrixB";
         numBlocksC = numBlocksRows;
         break;
       case MatrixType::MatrixC: return;

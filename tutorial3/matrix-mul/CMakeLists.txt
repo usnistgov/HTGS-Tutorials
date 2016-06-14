@@ -14,12 +14,14 @@ add_executable(matrixMul
         data/MatrixBlockMulData.h
         tasks/ReadMatrixTask.h
         tasks/OutputTask.h
+        tasks/MatrixAccumTask.h
         memory/MatrixMemoryRule.h
         memory/MatrixAllocator.h
         rules/MatrixLoadRule.h
         rules/MatrixDistributeRule.h
         rules/MatrixLoopRule.h
         rules/MatrixAccumulateRule.h
+        rules/MatrixOutputRule.h
         tasks/MatrixMulBlkTask.h
         tasks/OutputTask.h
         ${TUTORIAL_UTILS_SRC})

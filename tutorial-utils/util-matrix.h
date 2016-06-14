@@ -14,6 +14,7 @@ double *allocMatrix(int width, int height);
 void initMatrix(double *matrix, int width, int height);
 std::string generateFilename(std::string directory, MatrixType type, int blockRow, int blockCol, std::string suffix);
 std::string generateDirectoryName(std::string basePath, int totalWidth, int totalHeight, int blockSize);
+std::string generateDirectoryName(std::string basePath, int totalWidth, int totalHeight);
 int generateMatrixBlockFiles(std::string path, MatrixType type, int totalWidth, int totalHeight, int blockSize);
 int generateFullMatrixFile(std::string path, MatrixType type, int totalWidth, int totalHeight);
 
@@ -39,5 +40,6 @@ size_t readMatrix(std::string path,
 size_t writeMatrix(std::string file, int matrixWidth, int matrixHeight, double *&matrix, bool silent);
 bool checkMatrixBlockFiles(std::string path, MatrixType type, int totalWidth, int totalHeight, int blockSize);
 void checkAndValidateMatrixBlockFiles(std::string directory, int widthA, int heightA, int widthB, int heightB, int blockSize);
+void checkAndValidateMatrixFiles(std::string directory, int widthA, int heightA, int widthB, int heightB);
 
 #endif //HTGS_UTIL_MATRIX_H_H

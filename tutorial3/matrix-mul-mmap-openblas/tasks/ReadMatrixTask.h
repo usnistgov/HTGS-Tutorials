@@ -26,13 +26,7 @@ class ReadMatrixTask : public htgs::ITask<MatrixRequestData, MatrixBlockData<dou
   }
   virtual void initialize(int pipelineId,
                           int numPipeline) {
-    std::string matrixName;
-    switch(type)
-    {
-      case MatrixType::MatrixA: matrixName = "matrixA"; break;
-      case MatrixType::MatrixB: matrixName = "matrixB"; break;
-      case MatrixType::MatrixC:matrixName = "matrixC"; break;
-    }
+    std::string matrixName = matrixTypeToString(type);
 
     std::string fileName(directory + "/" + matrixName);
 //    std::ifstream inFile(fileName);

@@ -263,7 +263,7 @@ int main(int argc, char *argv[])
     if (argvs == "--output-dir")
     {
       arg++;
-      directory = argv[arg];
+      outputDirectory = argv[arg];
     }
 
     if (argvs == "--validate-results") {
@@ -276,10 +276,12 @@ int main(int argc, char *argv[])
 
     if (argvs == "--help")
     {
-      std::cout << argv[0] << " help: [--width-b <#>] [--height-a <#>] [--shared-dim <#>] [--block-size <#>] [--num-readers <#>] [--num-workers <#>] [--dir <dir>] [--output-dir <dir>] [--validate-results] [--run-sequential] [--help]" << std::endl;
+      std::cout << argv[0] << " args: [--width-b <#>] [--height-a <#>] [--shared-dim <#>] [--block-size <#>] [--num-readers <#>] [--num-workers <#>] [--dir <dir>] [--output-dir <dir>] [--validate-results] [--run-sequential] [--help]" << std::endl;
       exit(0);
     }
   }
+
+  create_dir(outputDirectory);
 
   checkAndValidateMatrixBlockFiles(directory, sharedDim, matrixAHeight, matrixBWidth, sharedDim, blockSize);
 
@@ -292,9 +294,6 @@ int main(int argc, char *argv[])
   if (runSequential) {
     clk.start();
     computeSequentialMatMul(inputDirectoryA, inputDirectoryB, outputDirectory, matrixAHeight, sharedDim, matrixBWidth, blockSize);
-    clk.stopAndIncrement();
-
-    std::cout << "Finished sequential in " << clk.getAverageTime(TimeVal::MILLI) << "ms" << std::endl;
   }
   else {
 

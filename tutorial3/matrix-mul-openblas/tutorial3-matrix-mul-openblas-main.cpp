@@ -4,7 +4,7 @@
 //#define DEBUG_FLAG
 //#define DEBUG_LEVEL_VERBOSE
 
-#define PROFILE
+//#define PROFILE
 
 #include <htgs/api/TaskGraph.hpp>
 #include <htgs/api/Runtime.hpp>
@@ -20,34 +20,15 @@
 #include "tasks/MatrixMulBlkTask.h"
 #include "tasks/MatrixAccumTask.h"
 #include "tasks/OutputTask.h"
-#include "../api/SimpleClock.h"
 #include "rules/MatrixAccumulateRule.h"
 #include "rules/MatrixDistributeRule.h"
 #include "rules/MatrixLoopRule.h"
 #include "rules/MatrixOutputRule.h"
-#include "../matrix-ops/utils/util-matrix.h"
+#include "../../tutorial-utils/util-matrix.h"
+#include "../../tutorial-utils/util-filesystem.h"
+#include "../../tutorial-utils/SimpleClock.h"
 
-int create_dir(std::string path) {
-#ifdef __linux__
-  int val = mkdir(path.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-#else
-  std::wstring wpath = std::wstring(path.begin(), path.end());
-  std::wcout << " Creating folder " << wpath << std::endl;
-  int val = _wmkdir(wpath.c_str());
-#endif
-  if (val == 0) {
-    std::cout << path << " created successfully " << std::endl;
-    return 0;
-  }
-  else {
-    if (errno == EEXIST)
-      return 1;
 
-    std::cout << "Unable to create directory " << path <<": " << strerror(errno) << std::endl; // << val << " " << path << std::endl;
-    return val;
-  }
-
-}
 int validateResults(std::string baseDirectory, int matrixAHeight, int matrixBWidth, int blockSize)
 {
   int blkHeightMatA = (int)ceil((double)matrixAHeight / (double)blockSize);
@@ -60,7 +41,7 @@ int validateResults(std::string baseDirectory, int matrixAHeight, int matrixBWid
       int matrixAHeight = (row == blkHeightMatA-1 && matrixAHeight % blockSize != 0) ? matrixAHeight % blockSize : blockSize;
       int matrixBWidth = (col == blkWidthMatB-1 && matrixBWidth % blockSize != 0) ? matrixBWidth % blockSize : blockSize;
       std::string fileName(baseDirectory + "/matrixC/" + std::to_string(row) + "_" + std::to_string(col));
-      std::string fileNamePar(baseDirectory + "/matrixCPar/" + std::to_string(row) + "_" + std::to_string(col));
+      std::string fileNamePar(baseDirectory + "/matrixC_HTGS/" + std::to_string(row) + "_" + std::to_string(col));
 
       std::ifstream c(fileName, std::ios::binary);
       std::ifstream cPar(fileNamePar, std::ios::binary);
@@ -93,9 +74,9 @@ int validateResults(std::string baseDirectory, int matrixAHeight, int matrixBWid
   return 0;
 }
 
-void computeSequentialMatMul(std::string directory, int fullMatrixAHeight, int fullMatrixAWidth, int fullMatrixBWidth, int blockSize)
+void computeSequentialMatMul(std::string directoryA, std::string directoryB, std::string outputDirectory, int fullMatrixAHeight, int fullMatrixAWidth, int fullMatrixBWidth, int blockSize)
 {
-  std::string matrixCDir(directory + "/matrixC");
+  std::string matrixCDir(outputDirectory + "/matrixC");
   create_dir(matrixCDir);
 
   int blkHeightMatA = (int)ceil((double)fullMatrixAHeight / (double)blockSize);
@@ -155,7 +136,7 @@ void computeSequentialMatMul(std::string directory, int fullMatrixAHeight, int f
         if (matALookup[blkRowA][blk] == nullptr)
         {
           matrixA = new double[matrixAHeight*matrixAWidth];
-          std::string matrixAFile(directory + "/matrixA/" + std::to_string(blkRowA) + "_" + std::to_string(blk));
+          std::string matrixAFile(directoryA + "/MatrixA/" + std::to_string(blkRowA) + "_" + std::to_string(blk));
           std::ifstream fileA(matrixAFile, std::ios::binary);
           fileA.read((char *)matrixA, sizeof(double) * matrixAHeight * matrixAWidth);
           matALookup[blkRowA][blk] = matrixA;
@@ -169,7 +150,7 @@ void computeSequentialMatMul(std::string directory, int fullMatrixAHeight, int f
         if (matBLookup[blk][blkColB] == nullptr)
         {
           matrixB = new double[matrixBWidth*matrixAWidth];
-          std::string matrixBFile(directory + "/matrixB/" + std::to_string(blk) + "_" + std::to_string(blkColB));
+          std::string matrixBFile(directoryB + "/MatrixB/" + std::to_string(blk) + "_" + std::to_string(blkColB));
           std::ifstream fileB(matrixBFile, std::ios::binary);
           fileB.read((char *)matrixB, sizeof(double) * matrixBWidth * matrixAWidth);
           matBLookup[blk][blkColB] = matrixB;
@@ -218,84 +199,112 @@ void computeSequentialMatMul(std::string directory, int fullMatrixAHeight, int f
 
 int main(int argc, char *argv[])
 {
-  int dim = 16384;
-  int blockSize = 4096;
+  int matrixAHeight = 1024;
+  int matrixBWidth = 1024;
+  int sharedDim = 1024;
+
+  int blockSize = 512;
   int numReadThreads = 1;
-  int numProdThreads = 16;
+  int numProdThreads = 20;
   int numBlasThreads = 40;
   bool runSequential = false;
+  bool validate = false;
+
+  std::string directory("data");
+  std::string outputDirectory(directory);
   std::string runtimeFileStr("runtimes");
+
   int numRetry = 1;
 
   if (argc > 1)
   {
     for (int arg = 1; arg < argc; arg++)
     {
-      std::string argStr(argv[arg]);
+      std::string argvs(argv[arg]);
 
-      if (argStr == "--dim" && arg+1 < argc)
+      if (argvs == "--width-b")
       {
-        dim = atoi(argv[arg+1]);
         arg++;
+        matrixBWidth= atoi(argv[arg]);
       }
 
-      if (argStr == "--seq")
+      if (argvs == "--height-a")
       {
+        arg++;
+        matrixAHeight = atoi(argv[arg]);
+      }
+
+      if (argvs == "--shared-dim")
+      {
+        arg++;
+        sharedDim = atoi(argv[arg]);
+      }
+
+      if (argvs == "--run-sequential") {
         runSequential = true;
       }
 
-      if (argStr == "--num-retry" && arg+1 < argc)
+      if (argvs == "--num-retry" && arg+1 < argc)
       {
-        numRetry = atoi(argv[arg+1]);
         arg++;
+        numRetry = atoi(argv[arg]);
       }
 
-      if (argStr == "--blk-size" && arg+1 < argc)
+      if (argvs == "--block-size")
       {
-        blockSize = atoi(argv[arg+1]);
         arg++;
+        blockSize = atoi(argv[arg]);
       }
 
-      if (argStr == "--num-threads-htgs" && arg+1 < argc)
+      if (argvs == "--num-threads-htgs" && arg+1 < argc)
       {
         numProdThreads = atoi(argv[arg+1]);
         arg++;
       }
 
-      if (argStr == "--num-threads-blas" && arg+1 < argc)
+      if (argvs == "--num-threads-blas" && arg+1 < argc)
       {
         numBlasThreads = atoi(argv[arg+1]);
         arg++;
       }
 
-      if (argStr == "--runtime-file" && arg+1 < argc)
+      if (argvs == "--runtime-file" && arg+1 < argc)
       {
         runtimeFileStr = argv[arg+1];
         arg++;
       }
 
-      if (argStr == "--help")
+      if (argvs == "--dir")
       {
-        std::cout << "Usage: " << argv[0] <<" --dim <n> --seq --num-retry <n> --blk-size <n> --num-threads-htgs <n> --num-thread-blas <n> --runtime-file <file>" << std::endl;
+        arg++;
+        directory = argv[arg];
+      }
+
+      if (argvs == "--output-dir")
+      {
+        arg++;
+        outputDirectory = argv[arg];
+      }
+
+      if (argvs == "--validate-results") {
+        validate = true;
+      }
+
+      if (argvs == "--help")
+      {
+        std::cout << argv[0] << " args: [--width-b <#>] [--height-a <#>] [--shared-dim <#>] [--block-size <#>] [--num-retry <#>] [--num-threads-htgs <#>] [--num-threads-blas <#>] [--runtime-file <filename>] [--dir <dir>] [--output-dir <dir>] [--validate-results] [--run-sequential] [--help]" << std::endl;
         exit(0);
       }
     }
   }
 
-  int matrixAHeight = dim;
-  int matrixBWidth = dim;
-  int matrixAWidth = dim;
-
-  std::string baseDirectory("data/blocked-matrix");
-
-  std::string directory = generateDirectoryName(baseDirectory, matrixAHeight,matrixBWidth, blockSize);
-
-  generateMatrixFiles2(baseDirectory, BlockType::MatrixA, matrixAWidth, matrixAHeight, blockSize);
-  generateMatrixFiles2(baseDirectory, BlockType::MatrixB, matrixBWidth, matrixAWidth, blockSize);
-
-  std::string outputDirectory(directory + "/matrixCPar");
-
   create_dir(outputDirectory);
+
+  checkAndValidateMatrixBlockFiles(directory, sharedDim, matrixAHeight, matrixBWidth, sharedDim, blockSize);
+
+  std::string inputDirectoryA = generateDirectoryName(directory, sharedDim, matrixAHeight, blockSize);
+  std::string inputDirectoryB = generateDirectoryName(directory, matrixBWidth, sharedDim, blockSize);
+
   std::ofstream runtimeFile(runtimeFileStr, std::ios::app);
 
   for (int numTry = 0; numTry < numRetry; numTry++) {
@@ -307,16 +316,16 @@ int main(int argc, char *argv[])
 
 
       clk.start();
-      computeSequentialMatMul(directory, matrixAHeight, matrixAWidth, matrixBWidth, blockSize);
+      computeSequentialMatMul(inputDirectoryA, inputDirectoryB, outputDirectory, matrixAHeight, sharedDim, matrixBWidth, blockSize);
       clk.stopAndIncrement();
     }
     else {
       openblas_set_num_threads(1);
 
       ReadMatrixTask
-          *readAMatTask = new ReadMatrixTask(numReadThreads, blockSize, matrixAWidth, matrixAHeight, directory, "A");
+          *readAMatTask = new ReadMatrixTask(numReadThreads, blockSize, sharedDim, matrixAHeight, inputDirectoryA, "A");
       ReadMatrixTask
-          *readBMatTask = new ReadMatrixTask(numReadThreads, blockSize, matrixBWidth, matrixAWidth, directory, "B");
+          *readBMatTask = new ReadMatrixTask(numReadThreads, blockSize, matrixBWidth, sharedDim, inputDirectoryB, "B");
       MatrixMulBlkTask *mmulTask = new MatrixMulBlkTask(numProdThreads);
       MatrixAccumTask *accumTask = new MatrixAccumTask((int) ceil((double) numProdThreads / 2.0));
 
@@ -364,13 +373,13 @@ int main(int argc, char *argv[])
       taskGraph->addRule(matAccumBk, outputTask, outputRule);
       taskGraph->addGraphOutputProducer(outputTask);
 
-      taskGraph->addMemoryManagerEdge("matrixA",
+      taskGraph->addMemoryManagerEdge("MatrixA",
                                       readAMatTask,
                                       mmulTask,
                                       new MatrixAllocator(blockSize, blockSize),
                                       1000,
                                       htgs::MMType::Static);
-      taskGraph->addMemoryManagerEdge("matrixB",
+      taskGraph->addMemoryManagerEdge("MatrixB",
                                       readBMatTask,
                                       mmulTask,
                                       new MatrixAllocator(blockSize, blockSize),
@@ -415,19 +424,29 @@ int main(int argc, char *argv[])
 
       clk.stopAndIncrement();
 
-      int res = validateResults(directory, matrixAHeight, matrixBWidth, blockSize);
-      if (res != 0) {
-        std::cout << "Error validation test failed!" << std::endl;
-      }
       delete runtime;
+    }
+
+    if (validate) {
+      int res = validateResults(outputDirectory, matrixAHeight, matrixBWidth, blockSize);
+      if (res != 0) {
+        std::cout << "Error validating test failed!" << std::endl;
+      }
+      else
+      {
+        std::cout << "Test PASSED" << std::endl;
+      }
 
     }
 
-
     std::cout << (runSequential ? "sequential" : "htgs") << ", " << (runSequential ? numBlasThreads : numProdThreads)
-        << ", " << dim << ", " << (runSequential ? 0 : blockSize) << ", " << clk.getAverageTime(TimeVal::MILLI)
+        << ", width-b: " << matrixBWidth << ", height-a: " << matrixAHeight
+        << ", shared-dim: " << sharedDim
+        << ", " << ", blockSize: " << (runSequential ? 0 : blockSize) << ", time:" << clk.getAverageTime(TimeVal::MILLI)
         << std::endl;
-    runtimeFile << (runSequential ? "sequential" : "htgs") << ", " << (runSequential ? numBlasThreads : numProdThreads) << ", " << dim << ", " << blockSize << ", " << clk.getAverageTime(TimeVal::MILLI) << std::endl;
+    runtimeFile << (runSequential ? "sequential" : "htgs") << ", " << (runSequential ? numBlasThreads : numProdThreads) << ", "
+        << matrixBWidth << ", " << matrixAHeight
+        << ", " << sharedDim << ", " << blockSize << ", " << clk.getAverageTime(TimeVal::MILLI) << std::endl;
 
   }
 

@@ -7,6 +7,7 @@
 
 #include <htgs/api/IRule.hpp>
 #include "../data/MatrixRequestData.h"
+#include "../../../tutorial-utils/enums/MatrixType.h"
 
 class MatrixDistributeRule : public htgs::IRule<MatrixRequestData, MatrixRequestData> {
 

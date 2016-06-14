@@ -7,6 +7,7 @@
 #include <htgs/api/IRule.hpp>
 #include "../data/MatrixBlockData.h"
 #include "../data/MatrixBlockMulData.h"
+#include "../../../tutorial-utils/enums/MatrixType.h"
 
 enum class MatrixState{
   NONE,
@@ -20,10 +21,10 @@ class MatrixLoadRule : public htgs::IRule<MatrixBlockData<double *>, MatrixBlock
       blockHeightA(blockHeightA), blockWidthA(blockWidthA), blockHeightB(blockHeightB), blockWidthB(blockWidthB)
   {
     for (int i = 0; i < blockWidthA; i++)
-      this->matrixCState.push_back(this->allocStateContainer<MatrixState>(blockWidthA, blockHeightB, MatrixState::NONE));
+      this->matrixCState.push_back(this->allocStateContainer<MatrixState>(blockHeightA, blockWidthB, MatrixState::NONE));
 
-    this->matrixAState = this->allocStateContainer(blockWidthA, blockHeightA);
-    this->matrixBState = this->allocStateContainer(blockWidthB, blockHeightB);
+    this->matrixAState = this->allocStateContainer(blockHeightA, blockWidthA);
+    this->matrixBState = this->allocStateContainer(blockHeightB, blockWidthB);
   }
 
   ~MatrixLoadRule() {
