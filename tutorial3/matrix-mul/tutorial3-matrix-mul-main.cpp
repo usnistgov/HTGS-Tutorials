@@ -288,6 +288,7 @@ int main(int argc, char *argv[])
   std::string inputDirectoryA = generateDirectoryName(directory, sharedDim, matrixAHeight, blockSize);
   std::string inputDirectoryB = generateDirectoryName(directory, matrixBWidth, sharedDim, blockSize);
 
+  outputDirectory = generateDirectoryName(outputDirectory, matrixBWidth, matrixAHeight, blockSize);
 
   SimpleClock clk;
 

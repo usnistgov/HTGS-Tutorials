@@ -4,7 +4,8 @@
 //#define DEBUG_FLAG
 //#define DEBUG_LEVEL_VERBOSE
 
-#define PROFILE
+//#define PROFILE
+
 
 #include <htgs/api/TaskGraph.hpp>
 #include <htgs/api/Runtime.hpp>
@@ -14,6 +15,16 @@
 #include <cblas.h>
 #include <cuda_runtime_api.h>
 #include <cublas_v2.h>
+
+#define gpuErrorChk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
+inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=true)
+{
+  if (code != cudaSuccess)
+  {
+    fprintf(stderr,"GPUassert: %s %s %d\n", cudaGetErrorString(code), file, line);
+    if (abort) exit(code);
+  }
+}
 
 #include "data/MatrixRequestData.h"
 #include "data/MatrixBlockData.h"
@@ -471,6 +482,9 @@ int main(int argc, char *argv[])
 
   std::ofstream runtimeFile(runtimeFileStr, std::ios::app);
 
+  outputDirectory = generateDirectoryName(outputDirectory, matrixBWidth, matrixAHeight, blockSize);
+
+
   for (int numTry = 0; numTry < numRetry; numTry++) {
     SimpleClock clk;
 
@@ -506,10 +520,10 @@ int main(int argc, char *argv[])
       int blkHeightMatA = readAMatTask->getNumBlocksRows();
       int blkWidthMatA = readAMatTask->getNumBlocksCols();
 
-      MatrixCopyInTask * copyInA = new MatrixCopyInTask("MatrixA", blkHeightMatA, contexts, cudaIds, numGpus);
-      MatrixCopyInTask * copyInB = new MatrixCopyInTask("MatrixB", blkWidthMatB, contexts, cudaIds, numGpus);
+      MatrixCopyInTask * copyInA = new MatrixCopyInTask("MatrixA", blockSize, blkHeightMatA, contexts, cudaIds, numGpus);
+      MatrixCopyInTask * copyInB = new MatrixCopyInTask("MatrixB", blockSize, blkWidthMatB, contexts, cudaIds, numGpus);
 
-      MatrixCopyOutTask *copyOutC = new MatrixCopyOutTask("MatrixC", contexts, cudaIds, numGpus);
+      MatrixCopyOutTask *copyOutC = new MatrixCopyOutTask("MatrixC", blockSize, contexts, cudaIds, numGpus);
 
       MatrixMulBlkTask *mmulTask = new MatrixMulBlkTask(contexts, cudaIds, numGpus);
 
@@ -575,7 +589,7 @@ int main(int argc, char *argv[])
                                           copyInA,
                                           mmulTask,
                                           new CudaMatrixAllocator(blockSize, blockSize),
-                                          blkHeightMatA*5,
+                                          blkHeightMatA+4,
                                           htgs::MMType::Static,
                                           contexts);
 
@@ -584,7 +598,7 @@ int main(int argc, char *argv[])
                                           copyInB,
                                           mmulTask,
                                           new CudaMatrixAllocator(blockSize, blockSize),
-                                          blkWidthMatB*5,
+                                          blkWidthMatB+4,
                                           htgs::MMType::Static,
                                           contexts);
 
@@ -592,7 +606,7 @@ int main(int argc, char *argv[])
                                           mmulTask,
                                           copyOutC,
                                           new CudaMatrixAllocator(blockSize, blockSize),
-                                          20,
+                                          10,
                                           htgs::MMType::Static,
                                           contexts);
 

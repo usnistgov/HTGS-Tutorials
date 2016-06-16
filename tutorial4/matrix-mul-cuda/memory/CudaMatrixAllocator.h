@@ -12,18 +12,18 @@ class CudaMatrixAllocator : public htgs::IMemoryAllocator<double *> {
 
   double *memAlloc(size_t size) {
     double *mem;
-    cudaMallocHost((void **)&mem, sizeof(double) * size);
+    cudaMalloc((void **)&mem, sizeof(double) * size);
     return mem;
   }
 
   double *memAlloc() {
     double *mem;
-    cudaMallocHost((void **)&mem, sizeof(double) * this->size());
+    cudaMalloc((void **)&mem, sizeof(double) * this->size());
     return mem;
   }
 
   void memFree(double *&memory) {
-    cudaFreeHost(memory);
+    cudaFree(memory);
   }
 
 };

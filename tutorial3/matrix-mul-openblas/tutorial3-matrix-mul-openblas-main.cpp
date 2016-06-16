@@ -205,7 +205,7 @@ int main(int argc, char *argv[])
 
   int blockSize = 512;
   int numReadThreads = 1;
-  int numProdThreads = 20;
+  int numProdThreads = 30;
   int numBlasThreads = 40;
   bool runSequential = false;
   bool validate = false;
@@ -306,6 +306,8 @@ int main(int argc, char *argv[])
   std::string inputDirectoryB = generateDirectoryName(directory, matrixBWidth, sharedDim, blockSize);
 
   std::ofstream runtimeFile(runtimeFileStr, std::ios::app);
+
+  outputDirectory = generateDirectoryName(outputDirectory, matrixBWidth, matrixAHeight, blockSize);
 
   for (int numTry = 0; numTry < numRetry; numTry++) {
     SimpleClock clk;

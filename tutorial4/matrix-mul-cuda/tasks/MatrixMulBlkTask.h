@@ -24,17 +24,23 @@ class MatrixMulBlkTask : public htgs::ICudaTask<MatrixBlockMulData<MatrixMemoryD
   initializeCudaGPU(CUcontext context, CUstream stream, int cudaId, int numGPUs, int pipelineId, int numPipelines) {
     cublasCreate_v2(&handle);
     cublasSetStream_v2(handle, stream);
-    cublasSetPointerMode_v2(handle, CUBLAS_POINTER_MODE_DEVICE);
-    cudaMalloc((void **)&alpha, sizeof(double));
-    cudaMalloc((void **)&beta, sizeof(double));
-    cudaMemset(alpha, 1.0, sizeof(double));
-    cudaMemset(beta, 0.0, sizeof(double));
+//    cublasSetPointerMode_v2(handle, CUBLAS_POINTER_MODE_DEVICE);
+    alpha = new double[1];
+    alpha[0] = 1.0;
+    beta = new double[1];
+    beta[0] = 0.0;
+//    cudaMalloc((void **)&alpha, sizeof(double));
+//    cudaMalloc((void **)&beta, sizeof(double));
+//    cudaMemset(alpha, 1.0, sizeof(double));
+//    cudaMemset(beta, 0.0, sizeof(double));
   }
 
   virtual void shutdownCuda() {
     cublasDestroy_v2(handle);
-    cudaFree(alpha);
-    cudaFree(beta);
+    delete [] alpha;
+    delete [] beta;
+//    cudaFree(alpha);
+//    cudaFree(beta);
   }
 
   virtual void executeGPUTask(std::shared_ptr<MatrixBlockMulData<MatrixMemoryData_t>> data, CUstream stream) {
