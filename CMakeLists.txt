@@ -8,6 +8,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake-mo
 find_package (Threads REQUIRED)
 find_package (HTGS REQUIRED)
 find_package (OpenBLAS QUIET)
+find_package(CUDA QUIET)
 
 
 include_directories(${HTGS_INCLUDE_DIR})
@@ -23,6 +24,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wl,--no-as-needed ${CMAKE_TH
 add_subdirectory(tutorial1)
 add_subdirectory(tutorial2)
 add_subdirectory(tutorial3)
+add_subdirectory(tutorial4)
 #add_subdirectory(matrix-mul-openblas)
 #add_subdirectory(matrix-mul-mmap)
 #add_subdirectory(matrix-mul-mmap-openblas)
