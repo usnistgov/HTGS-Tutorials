@@ -146,6 +146,7 @@ int main(int argc, char *argv[])
   double *matrixA = new double[matrixAHeight*sharedDim];
   double *matrixB = new double[matrixBWidth*sharedDim];
   double *matrixC = new double[matrixAHeight*matrixBWidth];
+  double *matrixC_HTGS = new double[matrixAHeight*matrixBWidth];
 
   initMatrix(matrixA, sharedDim, matrixAHeight);
   initMatrix(matrixB, matrixBWidth, sharedDim);
@@ -160,7 +161,9 @@ int main(int argc, char *argv[])
       computeSequentialMatMul(matrixA, matrixB, matrixC, matrixAHeight, sharedDim, matrixBWidth);
       clk.stopAndIncrement();
     }
-    else {
+
+    // TODO: Uncomment
+//    else {
 
       openblas_set_num_threads(1);
 
@@ -184,7 +187,8 @@ int main(int argc, char *argv[])
           new MatrixMulBlkTask(numProdThreads, sharedDim, matrixAHeight, matrixBWidth, sharedDim, blockSize);
       MatrixAccumTask *accumTask = new MatrixAccumTask((int) ceil((double) numProdThreads / 2.0));
 
-      OutputTask *outputTask = new OutputTask(matrixC, matrixBWidth, matrixAHeight, blockSize);
+    // TODO: Use matrixC
+      OutputTask *outputTask = new OutputTask(matrixC_HTGS, matrixBWidth, matrixAHeight, blockSize);
 
       int blkHeightMatB = readBMatTask->getNumBlocksRows();
       int blkWidthMatB = readBMatTask->getNumBlocksCols();
@@ -261,19 +265,20 @@ int main(int argc, char *argv[])
       clk.stopAndIncrement();
 
       delete runtime;
-    }
-
-//    if (validate) {
-//      int res = validateResults(matrixC, matrixC_HTGS, matrixAHeight, matrixBWidth);
-//      if (res != 0) {
-//        std::cout << "Error validating test failed!" << std::endl;
-//      }
-//      else
-//      {
-//        std::cout << "Test PASSED" << std::endl;
-//      }
-//
+  // TODO: Uncomment
 //    }
+
+    if (validate) {
+      int res = validateResults(matrixC, matrixC_HTGS, matrixAHeight, matrixBWidth);
+      if (res != 0) {
+        std::cout << "Error validating test failed!" << std::endl;
+      }
+      else
+      {
+        std::cout << "Test PASSED" << std::endl;
+      }
+
+    }
 
     std::cout << (runSequential ? "sequential" : "htgs") << ", " << (runSequential ? numBlasThreads : numProdThreads)
               << ", width-b: " << matrixBWidth << ", height-a: " << matrixAHeight

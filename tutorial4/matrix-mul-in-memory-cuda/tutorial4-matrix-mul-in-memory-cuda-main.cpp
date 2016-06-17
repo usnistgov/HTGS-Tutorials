@@ -64,28 +64,29 @@ int validateResults(double *matrixC, double *matrixC_HTGS, int fullMatrixAHeight
 
 void computeSequentialMatMul(double *matrixA, double *matrixB, double *matrixC, size_t fullMatrixAHeight, size_t fullMatrixAWidth, size_t fullMatrixBWidth, int blockDim) {
 
-  cublasXtHandle_t handle;
+//  cublasXtHandle_t handle;
+//
+//  cublasXtCreate(&handle);
+//
+//  int *devices = new int[1] {2};
+//
+//  cublasXtDeviceSelect(handle, 1, devices);
+//  cublasXtSetBlockDim(handle, blockDim);
+//
+//  double alpha = 1.0;
+//  double beta = 0.0;
+//
+//  cublasXtDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, fullMatrixAHeight, fullMatrixBWidth, fullMatrixAWidth, &alpha,
+//                matrixA, fullMatrixAWidth,
+//                matrixB, fullMatrixBWidth,
+//                &beta, matrixC, fullMatrixBWidth);
+//
 
-  cublasXtCreate(&handle);
-
-  int *devices = new int[1] {2};
-
-  cublasXtDeviceSelect(handle, 1, devices);
-  cublasXtSetBlockDim(handle, blockDim);
-
-  double alpha = 1.0;
-  double beta = 0.0;
-
-  cublasXtDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, fullMatrixAHeight, fullMatrixBWidth, fullMatrixAWidth, &alpha,
-                matrixA, fullMatrixAWidth,
-                matrixB, fullMatrixBWidth,
-                &beta, matrixC, fullMatrixBWidth);
-
-//  cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, fullMatrixAHeight, fullMatrixBWidth, fullMatrixAWidth, 1.0, matrixA, fullMatrixAWidth,
-//              matrixB, fullMatrixBWidth, 0.0, matrixC, fullMatrixBWidth);
+  cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, fullMatrixAHeight, fullMatrixBWidth, fullMatrixAWidth, 1.0, matrixA, fullMatrixAWidth,
+              matrixB, fullMatrixBWidth, 0.0, matrixC, fullMatrixBWidth);
 
 
-  cublasXtDestroy(handle);
+//  cublasXtDestroy(handle);
 }
 
 
@@ -181,6 +182,8 @@ int main(int argc, char *argv[])
   double *matrixA = new double[matrixAHeight*sharedDim];
   double *matrixB = new double[matrixBWidth*sharedDim];
   double *matrixC = new double[matrixAHeight*matrixBWidth];
+  // TODO: REMOVE
+  double *matrixC_HTGS = new double[matrixAHeight*matrixBWidth];
 
   initMatrix(matrixA, sharedDim, matrixAHeight);
   initMatrix(matrixB, matrixBWidth, sharedDim);
@@ -196,7 +199,9 @@ int main(int argc, char *argv[])
                               (size_t)matrixBWidth, blockSize);
       clk.stopAndIncrement();
     }
-    else {
+
+    // TODO :UNCOMMENT
+//    else {
 
       openblas_set_num_threads(1);
 
@@ -213,7 +218,7 @@ int main(int argc, char *argv[])
           *readBMatTask = new ReadMatrixTask(numReadThreads, MatrixType::MatrixB, blockSize,
                                              matrixBWidth, sharedDim, matrixB, "B");
 
-      OutputTask *outputTask = new OutputTask(matrixC, matrixBWidth, matrixAHeight, blockSize);
+      OutputTask *outputTask = new OutputTask(matrixC_HTGS, matrixBWidth, matrixAHeight, blockSize);
 
       int blkHeightMatB = readBMatTask->getNumBlocksRows();
       int blkWidthMatB = readBMatTask->getNumBlocksCols();
@@ -317,9 +322,10 @@ int main(int argc, char *argv[])
       }
 
 
-      for (int row = 0; row < blkHeightMatB; row++) {
-        for (int col = 0; col < blkWidthMatB; col++) {
-
+    for (int col = 0; col < blkWidthMatA; col++)
+    {
+      for (int row = 0; row < blkHeightMatA; row++)
+      {
           MatrixRequestData *matB = new MatrixRequestData(row, col, MatrixType::MatrixB);
           taskGraph->produceData(matB);
 
@@ -338,19 +344,21 @@ int main(int argc, char *argv[])
       clk.stopAndIncrement();
 
       delete runtime;
-    }
 
-//    if (validate) {
-//      int res = validateResults(matrixC, matrixC_HTGS, matrixAHeight, matrixBWidth);
-//      if (res != 0) {
-//        std::cout << "Error validating test failed!" << std::endl;
-//      }
-//      else
-//      {
-//        std::cout << "Test PASSED" << std::endl;
-//      }
-//
+    // TODO: Uncomment
 //    }
+
+    if (validate) {
+      int res = validateResults(matrixC, matrixC_HTGS, matrixAHeight, matrixBWidth);
+      if (res != 0) {
+        std::cout << "Error validating test failed!" << std::endl;
+      }
+      else
+      {
+        std::cout << "Test PASSED" << std::endl;
+      }
+
+    }
 
     std::cout << (runSequential ? "sequential" : "htgs") << ", " << (runSequential ? numBlasThreads : numProdThreads)
               << ", width-b: " << matrixBWidth << ", height-a: " << matrixAHeight

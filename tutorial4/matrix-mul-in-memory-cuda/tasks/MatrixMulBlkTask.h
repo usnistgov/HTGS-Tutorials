@@ -59,8 +59,8 @@ class MatrixMulBlkTask : public htgs::ICudaTask<MatrixBlockMulData<MatrixMemoryD
 
     auto result = this->memGet<double *>("MatrixC", new MatrixMemoryRule(1));
 
-    cublasDgemm_v2(handle, CUBLAS_OP_N, CUBLAS_OP_N, height, width, (int)matAData->getMatrixWidth(), alpha, matrixA->get(), (int)matAData->getMatrixWidth(),
-                   matrixB->get(), (int)width, beta, result->get(), width);
+    cublasDgemm_v2(handle, CUBLAS_OP_N, CUBLAS_OP_N, (int)height, (int)width, (int)matAData->getMatrixWidth(), alpha, matrixA->get(), (int)matAData->getMatrixWidth(),
+                   matrixB->get(), (int)width, beta, result->get(), (int)width);
 //    cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, height, width, matAData->getMatrixWidth(), 1.0, matrixA, fullMatrixWidthA,
 //                matrixB, fullMatrixWidthB, 0.0, result, width);
 

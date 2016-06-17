@@ -31,7 +31,6 @@ class ReadMatrixTask : public htgs::ITask<MatrixRequestData, MatrixBlockData<dou
 
   virtual void executeTask(std::shared_ptr<MatrixRequestData> data) {
 
-
     int row = data->getRow();
     int col = data->getCol();
 

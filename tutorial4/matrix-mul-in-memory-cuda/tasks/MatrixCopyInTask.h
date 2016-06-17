@@ -28,15 +28,15 @@ class MatrixCopyInTask : public htgs::ICudaTask<MatrixBlockData<double *>, Matri
     std::string matrixName = matrixTypeToString(data->getRequest()->getType());
 
     // CPU Memory
-    auto memoryIn = data->getMatrixData();
+    double *memoryIn = data->getMatrixData();
 
-//    for (int r = 0; r < data->getMatrixHeight(); r++)
-//    {
-//      for (int c = 0; c < data->getMatrixWidth(); c++)
-//      {
-//        scratchSpace[r * data->getMatrixWidth()+c] = memoryIn[r*fullMatrixWidth+c];
-//      }
-//    }
+    for (int r = 0; r < data->getMatrixHeight(); r++)
+    {
+      for (int c = 0; c < data->getMatrixWidth(); c++)
+      {
+        scratchSpace[r * data->getMatrixWidth()+c] = memoryIn[r*fullMatrixWidth+c];
+      }
+    }
 
 
     // Cuda Memory
@@ -46,11 +46,11 @@ class MatrixCopyInTask : public htgs::ICudaTask<MatrixBlockData<double *>, Matri
 
     // TODO Need to copy async 2D
 
-//    gpuErrorChk(cudaMemcpyAsync(gpuMemPinned, scratchSpace, sizeof(double) * data->getMatrixHeight()*data->getMatrixWidth(), cudaMemcpyHostToDevice, stream));
-    gpuErrorChk(cudaMemcpy2DAsync(gpuMemPinned, data->getMatrixWidth()*sizeof(double),
-                                  memoryIn, fullMatrixWidth*sizeof(double),
-                                  data->getMatrixWidth()*sizeof(double),
-                                  data->getMatrixHeight(), cudaMemcpyHostToDevice, stream));
+    gpuErrorChk(cudaMemcpyAsync(gpuMemPinned, scratchSpace, sizeof(double) * data->getMatrixHeight()*data->getMatrixWidth(), cudaMemcpyHostToDevice, stream));
+//    gpuErrorChk(cudaMemcpy2DAsync(gpuMemPinned, data->getMatrixWidth()*sizeof(double),
+//                                  memoryIn, fullMatrixWidth*sizeof(double),
+//                                  data->getMatrixWidth()*sizeof(double),
+//                                  data->getMatrixHeight(), cudaMemcpyHostToDevice, stream));
     gpuErrorChk(cudaMemcpyAsync(memoryOut->get(), gpuMemPinned, sizeof(double) * data->getMatrixHeight()*data->getMatrixWidth(), cudaMemcpyDeviceToDevice, stream));
 
     this->syncStream();

@@ -10,7 +10,7 @@ set(TUTORIAL_UTILS_SRC
         ../../tutorial-utils/enums/MatrixType.cpp)
 
 cuda_add_executable(matrixMul-in-memory-cuda
-        tutorial3-matrix-mul-in-memory-cuda-main.cpp
+        tutorial4-matrix-mul-in-memory-cuda-main.cpp
         data/MatrixRequestData.h
         data/MatrixBlockData.h
         data/MatrixBlockMulData.h
@@ -18,6 +18,7 @@ cuda_add_executable(matrixMul-in-memory-cuda
         tasks/OutputTask.h
         memory/MatrixMemoryRule.h
         memory/MatrixAllocator.h
+        memory/CudaMatrixAllocator.h
         rules/MatrixLoadRule.h
         rules/MatrixDistributeRule.h
         rules/MatrixLoopRule.h
@@ -26,6 +27,8 @@ cuda_add_executable(matrixMul-in-memory-cuda
         tasks/MatrixMulBlkTask.h
         tasks/MatrixAccumTask.h
         tasks/OutputTask.h
+        tasks/MatrixCopyInTask.h
+        tasks/MatrixCopyOutTask.h
         ${TUTORIAL_UTILS_SRC})
 
 target_link_libraries(matrixMul-in-memory-cuda openblas)
