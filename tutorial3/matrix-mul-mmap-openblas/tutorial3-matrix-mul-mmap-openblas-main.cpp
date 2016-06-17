@@ -437,11 +437,6 @@ int main(int argc, char *argv[])
 
     if (validate) {
       int res = validateResults(outputDirectory, matrixAHeight, matrixBWidth);
-      std::cout << "Finished (" << (res != 0 ? "FAILED - must run sequential" : "PASSED") << ") ";
-    }
-
-    if (validate) {
-      int res = validateResults(outputDirectory, matrixAHeight, matrixBWidth);
       if (res != 0) {
         std::cout << "Error validating test failed!" << std::endl;
       }

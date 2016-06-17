@@ -13,15 +13,16 @@ double *allocMatrix(int width, int height) {
   return matrix;
 }
 
-void initMatrix(double *matrix, int width, int height) {
+void initMatrix(double *matrix, long width, long height) {
   long min = 1;
   long max = 9000;
+  unsigned long seed = 9000;
 
   std::uniform_int_distribution<int> unif(min, max);
-  std::default_random_engine re;
+  std::default_random_engine re(seed);
 
-  for (int r = 0; r < height; r++) {
-    for (int c = 0; c < width; c++) {
+  for (long r = 0; r < height; r++) {
+    for (long c = 0; c < width; c++) {
       matrix[r*width+c] = unif(re);
     }
   }
