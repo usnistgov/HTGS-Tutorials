@@ -18,7 +18,7 @@ class MatrixCopyOutTask : public htgs::ICudaTask<MatrixBlockData<MatrixMemoryDat
 
   virtual void
   initializeCudaGPU(CUcontext context, CUstream stream, int cudaId, int numGPUs, int pipelineId, int numPipelines) {
-    cudaMallocHost((void **)&cudaMemPinned, sizeof(double)*blockSize*blockSize);
+//    cudaMallocHost((void **)&cudaMemPinned, sizeof(double)*blockSize*blockSize);
   }
 
   virtual void executeGPUTask(std::shared_ptr<MatrixBlockData<MatrixMemoryData_t>> data, CUstream stream) {
@@ -28,12 +28,9 @@ class MatrixCopyOutTask : public htgs::ICudaTask<MatrixBlockData<MatrixMemoryDat
     // CPU Memory
     double *memoryOut = new double[data->getMatrixHeight()*data->getMatrixWidth()];
 
-//    cudaMemcpy(memoryOut, memoryIn->get(), sizeof(double) *data->getMatrixHeight()*data->getMatrixWidth(), cudaMemcpyDeviceToHost);
-
-    // TODO Need to copy async 2D
-
-    gpuErrorChk(cudaMemcpyAsync(cudaMemPinned, memoryIn->get(), sizeof(double) * data->getMatrixHeight()*data->getMatrixWidth(), cudaMemcpyDeviceToDevice, stream));
-    gpuErrorChk(cudaMemcpyAsync(memoryOut, cudaMemPinned, sizeof(double) * data->getMatrixHeight()*data->getMatrixWidth(), cudaMemcpyDeviceToHost, stream));
+    cublasGetMatrixAsync((int)data->getMatrixHeight(), (int)data->getMatrixWidth(), sizeof(double),
+                         memoryIn->get(), (int)data->getMatrixHeight(),
+                         memoryOut, (int)data->getMatrixHeight(), stream);
 
     this->syncStream();
 
@@ -43,7 +40,7 @@ class MatrixCopyOutTask : public htgs::ICudaTask<MatrixBlockData<MatrixMemoryDat
   }
 
   virtual void shutdownCuda() {
-    cudaFreeHost(cudaMemPinned);
+//    cudaFreeHost(cudaMemPinned);
   }
 
   virtual std::string getName() {

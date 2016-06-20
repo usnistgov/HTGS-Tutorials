@@ -13,15 +13,15 @@
 class MatrixCopyInTask : public htgs::ICudaTask<MatrixBlockData<double *>, MatrixBlockData<MatrixMemoryData_t>> {
  public:
   MatrixCopyInTask(std::string name, int blockSize, int releaseCount,
-                   CUcontext *contexts, int *cudaIds, int numGpus, long fullMatrixWidth) :
+                   CUcontext *contexts, int *cudaIds, int numGpus, long leadingDimensionFullMatrix) :
       ICudaTask(contexts, cudaIds, numGpus),
-      name(name), releaseCount(releaseCount), blockSize(blockSize), fullMatrixWidth(fullMatrixWidth)
+      name(name), releaseCount(releaseCount), blockSize(blockSize), leadingDimensionFullMatrix(leadingDimensionFullMatrix)
   {}
 
   virtual void
   initializeCudaGPU(CUcontext context, CUstream stream, int cudaId, int numGPUs, int pipelineId, int numPipelines) {
-    cudaMallocHost((void **)&gpuMemPinned, sizeof(double)*blockSize*blockSize);
-    scratchSpace = new double[blockSize*blockSize];
+//    cudaMallocHost((void **)&gpuMemPinned, sizeof(double)*blockSize*blockSize);
+//    scratchSpace = new double[blockSize*blockSize];
   }
 
   virtual void executeGPUTask(std::shared_ptr<MatrixBlockData<double *>> data, CUstream stream) {
@@ -30,28 +30,14 @@ class MatrixCopyInTask : public htgs::ICudaTask<MatrixBlockData<double *>, Matri
     // CPU Memory
     double *memoryIn = data->getMatrixData();
 
-    for (int r = 0; r < data->getMatrixHeight(); r++)
-    {
-      for (int c = 0; c < data->getMatrixWidth(); c++)
-      {
-        scratchSpace[r * data->getMatrixWidth()+c] = memoryIn[r*fullMatrixWidth+c];
-      }
-    }
-
-
     // Cuda Memory
     auto memoryOut = this->memGet<double *>(matrixName + "Copy", new MatrixMemoryRule(releaseCount));
 
-//    cudaMemcpy(memoryOut->get(), memoryIn->get(), sizeof(double)*data->getMatrixWidth()*data->getMatrixHeight(), cudaMemcpyHostToDevice);
 
-    // TODO Need to copy async 2D
 
-    gpuErrorChk(cudaMemcpyAsync(gpuMemPinned, scratchSpace, sizeof(double) * data->getMatrixHeight()*data->getMatrixWidth(), cudaMemcpyHostToDevice, stream));
-//    gpuErrorChk(cudaMemcpy2DAsync(gpuMemPinned, data->getMatrixWidth()*sizeof(double),
-//                                  memoryIn, fullMatrixWidth*sizeof(double),
-//                                  data->getMatrixWidth()*sizeof(double),
-//                                  data->getMatrixHeight(), cudaMemcpyHostToDevice, stream));
-    gpuErrorChk(cudaMemcpyAsync(memoryOut->get(), gpuMemPinned, sizeof(double) * data->getMatrixHeight()*data->getMatrixWidth(), cudaMemcpyDeviceToDevice, stream));
+    cublasSetMatrixAsync((int)data->getMatrixHeight(), (int)data->getMatrixWidth(), sizeof(double),
+                         memoryIn, (int)leadingDimensionFullMatrix,
+                         memoryOut->get(), (int)data->getMatrixHeight(), stream);
 
     this->syncStream();
 
@@ -59,8 +45,8 @@ class MatrixCopyInTask : public htgs::ICudaTask<MatrixBlockData<double *>, Matri
   }
 
   virtual void shutdownCuda() {
-    cudaFreeHost(gpuMemPinned);
-    delete [] scratchSpace;
+//    cudaFreeHost(gpuMemPinned);
+//    delete [] scratchSpace;
   }
 
   virtual std::string getName() {
@@ -68,7 +54,7 @@ class MatrixCopyInTask : public htgs::ICudaTask<MatrixBlockData<double *>, Matri
   }
 
   virtual MatrixCopyInTask *copy() {
-    return new MatrixCopyInTask(this->name, this->blockSize, this->releaseCount, this->getContexts(), this->getCudaIds(), this->getNumGPUs(), this->fullMatrixWidth);
+    return new MatrixCopyInTask(this->name, this->blockSize, this->releaseCount, this->getContexts(), this->getCudaIds(), this->getNumGPUs(), this->leadingDimensionFullMatrix);
   }
 
  private:
@@ -77,7 +63,7 @@ class MatrixCopyInTask : public htgs::ICudaTask<MatrixBlockData<double *>, Matri
   double *gpuMemPinned;
   double *scratchSpace;
   int blockSize;
-  long fullMatrixWidth;
+  long leadingDimensionFullMatrix;
 };
 
 #endif //HTGS_TUTORIALS_MATRIXCOPYINTASK_H

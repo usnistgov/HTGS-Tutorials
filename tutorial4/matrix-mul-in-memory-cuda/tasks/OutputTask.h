@@ -8,7 +8,7 @@
 class OutputTask : public htgs::ITask<MatrixBlockData<double *>, MatrixRequestData> {
  public:
 
-  OutputTask(double *matrix, int fullMatrixWidth, int fullMatrixHeight, int blockSize) :
+  OutputTask(double *matrix, long fullMatrixWidth, long fullMatrixHeight, int blockSize) :
       matrix(matrix), fullMatrixWidth(fullMatrixWidth), fullMatrixHeight(fullMatrixHeight), blockSize(blockSize) {
     numBlocksRows = (int)ceil((double)fullMatrixHeight / (double)blockSize);
     numBlocksCols = (int)ceil((double)fullMatrixWidth / (double)blockSize);
@@ -25,16 +25,17 @@ class OutputTask : public htgs::ITask<MatrixBlockData<double *>, MatrixRequestDa
     int col = data->getRequest()->getCol();
     int row = data->getRequest()->getRow();
 
-    double *startLocation = &this->matrix[blockSize*col+blockSize*row*fullMatrixWidth];
+    double *startLocation = &this->matrix[IDX2C(blockSize*row, blockSize*col, fullMatrixHeight)];
 
     long dataWidth = data->getMatrixWidth();
     long dataHeight = data->getMatrixHeight();
     double *matrixData = data->getMatrixData();
-    for (long r = 0; r < dataHeight; r++)
+
+    for (long c = 0; c < dataWidth; c++)
     {
-      for (long c = 0; c < dataWidth; c++)
+      for (long r = 0; r < dataHeight; r++)
       {
-        startLocation[r *fullMatrixWidth + c] = matrixData[r*dataWidth+c];
+        startLocation[IDX2C(r, c, fullMatrixHeight)] = matrixData[IDX2C(r, c, dataHeight)];
       }
     }
 
@@ -57,8 +58,8 @@ class OutputTask : public htgs::ITask<MatrixBlockData<double *>, MatrixRequestDa
  private:
 
   double *matrix;
-  int fullMatrixWidth;
-  int fullMatrixHeight;
+  long fullMatrixWidth;
+  long fullMatrixHeight;
   int blockSize;
   int numBlocksRows;
   int numBlocksCols;

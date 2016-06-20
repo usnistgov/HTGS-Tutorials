@@ -3,6 +3,7 @@
 //
 //#define DEBUG_FLAG
 //#define DEBUG_LEVEL_VERBOSE
+
 #include <htgs/api/TaskGraph.hpp>
 #include <htgs/api/Runtime.hpp>
 #include <cblas.h>
@@ -43,16 +44,30 @@ int validateResults(double *matrixC, double *matrixC_HTGS, int fullMatrixAHeight
 {
   int count = 0;
 
-  for (int i = 0; i < fullMatrixAHeight*fullMatrixBWidth; i++)
+  for (int r = 0; r < fullMatrixAHeight; r++)
   {
-    if (matrixC[i] != matrixC_HTGS[i])
+    for (int c = 0; c < fullMatrixBWidth; c++)
     {
-      if (count <= 20) {
-        std::cout << std::fixed << i << ": cMem = " << matrixC[i] << " cMemPar = " << matrixC_HTGS[i] << std::endl;
+//      if (matrixC[r*fullMatrixBWidth+c] != matrixC_HTGS[IDX2C(r, c, fullMatrixAHeight)])
+      if (matrixC[IDX2C(r, c, fullMatrixAHeight)] != matrixC_HTGS[IDX2C(r, c, fullMatrixAHeight)])
+      {
+        if (count <= 20) {
+          std::cout << std::fixed << r*fullMatrixBWidth+c << ": cMem = " << matrixC[r*fullMatrixBWidth+c] << " cMemPar = " << matrixC_HTGS[IDX2C(r, c, fullMatrixAHeight)] << std::endl;
+        }
+        count++;
       }
-      count++;
     }
   }
+//  for (int i = 0; i < fullMatrixAHeight*fullMatrixBWidth; i++)
+//  {
+//    if (matrixC[i] != matrixC_HTGS[i])
+//    {
+//      if (count <= 20) {
+//        std::cout << std::fixed << i << ": cMem = " << matrixC[i] << " cMemPar = " << matrixC_HTGS[i] << std::endl;
+//      }
+//      count++;
+//    }
+//  }
 
   if (count > 0)
     std::cout << "Total incorrect = " << count <<std::endl;
@@ -64,29 +79,29 @@ int validateResults(double *matrixC, double *matrixC_HTGS, int fullMatrixAHeight
 
 void computeSequentialMatMul(double *matrixA, double *matrixB, double *matrixC, size_t fullMatrixAHeight, size_t fullMatrixAWidth, size_t fullMatrixBWidth, int blockDim) {
 
-//  cublasXtHandle_t handle;
-//
-//  cublasXtCreate(&handle);
-//
-//  int *devices = new int[1] {2};
-//
-//  cublasXtDeviceSelect(handle, 1, devices);
-//  cublasXtSetBlockDim(handle, blockDim);
-//
-//  double alpha = 1.0;
-//  double beta = 0.0;
-//
-//  cublasXtDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, fullMatrixAHeight, fullMatrixBWidth, fullMatrixAWidth, &alpha,
-//                matrixA, fullMatrixAWidth,
-//                matrixB, fullMatrixBWidth,
-//                &beta, matrixC, fullMatrixBWidth);
+  cublasXtHandle_t handle;
+
+  cublasXtCreate(&handle);
+
+  int *devices = new int[1] {2};
+
+  cublasXtDeviceSelect(handle, 1, devices);
+  cublasXtSetBlockDim(handle, blockDim);
+
+  double alpha = 1.0;
+  double beta = 0.0;
+
+  cublasXtDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, fullMatrixAHeight, fullMatrixBWidth, fullMatrixAWidth, &alpha,
+                matrixA, fullMatrixAWidth,
+                matrixB, fullMatrixBWidth,
+                &beta, matrixC, fullMatrixBWidth);
 //
 
-  cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, fullMatrixAHeight, fullMatrixBWidth, fullMatrixAWidth, 1.0, matrixA, fullMatrixAWidth,
-              matrixB, fullMatrixBWidth, 0.0, matrixC, fullMatrixBWidth);
+//  cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, fullMatrixAHeight, fullMatrixBWidth, fullMatrixAWidth, 1.0, matrixA, fullMatrixAWidth,
+//              matrixB, fullMatrixBWidth, 0.0, matrixC, fullMatrixBWidth);
 
 
-//  cublasXtDestroy(handle);
+  cublasXtDestroy(handle);
 }
 
 
@@ -182,11 +197,10 @@ int main(int argc, char *argv[])
   double *matrixA = new double[matrixAHeight*sharedDim];
   double *matrixB = new double[matrixBWidth*sharedDim];
   double *matrixC = new double[matrixAHeight*matrixBWidth];
-  // TODO: REMOVE
-  double *matrixC_HTGS = new double[matrixAHeight*matrixBWidth];
+//  double *matrixC_HTGS = new double[matrixAHeight*matrixBWidth];
 
-  initMatrix(matrixA, sharedDim, matrixAHeight);
-  initMatrix(matrixB, matrixBWidth, sharedDim);
+  initMatrix(matrixA, sharedDim, matrixAHeight, true);
+  initMatrix(matrixB, matrixBWidth, sharedDim, true);
 
   for (int numTry = 0; numTry < numRetry; numTry++) {
     SimpleClock clk;
@@ -200,9 +214,7 @@ int main(int argc, char *argv[])
       clk.stopAndIncrement();
     }
 
-    // TODO :UNCOMMENT
-//    else {
-
+    else {
       openblas_set_num_threads(1);
 
       // Initialize GPUs
@@ -218,7 +230,7 @@ int main(int argc, char *argv[])
           *readBMatTask = new ReadMatrixTask(numReadThreads, MatrixType::MatrixB, blockSize,
                                              matrixBWidth, sharedDim, matrixB, "B");
 
-      OutputTask *outputTask = new OutputTask(matrixC_HTGS, matrixBWidth, matrixAHeight, blockSize);
+      OutputTask *outputTask = new OutputTask(matrixC, matrixBWidth, matrixAHeight, blockSize);
 
       int blkHeightMatB = readBMatTask->getNumBlocksRows();
       int blkWidthMatB = readBMatTask->getNumBlocksCols();
@@ -226,8 +238,8 @@ int main(int argc, char *argv[])
       int blkHeightMatA = readAMatTask->getNumBlocksRows();
       int blkWidthMatA = readAMatTask->getNumBlocksCols();
 
-      MatrixCopyInTask * copyInA = new MatrixCopyInTask("MatrixA", blockSize, blkHeightMatA, contexts, cudaIds, numGpus, sharedDim);
-      MatrixCopyInTask * copyInB = new MatrixCopyInTask("MatrixB", blockSize, blkWidthMatB, contexts, cudaIds, numGpus, matrixBWidth);
+      MatrixCopyInTask * copyInA = new MatrixCopyInTask("MatrixA", blockSize, blkWidthMatA, contexts, cudaIds, numGpus, matrixAHeight);
+      MatrixCopyInTask * copyInB = new MatrixCopyInTask("MatrixB", blockSize, blkHeightMatB, contexts, cudaIds, numGpus, sharedDim);
 
       MatrixCopyOutTask *copyOutC = new MatrixCopyOutTask("MatrixC", blockSize, contexts, cudaIds, numGpus);
 
@@ -280,7 +292,7 @@ int main(int argc, char *argv[])
                                           copyInA,
                                           mmulTask,
                                           new CudaMatrixAllocator(blockSize, blockSize),
-                                          blkHeightMatA+4,
+                                          blkHeightMatA+6,
                                           htgs::MMType::Static,
                                           contexts);
 
@@ -289,7 +301,7 @@ int main(int argc, char *argv[])
                                           copyInB,
                                           mmulTask,
                                           new CudaMatrixAllocator(blockSize, blockSize),
-                                          blkWidthMatB+4,
+                                          blkWidthMatB+6,
                                           htgs::MMType::Static,
                                           contexts);
 
@@ -297,7 +309,7 @@ int main(int argc, char *argv[])
                                           mmulTask,
                                           copyOutC,
                                           new CudaMatrixAllocator(blockSize, blockSize),
-                                          10,
+                                          4,
                                           htgs::MMType::Static,
                                           contexts);
 
@@ -312,8 +324,9 @@ int main(int argc, char *argv[])
 
       runtime->executeRuntime();
 
-      for (int row = 0; row < blkHeightMatA; row++) {
-        for (int col = 0; col < blkWidthMatA; col++) {
+      for (int col = 0; col < blkWidthMatA; col++) {
+        for (int row = 0; row < blkHeightMatA; row++) {
+
 
           MatrixRequestData *matA = new MatrixRequestData(row, col, MatrixType::MatrixA);
           taskGraph->produceData(matA);
@@ -322,10 +335,11 @@ int main(int argc, char *argv[])
       }
 
 
-    for (int col = 0; col < blkWidthMatA; col++)
-    {
-      for (int row = 0; row < blkHeightMatA; row++)
+      for (int row = 0; row < blkHeightMatB; row++)
       {
+        for (int col = 0; col < blkWidthMatB; col++)
+        {
+
           MatrixRequestData *matB = new MatrixRequestData(row, col, MatrixType::MatrixB);
           taskGraph->produceData(matB);
 
@@ -334,31 +348,38 @@ int main(int argc, char *argv[])
 
       taskGraph->finishedProducingData();
 
-      while (!taskGraph->isOutputTerminated()) {
-        auto data = taskGraph->consumeData();
-        if (data != nullptr) {
-        }
-      }
+//      while (!taskGraph->isOutputTerminated()) {
+//        auto data = taskGraph->consumeData();
+//        if (data != nullptr) {
+//        }
+//      }
+//
+
+//    for (int i = 0; i < 90000; i++)
+//    {
+//      std::cout << "test " << i << std::endl;
+//    }
+//
+//    taskGraph->writeDotToFile("afterExecute.dot");
 
       runtime->waitForRuntime();
       clk.stopAndIncrement();
 
       delete runtime;
 
-    // TODO: Uncomment
-//    }
-
-    if (validate) {
-      int res = validateResults(matrixC, matrixC_HTGS, matrixAHeight, matrixBWidth);
-      if (res != 0) {
-        std::cout << "Error validating test failed!" << std::endl;
-      }
-      else
-      {
-        std::cout << "Test PASSED" << std::endl;
-      }
-
     }
+
+//    if (validate) {
+//      int res = validateResults(matrixC, matrixC_HTGS, matrixAHeight, matrixBWidth);
+//      if (res != 0) {
+//        std::cout << "Error validating test failed!" << std::endl;
+//      }
+//      else
+//      {
+//        std::cout << "Test PASSED" << std::endl;
+//      }
+//
+//    }
 
     std::cout << (runSequential ? "sequential" : "htgs") << ", " << (runSequential ? numBlasThreads : numProdThreads)
               << ", width-b: " << matrixBWidth << ", height-a: " << matrixAHeight

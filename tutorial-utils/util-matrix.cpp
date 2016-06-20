@@ -13,7 +13,7 @@ double *allocMatrix(int width, int height) {
   return matrix;
 }
 
-void initMatrix(double *matrix, long width, long height) {
+void initMatrix(double *matrix, long width, long height, bool columnStore) {
   long min = 1;
   long max = 9000;
   unsigned long seed = 9000;
@@ -21,11 +21,24 @@ void initMatrix(double *matrix, long width, long height) {
   std::uniform_int_distribution<int> unif(min, max);
   std::default_random_engine re(seed);
 
-  for (long r = 0; r < height; r++) {
+  if (columnStore)
+  {
     for (long c = 0; c < width; c++) {
-      matrix[r*width+c] = unif(re);
+      for (long r = 0; r < height; r++) {
+        matrix[IDX2C(r, c, height)] = unif(re);
+      }
     }
   }
+  else
+  {
+    for (long r = 0; r < height; r++) {
+      for (long c = 0; c < width; c++) {
+          matrix[r*width+c] = unif(re);
+      }
+    }
+  }
+
+
 
 }
 
@@ -78,7 +91,7 @@ int generateFullMatrixFile(std::string path, MatrixType type, int totalWidth, in
 
   std::cout << " Generating Matrix" << std::endl;
   double *matrix = allocMatrix(totalWidth, totalHeight);
-  initMatrix(matrix, totalWidth, totalHeight);
+  initMatrix(matrix, totalWidth, totalHeight, false);
 
   std::ofstream ofs(matrixFile, std::ios::binary);
   ofs.write((const char *) matrix, totalWidth * totalHeight* sizeof(double));
@@ -123,7 +136,7 @@ int generateMatrixBlockFiles(std::string path, MatrixType type, int totalWidth, 
   std::cout.flush();
 
   double *matrix = allocMatrix(blockSize, blockSize);
-  initMatrix(matrix, blockSize, blockSize);
+  initMatrix(matrix, blockSize, blockSize, false);
   std::cout << " -- DONE" << std::endl;
 
   for (int blockRow = 0; blockRow < numBlocksHeight; blockRow++) {

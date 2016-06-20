@@ -18,7 +18,7 @@ class MatrixMulBlkTask : public htgs::ICudaTask<MatrixBlockMulData<MatrixMemoryD
 {
 
  public:
-  MatrixMulBlkTask(CUcontext *contexts, int *cudaIds, int numGpus, int fullMatrixWidthA, int fullMatrixHeightA, int fullMatrixWidthB, int fullMatrixHeightB, int blockSize) :
+  MatrixMulBlkTask(CUcontext *contexts, int *cudaIds, int numGpus, long fullMatrixWidthA, long fullMatrixHeightA, long fullMatrixWidthB, long fullMatrixHeightB, int blockSize) :
       ICudaTask(contexts, cudaIds, numGpus),
       fullMatrixWidthA(fullMatrixWidthA), fullMatrixHeightA(fullMatrixHeightA),
       fullMatrixWidthB(fullMatrixWidthB), fullMatrixHeightB(fullMatrixHeightB), blockSize(blockSize)
@@ -30,15 +30,15 @@ class MatrixMulBlkTask : public htgs::ICudaTask<MatrixBlockMulData<MatrixMemoryD
   virtual void initializeCudaGPU(CUcontext context, CUstream stream, int cudaId, int numGPUs, int pipelineId, int numPipelines) {
     cublasCreate_v2(&handle);
     cublasSetStream_v2(handle, stream);
-    alpha = new double[1];
-    alpha[0] = 1.0;
-    beta = new double[1];
-    beta[0] = 0.0;
+//    alpha = new double[1];
+//    alpha[0] = 1.0;
+//    beta = new double[1];
+//    beta[0] = 0.0;
   }
   virtual void shutdownCuda() {
     cublasDestroy_v2(handle);
-    delete [] alpha;
-    delete [] beta;
+//    delete [] alpha;
+//    delete [] beta;
   }
 
   virtual void executeGPUTask(std::shared_ptr<MatrixBlockMulData<MatrixMemoryData_t>> data, CUstream stream) {
@@ -59,8 +59,11 @@ class MatrixMulBlkTask : public htgs::ICudaTask<MatrixBlockMulData<MatrixMemoryD
 
     auto result = this->memGet<double *>("MatrixC", new MatrixMemoryRule(1));
 
-    cublasDgemm_v2(handle, CUBLAS_OP_N, CUBLAS_OP_N, (int)height, (int)width, (int)matAData->getMatrixWidth(), alpha, matrixA->get(), (int)matAData->getMatrixWidth(),
-                   matrixB->get(), (int)width, beta, result->get(), (int)width);
+    double *alpha = new double[1] { 1.0};
+    double *beta = new double[1] {0.0};
+
+    cublasDgemm_v2(handle, CUBLAS_OP_N, CUBLAS_OP_N, (int)height, (int)width, (int)matAData->getMatrixWidth(), alpha, matrixA->get(), (int)matAData->getMatrixHeight(),
+                   matrixB->get(), (int)matBData->getMatrixHeight(), beta, result->get(), (int)height);
 //    cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, height, width, matAData->getMatrixWidth(), 1.0, matrixA, fullMatrixWidthA,
 //                matrixB, fullMatrixWidthB, 0.0, result, width);
 
@@ -89,15 +92,15 @@ class MatrixMulBlkTask : public htgs::ICudaTask<MatrixBlockMulData<MatrixMemoryD
   }
 
  private:
-  int fullMatrixWidthA;
-  int fullMatrixHeightA;
-  int fullMatrixWidthB;
-  int fullMatrixHeightB;
+  long fullMatrixWidthA;
+  long fullMatrixHeightA;
+  long fullMatrixWidthB;
+  long fullMatrixHeightB;
   int blockSize;
 
   cublasHandle_t handle;
-  double *alpha;
-  double *beta;
+//  double *alpha;
+//  double *beta;
 };
 
 #endif //HTGS_MATRIXMULBLKTASK_H

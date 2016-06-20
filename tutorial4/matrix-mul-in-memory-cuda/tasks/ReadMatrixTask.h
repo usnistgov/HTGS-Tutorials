@@ -7,13 +7,14 @@
 #include <htgs/api/ITask.hpp>
 #include <cmath>
 #include "../memory/MatrixMemoryRule.h"
+#include "../../../tutorial-utils/util-matrix.h"
 
 class ReadMatrixTask : public htgs::ITask<MatrixRequestData, MatrixBlockData<double *>>
 {
 
  public:
 
-  ReadMatrixTask(int numThreads, MatrixType type, int blockSize, int fullMatrixWidth, int fullMatrixHeight, double *matrix, std::string matrixName) :
+  ReadMatrixTask(int numThreads, MatrixType type, int blockSize, long fullMatrixWidth, long fullMatrixHeight, double *matrix, std::string matrixName) :
       ITask(numThreads), blockSize(blockSize), fullMatrixHeight(fullMatrixHeight), fullMatrixWidth(fullMatrixWidth), matrix(matrix), matrixName(matrixName)
   {
     this->type = type;
@@ -49,7 +50,7 @@ class ReadMatrixTask : public htgs::ITask<MatrixRequestData, MatrixBlockData<dou
       matrixHeight = blockSize;
 
     // compute starting location of pointer
-    double *memPtr = &matrix[blockSize*col+blockSize*row*fullMatrixWidth];
+    double *memPtr = &matrix[IDX2C(blockSize*row, blockSize*col, fullMatrixHeight)];
 
     addResult(new MatrixBlockData<double *>(data, memPtr, matrixWidth, matrixHeight));
 
@@ -74,8 +75,8 @@ class ReadMatrixTask : public htgs::ITask<MatrixRequestData, MatrixBlockData<dou
   MatrixType type;
   double *matrix;
   int blockSize;
-  int fullMatrixWidth;
-  int fullMatrixHeight;
+  long fullMatrixWidth;
+  long fullMatrixHeight;
   int numBlocksRows;
   int numBlocksCols;
   std::string matrixName;

@@ -10,8 +10,10 @@
 #include <fstream>
 #include "enums/MatrixType.h"
 
+#define IDX2C(i,j,ld) (((j)*(ld))+(i))
+
 double *allocMatrix(long width, long height);
-void initMatrix(double *matrix, long width, long height);
+void initMatrix(double *matrix, long width, long height, bool columnStore);
 std::string generateFilename(std::string directory, MatrixType type, int blockRow, int blockCol, std::string suffix);
 std::string generateDirectoryName(std::string basePath, int totalWidth, int totalHeight, int blockSize);
 std::string generateDirectoryName(std::string basePath, int totalWidth, int totalHeight);
