@@ -33,8 +33,6 @@ class MatrixCopyInTask : public htgs::ICudaTask<MatrixBlockData<double *>, Matri
     // Cuda Memory
     auto memoryOut = this->memGet<double *>(matrixName + "Copy", new MatrixMemoryRule(releaseCount));
 
-
-
     cublasSetMatrixAsync((int)data->getMatrixHeight(), (int)data->getMatrixWidth(), sizeof(double),
                          memoryIn, (int)leadingDimensionFullMatrix,
                          memoryOut->get(), (int)data->getMatrixHeight(), stream);

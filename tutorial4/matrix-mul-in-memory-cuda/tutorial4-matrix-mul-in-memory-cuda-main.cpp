@@ -92,9 +92,9 @@ void computeSequentialMatMul(double *matrixA, double *matrixB, double *matrixC, 
   double beta = 0.0;
 
   cublasXtDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, fullMatrixAHeight, fullMatrixBWidth, fullMatrixAWidth, &alpha,
-                matrixA, fullMatrixAWidth,
-                matrixB, fullMatrixBWidth,
-                &beta, matrixC, fullMatrixBWidth);
+                matrixA, fullMatrixAHeight,
+                matrixB, fullMatrixAHeight,
+                &beta, matrixC, fullMatrixAHeight);
 //
 
 //  cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, fullMatrixAHeight, fullMatrixBWidth, fullMatrixAWidth, 1.0, matrixA, fullMatrixAWidth,
@@ -197,7 +197,7 @@ int main(int argc, char *argv[])
   double *matrixA = new double[matrixAHeight*sharedDim];
   double *matrixB = new double[matrixBWidth*sharedDim];
   double *matrixC = new double[matrixAHeight*matrixBWidth];
-//  double *matrixC_HTGS = new double[matrixAHeight*matrixBWidth];
+  double *matrixC_HTGS = new double[matrixAHeight*matrixBWidth];
 
   initMatrix(matrixA, sharedDim, matrixAHeight, true);
   initMatrix(matrixB, matrixBWidth, sharedDim, true);
@@ -214,7 +214,7 @@ int main(int argc, char *argv[])
       clk.stopAndIncrement();
     }
 
-    else {
+//    else {
       openblas_set_num_threads(1);
 
       // Initialize GPUs
@@ -230,7 +230,7 @@ int main(int argc, char *argv[])
           *readBMatTask = new ReadMatrixTask(numReadThreads, MatrixType::MatrixB, blockSize,
                                              matrixBWidth, sharedDim, matrixB, "B");
 
-      OutputTask *outputTask = new OutputTask(matrixC, matrixBWidth, matrixAHeight, blockSize);
+      OutputTask *outputTask = new OutputTask(matrixC_HTGS, matrixBWidth, matrixAHeight, blockSize);
 
       int blkHeightMatB = readBMatTask->getNumBlocksRows();
       int blkWidthMatB = readBMatTask->getNumBlocksCols();
@@ -238,8 +238,8 @@ int main(int argc, char *argv[])
       int blkHeightMatA = readAMatTask->getNumBlocksRows();
       int blkWidthMatA = readAMatTask->getNumBlocksCols();
 
-      MatrixCopyInTask * copyInA = new MatrixCopyInTask("MatrixA", blockSize, blkWidthMatA, contexts, cudaIds, numGpus, matrixAHeight);
-      MatrixCopyInTask * copyInB = new MatrixCopyInTask("MatrixB", blockSize, blkHeightMatB, contexts, cudaIds, numGpus, sharedDim);
+      MatrixCopyInTask * copyInA = new MatrixCopyInTask("MatrixA", blockSize, blkWidthMatB, contexts, cudaIds, numGpus, matrixAHeight);
+      MatrixCopyInTask * copyInB = new MatrixCopyInTask("MatrixB", blockSize, blkHeightMatA, contexts, cudaIds, numGpus, sharedDim);
 
       MatrixCopyOutTask *copyOutC = new MatrixCopyOutTask("MatrixC", blockSize, contexts, cudaIds, numGpus);
 
@@ -292,7 +292,7 @@ int main(int argc, char *argv[])
                                           copyInA,
                                           mmulTask,
                                           new CudaMatrixAllocator(blockSize, blockSize),
-                                          blkHeightMatA+6,
+                                          blkWidthMatB+1,
                                           htgs::MMType::Static,
                                           contexts);
 
@@ -301,7 +301,7 @@ int main(int argc, char *argv[])
                                           copyInB,
                                           mmulTask,
                                           new CudaMatrixAllocator(blockSize, blockSize),
-                                          blkWidthMatB+6,
+                                          blkHeightMatA+1,
                                           htgs::MMType::Static,
                                           contexts);
 
@@ -367,19 +367,19 @@ int main(int argc, char *argv[])
 
       delete runtime;
 
-    }
-
-//    if (validate) {
-//      int res = validateResults(matrixC, matrixC_HTGS, matrixAHeight, matrixBWidth);
-//      if (res != 0) {
-//        std::cout << "Error validating test failed!" << std::endl;
-//      }
-//      else
-//      {
-//        std::cout << "Test PASSED" << std::endl;
-//      }
-//
 //    }
+
+    if (validate) {
+      int res = validateResults(matrixC, matrixC_HTGS, matrixAHeight, matrixBWidth);
+      if (res != 0) {
+        std::cout << "Error validating test failed!" << std::endl;
+      }
+      else
+      {
+        std::cout << "Test PASSED" << std::endl;
+      }
+
+    }
 
     std::cout << (runSequential ? "sequential" : "htgs") << ", " << (runSequential ? numBlasThreads : numProdThreads)
               << ", width-b: " << matrixBWidth << ", height-a: " << matrixAHeight

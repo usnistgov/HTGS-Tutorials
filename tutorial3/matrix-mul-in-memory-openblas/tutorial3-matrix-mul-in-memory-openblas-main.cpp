@@ -148,8 +148,8 @@ int main(int argc, char *argv[])
   double *matrixC = new double[matrixAHeight*matrixBWidth];
   double *matrixC_HTGS = new double[matrixAHeight*matrixBWidth];
 
-  initMatrix(matrixA, sharedDim, matrixAHeight);
-  initMatrix(matrixB, matrixBWidth, sharedDim);
+  initMatrix(matrixA, sharedDim, matrixAHeight, false);
+  initMatrix(matrixB, matrixBWidth, sharedDim, false);
 
   for (int numTry = 0; numTry < numRetry; numTry++) {
     SimpleClock clk;
