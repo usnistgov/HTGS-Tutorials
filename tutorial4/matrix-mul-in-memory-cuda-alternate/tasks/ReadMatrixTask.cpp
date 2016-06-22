@@ -4,13 +4,22 @@
 
 #include "ReadMatrixTask.h"
 
-
-ReadMatrixTask::ReadMatrixTask(int numThreads, MatrixType type, int blockSize, long fullMatrixWidth, long fullMatrixHeight, double *matrix, std::string matrixName) :
-    ITask(numThreads), blockSize(blockSize), fullMatrixHeight(fullMatrixHeight), fullMatrixWidth(fullMatrixWidth), matrix(matrix), matrixName(matrixName)
-{
+ReadMatrixTask::ReadMatrixTask(int numThreads,
+                               MatrixType type,
+                               int blockSize,
+                               long fullMatrixWidth,
+                               long fullMatrixHeight,
+                               double *matrix,
+                               std::string matrixName) :
+    ITask(numThreads),
+    blockSize(blockSize),
+    fullMatrixWidth(fullMatrixWidth),
+    fullMatrixHeight(fullMatrixHeight),
+    matrix(matrix),
+    matrixName(matrixName) {
   this->type = type;
-  numBlocksRows = (int)ceil((double)fullMatrixHeight / (double)blockSize);
-  numBlocksCols = (int)ceil((double)fullMatrixWidth / (double)blockSize);
+  numBlocksRows = (int) ceil((double) fullMatrixHeight / (double) blockSize);
+  numBlocksCols = (int) ceil((double) fullMatrixWidth / (double) blockSize);
 }
 
 void ReadMatrixTask::executeTask(std::shared_ptr<MatrixRequestData> data) {
@@ -21,19 +30,18 @@ void ReadMatrixTask::executeTask(std::shared_ptr<MatrixRequestData> data) {
   long matrixWidth;
   long matrixHeight;
 
-  if (col == numBlocksCols-1 && fullMatrixWidth % blockSize != 0)
+  if (col == numBlocksCols - 1 && fullMatrixWidth % blockSize != 0)
     matrixWidth = fullMatrixWidth % blockSize;
   else
     matrixWidth = blockSize;
 
-
-  if (row == numBlocksRows-1 && fullMatrixHeight % blockSize != 0)
+  if (row == numBlocksRows - 1 && fullMatrixHeight % blockSize != 0)
     matrixHeight = fullMatrixHeight % blockSize;
   else
     matrixHeight = blockSize;
 
   // compute starting location of pointer
-  double *memPtr = &matrix[IDX2C(blockSize*row, blockSize*col, fullMatrixHeight)];
+  double *memPtr = &matrix[IDX2C(blockSize * row, blockSize * col, fullMatrixHeight)];
 
   addResult(new MatrixBlockData<double *>(data, memPtr, matrixWidth, matrixHeight));
 

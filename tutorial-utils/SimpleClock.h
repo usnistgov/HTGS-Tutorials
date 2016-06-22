@@ -5,7 +5,6 @@
 #ifndef HTGS_SIMPLECLOCK_H
 #define HTGS_SIMPLECLOCK_H
 
-
 #include <chrono>
 
 enum class TimeVal {
@@ -62,6 +61,8 @@ class SimpleClock {
       case TimeVal::MICRO:
         return avg / 1000;
     }
+
+    return 0.0;
   }
 
  private:
@@ -71,6 +72,5 @@ class SimpleClock {
   long long int duration;
   long count;
 };
-
 
 #endif //HTGS_SIMPLECLOCK_H

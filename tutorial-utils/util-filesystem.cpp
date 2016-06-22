@@ -17,7 +17,6 @@ int create_dir(std::string path) {
   int val = _wmkdir(wpath.c_str());
 #endif
 
-
   if (val == 0) {
     std::cout << "directory: " << path << " created successfully " << std::endl;
     return 0;
@@ -26,7 +25,8 @@ int create_dir(std::string path) {
     if (errno == EEXIST)
       return 0;
 
-    std::cout << "Unable to create directory " << path <<": " << strerror(errno) << std::endl; // << val << " " << path << std::endl;
+    std::cout << "Unable to create directory " << path << ": " << strerror(errno)
+              << std::endl; // << val << " " << path << std::endl;
     return val;
   }
 
@@ -34,13 +34,11 @@ int create_dir(std::string path) {
 
 bool has_dir(std::string path) {
   struct stat info;
-  if (stat(path.c_str(), &info) != 0)
-  {
+  if (stat(path.c_str(), &info) != 0) {
     std::cout << "cannot access " << path << std::endl;
     return false;
   }
-  else if (info.st_mode & S_IFDIR)
-  {
+  else if (info.st_mode & S_IFDIR) {
     return true;
   }
 
@@ -51,8 +49,7 @@ bool has_dir(std::string path) {
 
 bool has_file(std::string filePath) {
   struct stat info;
-  if (stat(filePath.c_str(), &info) != 0)
-  {
+  if (stat(filePath.c_str(), &info) != 0) {
     std::cout << "cannot access " << filePath << std::endl;
     return false;
   }

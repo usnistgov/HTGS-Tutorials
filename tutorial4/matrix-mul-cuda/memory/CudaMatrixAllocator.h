@@ -8,17 +8,17 @@
 
 class CudaMatrixAllocator : public htgs::IMemoryAllocator<double *> {
  public:
-  CudaMatrixAllocator(int width, int height) : IMemoryAllocator((size_t) width * height) { }
+  CudaMatrixAllocator(int width, int height) : IMemoryAllocator((size_t) width * height) {}
 
   double *memAlloc(size_t size) {
     double *mem;
-    cudaMalloc((void **)&mem, sizeof(double) * size);
+    cudaMalloc((void **) &mem, sizeof(double) * size);
     return mem;
   }
 
   double *memAlloc() {
     double *mem;
-    cudaMalloc((void **)&mem, sizeof(double) * this->size());
+    cudaMalloc((void **) &mem, sizeof(double) * this->size());
     return mem;
   }
 

@@ -8,7 +8,7 @@
 #include "../data/MatrixBlockData.h"
 #include "../data/MatrixBlockMulData.h"
 
-enum class MatrixState{
+enum class MatrixState {
   NONE,
   IN_FLIGHT
 };
@@ -17,10 +17,11 @@ class MatrixLoadRule : public htgs::IRule<MatrixBlockData<MatrixMemoryData_t>, M
 
  public:
   MatrixLoadRule(int blockWidthA, int blockHeightA, int blockWidthB, int blockHeightB) :
-      blockHeightA(blockHeightA), blockWidthA(blockWidthA), blockHeightB(blockHeightB), blockWidthB(blockWidthB)
-  {
+      blockHeightA(blockHeightA), blockWidthA(blockWidthA), blockHeightB(blockHeightB), blockWidthB(blockWidthB) {
     for (int i = 0; i < blockWidthA; i++)
-      this->matrixCState.push_back(this->allocStateContainer<MatrixState>(blockHeightA, blockWidthB, MatrixState::NONE));
+      this->matrixCState.push_back(this->allocStateContainer<MatrixState>(blockHeightA,
+                                                                          blockWidthB,
+                                                                          MatrixState::NONE));
 
     this->matrixAState = this->allocStateContainer(blockHeightA, blockWidthA);
     this->matrixBState = this->allocStateContainer(blockHeightB, blockWidthB);
@@ -30,8 +31,7 @@ class MatrixLoadRule : public htgs::IRule<MatrixBlockData<MatrixMemoryData_t>, M
     delete matrixAState;
     delete matrixBState;
 
-    for (auto state : this->matrixCState)
-    {
+    for (auto state : this->matrixCState) {
       delete state;
     }
   }
@@ -40,12 +40,13 @@ class MatrixLoadRule : public htgs::IRule<MatrixBlockData<MatrixMemoryData_t>, M
     return false;
   }
 
-  void shutdownRule(int pipelineId) { }
+  void shutdownRule(int pipelineId) {}
 
   void applyRule(std::shared_ptr<MatrixBlockData<MatrixMemoryData_t>> data, int pipelineId) {
     std::shared_ptr<MatrixRequestData> request = data->getRequest();
 
-    std::cout << "Received: " << request->getRow() << ", " << request->getCol() << " " << matrixTypeToString(request->getType()) << std::endl;
+    std::cout << "Received: " << request->getRow() << ", " << request->getCol() << " "
+              << matrixTypeToString(request->getType()) << std::endl;
 
     int rowA, rowB, colA, colB;
     switch (request->getType()) {
@@ -63,7 +64,7 @@ class MatrixLoadRule : public htgs::IRule<MatrixBlockData<MatrixMemoryData_t>, M
 
             if (!container->has(rowA, colB)) {
               std::cout << "Sending A(" << rowA << ", " << colA << "); B(" << rowB << ", " << colB << ")"
-                  << "Updating C[" << rowB << "](" << rowA << ", " << colB << ")" << std::endl;
+                        << "Updating C[" << rowB << "](" << rowA << ", " << colB << ")" << std::endl;
               // Schedule work
               addResult(new MatrixBlockMulData<MatrixMemoryData_t>(data, matrixBState->get(rowB, colB)));
               MatrixState state = MatrixState::IN_FLIGHT;
@@ -79,18 +80,15 @@ class MatrixLoadRule : public htgs::IRule<MatrixBlockData<MatrixMemoryData_t>, M
 
         this->matrixBState->set(rowB, colB, data);
 
-
         colA = rowB;
 
-        for (rowA = 0; rowA < blockHeightA; rowA++)
-        {
-          if (this->matrixAState->has(rowA, colA))
-          {
+        for (rowA = 0; rowA < blockHeightA; rowA++) {
+          if (this->matrixAState->has(rowA, colA)) {
             auto container = matrixCState[colA];
 
             if (!container->has(rowA, colB)) {
               std::cout << "Sending A(" << rowA << ", " << colA << "); B(" << rowB << ", " << colB << ")"
-                  << "Updating C[" << colA << "](" << rowA << ", " << colB << ")" << std::endl;
+                        << "Updating C[" << colA << "](" << rowA << ", " << colB << ")" << std::endl;
               // Schedule work
               addResult(new MatrixBlockMulData<MatrixMemoryData_t>(matrixAState->get(rowA, colA), data));
               MatrixState state = MatrixState::IN_FLIGHT;
@@ -119,18 +117,13 @@ class MatrixLoadRule : public htgs::IRule<MatrixBlockData<MatrixMemoryData_t>, M
 //    }
   }
 
-  void printMatrixA()
-  {
-    for (int r = 0; r < blockHeightA; r++)
-    {
-      for (int c = 0; c < blockWidthA; c++)
-      {
-        if (matrixAState->has(r, c))
-        {
+  void printMatrixA() {
+    for (int r = 0; r < blockHeightA; r++) {
+      for (int c = 0; c < blockWidthA; c++) {
+        if (matrixAState->has(r, c)) {
           std::cout << "1";
         }
-        else
-        {
+        else {
           std::cout << "0";
         }
 
@@ -140,18 +133,13 @@ class MatrixLoadRule : public htgs::IRule<MatrixBlockData<MatrixMemoryData_t>, M
 
   }
 
-  void printMatrixB()
-  {
-    for (int r = 0; r < blockHeightB; r++)
-    {
-      for (int c = 0; c < blockWidthB; c++)
-      {
-        if (matrixBState->has(r, c))
-        {
+  void printMatrixB() {
+    for (int r = 0; r < blockHeightB; r++) {
+      for (int c = 0; c < blockWidthB; c++) {
+        if (matrixBState->has(r, c)) {
           std::cout << "1";
         }
-        else
-        {
+        else {
           std::cout << "0";
         }
 
@@ -160,18 +148,13 @@ class MatrixLoadRule : public htgs::IRule<MatrixBlockData<MatrixMemoryData_t>, M
     }
   }
 
-  void printMatrixC(int index)
-  {
-    for (int r = 0; r < blockHeightA; r++)
-    {
-      for (int c = 0; c < blockWidthB; c++)
-      {
-        if (matrixCState[index]->has(r, c))
-        {
+  void printMatrixC(int index) {
+    for (int r = 0; r < blockHeightA; r++) {
+      for (int c = 0; c < blockWidthB; c++) {
+        if (matrixCState[index]->has(r, c)) {
           std::cout << "1";
         }
-        else
-        {
+        else {
           std::cout << "0";
         }
 

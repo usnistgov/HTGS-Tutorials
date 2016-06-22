@@ -9,21 +9,25 @@
 #include "../data/MatrixBlockData.h"
 #include <cuda.h>
 
-
 class MatrixCopyInTask : public htgs::ICudaTask<MatrixBlockData<double *>, MatrixBlockData<MatrixMemoryData_t>> {
  public:
   MatrixCopyInTask(std::string name, int blockSize, int releaseCount,
                    CUcontext *contexts, int *cudaIds, int numGpus, long leadingDimensionFullMatrix);
 
-
   virtual void executeGPUTask(std::shared_ptr<MatrixBlockData<double *>> data, CUstream stream);
 
   virtual std::string getName() {
-    return "CudaCopyInTask(" + name +")";
+    return "CudaCopyInTask(" + name + ")";
   }
 
   virtual MatrixCopyInTask *copy() {
-    return new MatrixCopyInTask(this->name, this->blockSize, this->releaseCount, this->getContexts(), this->getCudaIds(), this->getNumGPUs(), this->leadingDimensionFullMatrix);
+    return new MatrixCopyInTask(this->name,
+                                this->blockSize,
+                                this->releaseCount,
+                                this->getContexts(),
+                                this->getCudaIds(),
+                                this->getNumGPUs(),
+                                this->leadingDimensionFullMatrix);
   }
 
  private:

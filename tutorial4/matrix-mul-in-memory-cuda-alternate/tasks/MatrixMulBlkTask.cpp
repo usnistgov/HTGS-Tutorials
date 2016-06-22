@@ -16,11 +16,14 @@ MatrixMulBlkTask::MatrixMulBlkTask(CUcontext *contexts,
     :
     ICudaTask(contexts, cudaIds, numGpus),
     fullMatrixWidthA(fullMatrixWidthA), fullMatrixHeightA(fullMatrixHeightA),
-    fullMatrixWidthB(fullMatrixWidthB), fullMatrixHeightB(fullMatrixHeightB), blockSize(blockSize)
-{}
+    fullMatrixWidthB(fullMatrixWidthB), fullMatrixHeightB(fullMatrixHeightB), blockSize(blockSize) {}
 
-
-void MatrixMulBlkTask::initializeCudaGPU(CUcontext context, CUstream stream, int cudaId, int numGPUs, int pipelineId, int numPipelines) {
+void MatrixMulBlkTask::initializeCudaGPU(CUcontext context,
+                                         CUstream stream,
+                                         int cudaId,
+                                         int numGPUs,
+                                         int pipelineId,
+                                         int numPipelines) {
   cublasCreate_v2(&handle);
   cublasSetStream_v2(handle, stream);
   alpha = new double[1];
@@ -29,11 +32,10 @@ void MatrixMulBlkTask::initializeCudaGPU(CUcontext context, CUstream stream, int
   beta[0] = 0.0;
 }
 
-
 void MatrixMulBlkTask::shutdownCuda() {
   cublasDestroy_v2(handle);
-  delete [] alpha;
-  delete [] beta;
+  delete[] alpha;
+  delete[] beta;
 }
 
 void MatrixMulBlkTask::executeGPUTask(std::shared_ptr<MatrixBlockMulData<MatrixMemoryData_t>> data, CUstream stream) {
@@ -47,22 +49,29 @@ void MatrixMulBlkTask::executeGPUTask(std::shared_ptr<MatrixBlockMulData<MatrixM
   long width = matBData->getMatrixWidth();
   long height = matAData->getMatrixHeight();
 
-  int blkRowA = data->getMatrixA()->getRequest()->getRow();
-  int blkColA = data->getMatrixA()->getRequest()->getCol();
-  int blkRowB = data->getMatrixB()->getRequest()->getRow();
-  int blkColB = data->getMatrixB()->getRequest()->getCol();
-
   auto result = this->memGet<double *>("MatrixC", new MatrixMemoryRule(1));
 
-  cublasDgemm_v2(handle, CUBLAS_OP_N, CUBLAS_OP_N, (int)height, (int)width, (int)matAData->getMatrixWidth(), alpha, matrixA->get(), (int)matAData->getMatrixHeight(),
-                 matrixB->get(), (int)matBData->getMatrixHeight(), beta, result->get(), (int)height);
+  cublasDgemm_v2(handle,
+                 CUBLAS_OP_N,
+                 CUBLAS_OP_N,
+                 (int) height,
+                 (int) width,
+                 (int) matAData->getMatrixWidth(),
+                 alpha,
+                 matrixA->get(),
+                 (int) matAData->getMatrixHeight(),
+                 matrixB->get(),
+                 (int) matBData->getMatrixHeight(),
+                 beta,
+                 result->get(),
+                 (int) height);
 //    cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, height, width, matAData->getMatrixWidth(), 1.0, matrixA, fullMatrixWidthA,
 //                matrixB, fullMatrixWidthB, 0.0, result, width);
 
   this->syncStream();
 
-
-  std::shared_ptr<MatrixRequestData> matReq(new MatrixRequestData(matAData->getRequest()->getRow(), matBData->getRequest()->getCol(), MatrixType::MatrixC));
+  std::shared_ptr<MatrixRequestData> matReq
+      (new MatrixRequestData(matAData->getRequest()->getRow(), matBData->getRequest()->getCol(), MatrixType::MatrixC));
 
   addResult(new MatrixBlockData<MatrixMemoryData_t>(matReq, result, width, height));
 

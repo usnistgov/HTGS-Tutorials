@@ -21,24 +21,20 @@ void initMatrix(double *matrix, long width, long height, bool columnStore) {
   std::uniform_int_distribution<int> unif(min, max);
   std::default_random_engine re(seed);
 
-  if (columnStore)
-  {
+  if (columnStore) {
     for (long c = 0; c < width; c++) {
       for (long r = 0; r < height; r++) {
         matrix[IDX2C(r, c, height)] = unif(re);
       }
     }
   }
-  else
-  {
+  else {
     for (long r = 0; r < height; r++) {
       for (long c = 0; c < width; c++) {
-          matrix[r*width+c] = unif(re);
+        matrix[r * width + c] = unif(re);
       }
     }
   }
-
-
 
 }
 
@@ -48,18 +44,18 @@ size_t writeMatrix(std::string file, int matrixWidth, int matrixHeight, double *
     std::cout.flush();
   }
 
-    std::ofstream ofs (file, std::ios::binary);
-    size_t numElems = (size_t)matrixWidth*(size_t)matrixHeight;
+  std::ofstream ofs(file, std::ios::binary);
+  size_t numElems = (size_t) matrixWidth * (size_t) matrixHeight;
 
-    ofs.write((const char *) matrix, numElems * sizeof(double));
-    if (!ofs.good())
-        std::cout << "Error writing file " << strerror(errno) << ": " << file << std::endl;
-    ofs.flush();
+  ofs.write((const char *) matrix, numElems * sizeof(double));
+  if (!ofs.good())
+    std::cout << "Error writing file " << strerror(errno) << ": " << file << std::endl;
+  ofs.flush();
 
   if (!silent)
     std::cout << " -- DONE" << std::endl;
 
-    ofs.close();
+  ofs.close();
 
   return numElems;
 }
@@ -88,13 +84,12 @@ int generateFullMatrixFile(std::string path, MatrixType type, int totalWidth, in
 
   std::string matrixFile = std::string(blkDir + "/" + matrixTypeToString(type));
 
-
   std::cout << " Generating Matrix" << std::endl;
   double *matrix = allocMatrix(totalWidth, totalHeight);
   initMatrix(matrix, totalWidth, totalHeight, false);
 
   std::ofstream ofs(matrixFile, std::ios::binary);
-  ofs.write((const char *) matrix, totalWidth * totalHeight* sizeof(double));
+  ofs.write((const char *) matrix, totalWidth * totalHeight * sizeof(double));
   ofs.flush();
   ofs.close();
 
@@ -103,8 +98,15 @@ int generateFullMatrixFile(std::string path, MatrixType type, int totalWidth, in
   return 0;
 }
 
-int generateMatrixBlockFiles(std::string path, MatrixType type, int totalWidth, int totalHeight, int blockSize, bool columnStore) {
-  std::string blkDir = std::string(path + "/" + std::to_string(totalWidth) + "x"  + std::to_string(totalHeight) + "blksize" + std::to_string(blockSize));
+int generateMatrixBlockFiles(std::string path,
+                             MatrixType type,
+                             int totalWidth,
+                             int totalHeight,
+                             int blockSize,
+                             bool columnStore) {
+  std::string blkDir = std::string(
+      path + "/" + std::to_string(totalWidth) + "x" + std::to_string(totalHeight) + "blksize"
+          + std::to_string(blockSize));
   int ret = create_dir(path);
   if (ret != 0 && ret != 1)
     return -1;
@@ -118,7 +120,6 @@ int generateMatrixBlockFiles(std::string path, MatrixType type, int totalWidth, 
   if (create_dir(matrixDir) != 0)
     return -1;
 
-
   int numBlocksWidth = totalWidth / blockSize;
   int numBlocksHeight = totalHeight / blockSize;
 
@@ -129,10 +130,9 @@ int generateMatrixBlockFiles(std::string path, MatrixType type, int totalWidth, 
   if (totalHeight % blockSize != 0)
     numBlocksHeight++;
 
-
   std::cout << " Generating Matrix " << totalHeight << "x" << totalWidth << " blockSize: " << blockSize
-      << " numBlocksWidth: " << numBlocksWidth << " numBlocksHeight: " << numBlocksHeight
-      << " -- Allocating and Initializing...";
+            << " numBlocksWidth: " << numBlocksWidth << " numBlocksHeight: " << numBlocksHeight
+            << " -- Allocating and Initializing...";
   std::cout.flush();
 
   double *matrix = allocMatrix(blockSize, blockSize);
@@ -147,7 +147,7 @@ int generateMatrixBlockFiles(std::string path, MatrixType type, int totalWidth, 
           ((blockCol == numBlocksWidth - 1 && totalWidth % blockSize != 0) ? totalWidth % blockSize : blockSize);
       std::string fileName = std::string(matrixDir + "/" + std::to_string(blockRow) + "_" + std::to_string(blockCol));
       std::cout << "Writing " << fileName << " - blockRow: " << blockRow << " blockCol: " << blockCol << ": "
-          << matrixHeight << "x" << matrixWidth;
+                << matrixHeight << "x" << matrixWidth;
       std::cout.flush();
 
       std::ofstream ofs(fileName, std::ios::binary);
@@ -165,22 +165,22 @@ int generateMatrixBlockFiles(std::string path, MatrixType type, int totalWidth, 
 }
 
 double *readMatrix(std::string path,
-                  MatrixType type,
-                  int totalWidth,
-                  int totalHeight,
-                  int blockSize,
-                  int blockRow,
-                  int blockCol,
-                  std::string suffix) {
+                   MatrixType type,
+                   int totalWidth,
+                   int totalHeight,
+                   int blockSize,
+                   int blockRow,
+                   int blockCol,
+                   std::string suffix) {
   std::string directory = generateDirectoryName(path,
                                                 totalWidth,
                                                 totalHeight,
-                                                blockSize); 
+                                                blockSize);
   std::string fileName = generateFilename(directory,
                                           type,
                                           blockRow,
                                           blockCol,
-                                          suffix); 
+                                          suffix);
 
   int numBlocksWidth = totalWidth / blockSize;
   int numBlocksHeight = totalHeight / blockSize;
@@ -200,9 +200,8 @@ double *readMatrix(std::string path,
   double *matrix = allocMatrix(matrixWidth, matrixHeight);
 
   std::ifstream ifs(fileName, std::ios::binary);
-  if (!ifs.good())
-  {
-      std::cout << "Error reading file " << strerror(errno) << ": " << fileName << std::endl;
+  if (!ifs.good()) {
+    std::cout << "Error reading file " << strerror(errno) << ": " << fileName << std::endl;
   }
   ifs.read((char *) matrix, matrixWidth * matrixHeight * sizeof(double));
   ifs.close();
@@ -221,13 +220,13 @@ size_t readMatrix(std::string path,
   std::string directory = generateDirectoryName(path,
                                                 totalWidth,
                                                 totalHeight,
-                                                blockSize); 
-  
+                                                blockSize);
+
   std::string fileName = generateFilename(directory,
                                           type,
                                           blockRow,
                                           blockCol,
-                                          suffix); 
+                                          suffix);
   int numBlocksWidth = totalWidth / blockSize;
   int numBlocksHeight = totalHeight / blockSize;
 
@@ -244,12 +243,11 @@ size_t readMatrix(std::string path,
       ((blockRow == numBlocksHeight - 1 && totalHeight % blockSize != 0) ? totalHeight % blockSize : blockSize);
 
   std::ifstream ifs(fileName, std::ios::binary);
-  if (!ifs.good())
-  {
-      std::cout << "Error reading file " << strerror(errno) << ": " << fileName << std::endl;
+  if (!ifs.good()) {
+    std::cout << "Error reading file " << strerror(errno) << ": " << fileName << std::endl;
   }
 
-  size_t numElems = matrixWidth *matrixHeight;
+  size_t numElems = matrixWidth * matrixHeight;
   ifs.read((char *) matrix, numElems * sizeof(double));
   ifs.close();
 
@@ -270,8 +268,7 @@ bool checkMatrixFiles(std::string path, MatrixType type, int totalWidth, int tot
     return false;
   }
 
-  if (!has_file(fileName))
-  {
+  if (!has_file(fileName)) {
     std::cout << "Unable to find file: " << fileName << std::endl;
     return false;
   }
@@ -327,9 +324,13 @@ bool checkMatrixBlockFiles(std::string path, MatrixType type, int totalWidth, in
   return true;
 }
 
-
-void checkAndValidateMatrixBlockFiles(std::string directory, int widthA, int heightA, int widthB, int heightB, int blockSize, bool columnStore)
-{
+void checkAndValidateMatrixBlockFiles(std::string directory,
+                                      int widthA,
+                                      int heightA,
+                                      int widthB,
+                                      int heightB,
+                                      int blockSize,
+                                      bool columnStore) {
   if (!has_dir(directory))
     create_dir(directory);
 
@@ -348,9 +349,7 @@ void checkAndValidateMatrixBlockFiles(std::string directory, int widthA, int hei
   }
 }
 
-
-void checkAndValidateMatrixFiles(std::string directory, int widthA, int heightA, int widthB, int heightB)
-{
+void checkAndValidateMatrixFiles(std::string directory, int widthA, int heightA, int widthB, int heightB) {
   if (!has_dir(directory))
     create_dir(directory);
 

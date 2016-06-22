@@ -6,17 +6,17 @@
 #
 
 FIND_PATH(HTGS_INCLUDE_DIR htgs/api/TaskGraph.hpp
-	/usr/include
-	/usr/local/include
-)
+        /usr/include
+        /usr/local/include
+        )
 
 SET(HTGS_FOUND ON)
 
 #    Check include files
-IF(NOT HTGS_INCLUDE_DIR)
+IF (NOT HTGS_INCLUDE_DIR)
     SET(HTGS_FOUND OFF)
     MESSAGE(STATUS "Could not find HTGS includes. Turning HTGS_FOUND off")
-ENDIF()
+ENDIF ()
 
 IF (HTGS_FOUND)
     IF (NOT HTGS_FIND_QUIETLY)

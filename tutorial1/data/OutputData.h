@@ -7,10 +7,9 @@
 
 #include <htgs/api/IData.hpp>
 
-class OutputData : public htgs::IData
-{
-public:
-  OutputData(int result) : IData(result),  result(result) {}
+class OutputData : public htgs::IData {
+ public:
+  OutputData(int result) : IData(result), result(result) {}
 
   int getResult() const { return result; }
 

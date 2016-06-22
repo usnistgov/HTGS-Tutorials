@@ -9,7 +9,7 @@
 #include "../data/MatrixBlockMulData.h"
 #include "../../../tutorial-utils/enums/MatrixType.h"
 
-enum class MatrixState{
+enum class MatrixState {
   NONE,
   IN_FLIGHT
 };
@@ -18,10 +18,11 @@ class MatrixLoadRule : public htgs::IRule<MatrixBlockData<double *>, MatrixBlock
 
  public:
   MatrixLoadRule(int blockWidthA, int blockHeightA, int blockWidthB, int blockHeightB) :
-      blockHeightA(blockHeightA), blockWidthA(blockWidthA), blockHeightB(blockHeightB), blockWidthB(blockWidthB)
-  {
+      blockHeightA(blockHeightA), blockWidthA(blockWidthA), blockHeightB(blockHeightB), blockWidthB(blockWidthB) {
     for (int i = 0; i < blockWidthA; i++)
-      this->matrixCState.push_back(this->allocStateContainer<MatrixState>(blockHeightA, blockWidthB, MatrixState::NONE));
+      this->matrixCState.push_back(this->allocStateContainer<MatrixState>(blockHeightA,
+                                                                          blockWidthB,
+                                                                          MatrixState::NONE));
 
     this->matrixAState = this->allocStateContainer(blockHeightA, blockWidthA);
     this->matrixBState = this->allocStateContainer(blockHeightB, blockWidthB);
@@ -31,8 +32,7 @@ class MatrixLoadRule : public htgs::IRule<MatrixBlockData<double *>, MatrixBlock
     delete matrixAState;
     delete matrixBState;
 
-    for (auto state : this->matrixCState)
-    {
+    for (auto state : this->matrixCState) {
       delete state;
     }
   }
@@ -41,7 +41,7 @@ class MatrixLoadRule : public htgs::IRule<MatrixBlockData<double *>, MatrixBlock
     return false;
   }
 
-  void shutdownRule(int pipelineId) { }
+  void shutdownRule(int pipelineId) {}
 
   void applyRule(std::shared_ptr<MatrixBlockData<double *>> data, int pipelineId) {
     std::shared_ptr<MatrixRequestData> request = data->getRequest();
@@ -80,10 +80,8 @@ class MatrixLoadRule : public htgs::IRule<MatrixBlockData<double *>, MatrixBlock
 
         colA = rowB;
 
-        for (rowA = 0; rowA < blockHeightA; rowA++)
-        {
-          if (this->matrixAState->has(rowA, colA))
-          {
+        for (rowA = 0; rowA < blockHeightA; rowA++) {
+          if (this->matrixAState->has(rowA, colA)) {
             auto container = matrixCState[colA];
 
             if (!container->has(rowA, colB)) {
@@ -117,18 +115,13 @@ class MatrixLoadRule : public htgs::IRule<MatrixBlockData<double *>, MatrixBlock
 //    }
   }
 
-  void printMatrixA()
-  {
-    for (int r = 0; r < blockHeightA; r++)
-    {
-      for (int c = 0; c < blockWidthA; c++)
-      {
-        if (matrixAState->has(r, c))
-        {
+  void printMatrixA() {
+    for (int r = 0; r < blockHeightA; r++) {
+      for (int c = 0; c < blockWidthA; c++) {
+        if (matrixAState->has(r, c)) {
           std::cout << "1";
         }
-        else
-        {
+        else {
           std::cout << "0";
         }
 
@@ -138,18 +131,13 @@ class MatrixLoadRule : public htgs::IRule<MatrixBlockData<double *>, MatrixBlock
 
   }
 
-  void printMatrixB()
-  {
-    for (int r = 0; r < blockHeightB; r++)
-    {
-      for (int c = 0; c < blockWidthB; c++)
-      {
-        if (matrixBState->has(r, c))
-        {
+  void printMatrixB() {
+    for (int r = 0; r < blockHeightB; r++) {
+      for (int c = 0; c < blockWidthB; c++) {
+        if (matrixBState->has(r, c)) {
           std::cout << "1";
         }
-        else
-        {
+        else {
           std::cout << "0";
         }
 
@@ -158,18 +146,13 @@ class MatrixLoadRule : public htgs::IRule<MatrixBlockData<double *>, MatrixBlock
     }
   }
 
-  void printMatrixC(int index)
-  {
-    for (int r = 0; r < blockHeightB; r++)
-    {
-      for (int c = 0; c < blockWidthA; c++)
-      {
-        if (matrixCState[index]->has(r, c))
-        {
+  void printMatrixC(int index) {
+    for (int r = 0; r < blockHeightB; r++) {
+      for (int c = 0; c < blockWidthA; c++) {
+        if (matrixCState[index]->has(r, c)) {
           std::cout << "1";
         }
-        else
-        {
+        else {
           std::cout << "0";
         }
 

@@ -11,37 +11,37 @@
 
 class MatrixLoopRule : public htgs::IRule<MatrixBlockData<MatrixMemoryData_t>, MatrixRequestData> {
 
-public:
-    MatrixLoopRule(int loopIterations) {
-        this->loopIterations = loopIterations;
-        firstRun = false;
+ public:
+  MatrixLoopRule(int loopIterations) {
+    this->loopIterations = loopIterations;
+    firstRun = false;
+  }
+
+  ~MatrixLoopRule() {
+  }
+
+  bool isRuleTerminated(int pipelineId) {
+    return loopIterations == 0 && firstRun;
+  }
+
+  void shutdownRule(int pipelineId) {
+  }
+
+  void applyRule(std::shared_ptr<MatrixBlockData<MatrixMemoryData_t>> data, int pipelineId) {
+    firstRun = true;
+
+    if (this->loopIterations > 0) {
+      addResult(data->getRequest());
+      this->loopIterations--;
     }
+  }
 
-    ~MatrixLoopRule() {
-    }
+  std::string getName() {
+    return "MatrixLoopRule";
+  }
 
-    bool isRuleTerminated(int pipelineId) {
-        return loopIterations == 0 && firstRun;
-    }
-
-    void shutdownRule(int pipelineId) {
-    }
-
-    void applyRule(std::shared_ptr<MatrixBlockData<MatrixMemoryData_t>> data, int pipelineId) {
-        firstRun = true;
-
-        if (this->loopIterations > 0) {
-            addResult(data->getRequest());
-            this->loopIterations--;
-        }
-    }
-
-    std::string getName() {
-        return "MatrixLoopRule";
-    }
-
-private:
-    int loopIterations;
+ private:
+  int loopIterations;
   bool firstRun;
 };
 

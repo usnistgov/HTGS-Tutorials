@@ -12,42 +12,41 @@
 #include "../data/MatrixBlockData.h"
 
 class MatrixOutputRule : public htgs::IRule<MatrixBlockData<double *>, MatrixBlockData<double *> > {
-public:
-    MatrixOutputRule(int blockWidth, int blockHeight, int blockWidthMatrixA) {
-      matrixCountContainer = this->allocStateContainer<int>(blockHeight, blockWidth, 0);
-      numBlocks = 2 * blockWidthMatrixA - 1;
+ public:
+  MatrixOutputRule(int blockWidth, int blockHeight, int blockWidthMatrixA) {
+    matrixCountContainer = this->allocStateContainer<int>(blockHeight, blockWidth, 0);
+    numBlocks = 2 * blockWidthMatrixA - 1;
+  }
+
+  ~MatrixOutputRule() {
+    free(matrixCountContainer);
+  }
+
+  bool isRuleTerminated(int pipelineId) {
+    return false;
+  }
+
+  void shutdownRule(int pipelineId) {}
+
+  void applyRule(std::shared_ptr<MatrixBlockData<double *>> data, int pipelineId) {
+    auto request = data->getRequest();
+
+    int row = request->getRow();
+    int col = request->getCol();
+
+    int count = matrixCountContainer->get(row, col);
+    count++;
+    matrixCountContainer->set(row, col, count);
+    if (count == numBlocks) {
+      addResult(data);
     }
+  }
 
-    ~MatrixOutputRule() {
-      free(matrixCountContainer);
-    }
+  std::string getName() {
+    return "MatrixOutputRule";
+  }
 
-    bool isRuleTerminated(int pipelineId) {
-        return false;
-    }
-
-    void shutdownRule(int pipelineId) { }
-
-    void applyRule(std::shared_ptr<MatrixBlockData<double *>> data, int pipelineId) {
-      auto request = data->getRequest();
-
-      int row = request->getRow();
-      int col = request->getCol();
-
-      int count = matrixCountContainer->get(row, col);
-      count++;
-      matrixCountContainer->set(row, col, count);
-      if (count == numBlocks)
-      {
-        addResult(data);
-      }
-    }
-
-    std::string getName() {
-        return "MatrixOutputRule";
-    }
-
-private:
+ private:
   htgs::StateContainer<int> *matrixCountContainer;
   int numBlocks;
 };

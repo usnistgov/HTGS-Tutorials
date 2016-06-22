@@ -11,11 +11,9 @@
 #include <cuda_runtime_api.h>
 
 #define gpuErrorChk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
-inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=true)
-{
-  if (code != cudaSuccess)
-  {
-    fprintf(stderr,"GPUassert: %s %s %d\n", cudaGetErrorString(code), file, line);
+inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort = true) {
+  if (code != cudaSuccess) {
+    fprintf(stderr, "GPUassert: %s %s %d\n", cudaGetErrorString(code), file, line);
     if (abort) exit(code);
   }
 }
@@ -23,37 +21,30 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=t
 #include "data/MatrixRequestData.h"
 #include "data/MatrixBlockData.h"
 #include "tasks/ReadMatrixTask.h"
-#include "memory/MatrixAllocator.h"
 #include "rules/MatrixLoadRule.h"
 #include "tasks/MatrixMulBlkTask.h"
 #include "tasks/MatrixAccumTask.h"
 #include "tasks/OutputTask.h"
 #include "rules/MatrixAccumulateRule.h"
 #include "rules/MatrixDistributeRule.h"
-#include "rules/MatrixLoopRule.h"
 #include "rules/MatrixOutputRule.h"
 #include "../../tutorial-utils/SimpleClock.h"
-#include "../../tutorial-utils/util-filesystem.h"
-#include "../../tutorial-utils/util-matrix.h"
 
 #include "tasks/MatrixCopyInTask.h"
 #include "tasks/MatrixCopyOutTask.h"
 #include "memory/CudaMatrixAllocator.h"
 #include "../../tutorial-utils/util-cuda.h"
 
-int validateResults(double *matrixC, double *matrixC_HTGS, int fullMatrixAHeight, int fullMatrixBWidth)
-{
+int validateResults(double *matrixC, double *matrixC_HTGS, int fullMatrixAHeight, int fullMatrixBWidth) {
   int count = 0;
 
-  for (int r = 0; r < fullMatrixAHeight; r++)
-  {
-    for (int c = 0; c < fullMatrixBWidth; c++)
-    {
+  for (int r = 0; r < fullMatrixAHeight; r++) {
+    for (int c = 0; c < fullMatrixBWidth; c++) {
 //      if (matrixC[r*fullMatrixBWidth+c] != matrixC_HTGS[IDX2C(r, c, fullMatrixAHeight)])
-      if (matrixC[IDX2C(r, c, fullMatrixAHeight)] != matrixC_HTGS[IDX2C(r, c, fullMatrixAHeight)])
-      {
+      if (matrixC[IDX2C(r, c, fullMatrixAHeight)] != matrixC_HTGS[IDX2C(r, c, fullMatrixAHeight)]) {
         if (count <= 20) {
-          std::cout << std::fixed << r*fullMatrixBWidth+c << ": cMem = " << matrixC[r*fullMatrixBWidth+c] << " cMemPar = " << matrixC_HTGS[IDX2C(r, c, fullMatrixAHeight)] << std::endl;
+          std::cout << std::fixed << r * fullMatrixBWidth + c << ": cMem = " << matrixC[r * fullMatrixBWidth + c]
+                    << " cMemPar = " << matrixC_HTGS[IDX2C(r, c, fullMatrixAHeight)] << std::endl;
         }
         count++;
       }
@@ -71,20 +62,26 @@ int validateResults(double *matrixC, double *matrixC_HTGS, int fullMatrixAHeight
 //  }
 
   if (count > 0)
-    std::cout << "Total incorrect = " << count <<std::endl;
+    std::cout << "Total incorrect = " << count << std::endl;
 
   if (count > 0)
     return 1;
   return 0;
 }
 
-void computeSequentialMatMul(double *matrixA, double *matrixB, double *matrixC, size_t fullMatrixAHeight, size_t fullMatrixAWidth, size_t fullMatrixBWidth, int blockDim) {
+void computeSequentialMatMul(double *matrixA,
+                             double *matrixB,
+                             double *matrixC,
+                             size_t fullMatrixAHeight,
+                             size_t fullMatrixAWidth,
+                             size_t fullMatrixBWidth,
+                             int blockDim) {
 
   cublasXtHandle_t handle;
 
   cublasXtCreate(&handle);
 
-  int *devices = new int[1] {2};
+  int *devices = new int[1]{2};
 
   cublasXtDeviceSelect(handle, 1, devices);
   cublasXtSetBlockDim(handle, blockDim);
@@ -105,9 +102,7 @@ void computeSequentialMatMul(double *matrixA, double *matrixB, double *matrixC, 
   cublasXtDestroy(handle);
 }
 
-
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
   long matrixAHeight = 1024;
   long matrixBWidth = 1024;
   long sharedDim = 1024;
@@ -123,26 +118,21 @@ int main(int argc, char *argv[])
 
   int numRetry = 1;
 
-  if (argc > 1)
-  {
-    for (int arg = 1; arg < argc; arg++)
-    {
+  if (argc > 1) {
+    for (int arg = 1; arg < argc; arg++) {
       std::string argvs(argv[arg]);
 
-      if (argvs == "--width-b")
-      {
+      if (argvs == "--width-b") {
         arg++;
-        matrixBWidth= atoi(argv[arg]);
+        matrixBWidth = atoi(argv[arg]);
       }
 
-      if (argvs == "--height-a")
-      {
+      if (argvs == "--height-a") {
         arg++;
         matrixAHeight = atoi(argv[arg]);
       }
 
-      if (argvs == "--shared-dim")
-      {
+      if (argvs == "--shared-dim") {
         arg++;
         sharedDim = atoi(argv[arg]);
       }
@@ -151,33 +141,28 @@ int main(int argc, char *argv[])
         runSequential = true;
       }
 
-      if (argvs == "--num-retry" && arg+1 < argc)
-      {
+      if (argvs == "--num-retry" && arg + 1 < argc) {
         arg++;
         numRetry = atoi(argv[arg]);
       }
 
-      if (argvs == "--block-size")
-      {
+      if (argvs == "--block-size") {
         arg++;
         blockSize = atoi(argv[arg]);
       }
 
-      if (argvs == "--num-threads-htgs" && arg+1 < argc)
-      {
-        numProdThreads = atoi(argv[arg+1]);
+      if (argvs == "--num-threads-htgs" && arg + 1 < argc) {
+        numProdThreads = atoi(argv[arg + 1]);
         arg++;
       }
 
-      if (argvs == "--num-threads-blas" && arg+1 < argc)
-      {
-        numBlasThreads = atoi(argv[arg+1]);
+      if (argvs == "--num-threads-blas" && arg + 1 < argc) {
+        numBlasThreads = atoi(argv[arg + 1]);
         arg++;
       }
 
-      if (argvs == "--runtime-file" && arg+1 < argc)
-      {
-        runtimeFileStr = argv[arg+1];
+      if (argvs == "--runtime-file" && arg + 1 < argc) {
+        runtimeFileStr = argv[arg + 1];
         arg++;
       }
 
@@ -185,20 +170,20 @@ int main(int argc, char *argv[])
 //        validate = true;
 //      }
 
-      if (argvs == "--help")
-      {
-        std::cout << argv[0] << " args: [--width-b <#>] [--height-a <#>] [--shared-dim <#>] [--block-size <#>] [--num-retry <#>] [--num-threads-htgs <#>] [--num-threads-blas <#>] [--runtime-file <filename>] [--dir <dir>] [--output-dir <dir>] [--validate-results] [--run-sequential] [--help]" << std::endl;
+      if (argvs == "--help") {
+        std::cout << argv[0]
+                  << " args: [--width-b <#>] [--height-a <#>] [--shared-dim <#>] [--block-size <#>] [--num-retry <#>] [--num-threads-htgs <#>] [--num-threads-blas <#>] [--runtime-file <filename>] [--dir <dir>] [--output-dir <dir>] [--validate-results] [--run-sequential] [--help]"
+                  << std::endl;
         exit(0);
       }
     }
   }
 
-
   std::ofstream runtimeFile(runtimeFileStr, std::ios::app);
 
-  double *matrixA = new double[matrixAHeight*sharedDim];
-  double *matrixB = new double[matrixBWidth*sharedDim];
-  double *matrixC = new double[matrixAHeight*matrixBWidth];
+  double *matrixA = new double[matrixAHeight * sharedDim];
+  double *matrixB = new double[matrixBWidth * sharedDim];
+  double *matrixC = new double[matrixAHeight * matrixBWidth];
 //  double *matrixC_HTGS = new double[matrixAHeight*matrixBWidth];
 
   initMatrix(matrixA, sharedDim, matrixAHeight, true);
@@ -211,8 +196,8 @@ int main(int argc, char *argv[])
       openblas_set_num_threads(numBlasThreads);
 
       clk.start();
-      computeSequentialMatMul(matrixA, matrixB, matrixC, (size_t)matrixAHeight, (size_t)sharedDim,
-                              (size_t)matrixBWidth, blockSize);
+      computeSequentialMatMul(matrixA, matrixB, matrixC, (size_t) matrixAHeight, (size_t) sharedDim,
+                              (size_t) matrixBWidth, blockSize);
       clk.stopAndIncrement();
     }
 
@@ -220,10 +205,10 @@ int main(int argc, char *argv[])
       openblas_set_num_threads(1);
 
       // Initialize GPUs
-      int *cudaIds = new int [2] {2, 1};
+      int *cudaIds = new int[2]{2, 1};
       int numGpus = 1;
 
-      CUcontext * contexts = initCuda(numGpus, cudaIds);
+      CUcontext *contexts = initCuda(numGpus, cudaIds);
 
       ReadMatrixTask
           *readAMatTask = new ReadMatrixTask(numReadThreads, MatrixType::MatrixA, blockSize,
@@ -240,15 +225,23 @@ int main(int argc, char *argv[])
       int blkHeightMatA = readAMatTask->getNumBlocksRows();
       int blkWidthMatA = readAMatTask->getNumBlocksCols();
 
-      MatrixCopyInTask * copyInA = new MatrixCopyInTask("MatrixA", blockSize, blkWidthMatB, contexts, cudaIds, numGpus, matrixAHeight);
-      MatrixCopyInTask * copyInB = new MatrixCopyInTask("MatrixB", blockSize, blkHeightMatA, contexts, cudaIds, numGpus, sharedDim);
+      MatrixCopyInTask *copyInA =
+          new MatrixCopyInTask("MatrixA", blockSize, blkWidthMatB, contexts, cudaIds, numGpus, matrixAHeight);
+      MatrixCopyInTask
+          *copyInB = new MatrixCopyInTask("MatrixB", blockSize, blkHeightMatA, contexts, cudaIds, numGpus, sharedDim);
 
       MatrixCopyOutTask *copyOutC = new MatrixCopyOutTask("MatrixC", blockSize, contexts, cudaIds, numGpus);
 
-      MatrixMulBlkTask *mmulTask = new MatrixMulBlkTask(contexts, cudaIds, numGpus, sharedDim, matrixAHeight, matrixBWidth, sharedDim, blockSize);
+      MatrixMulBlkTask *mmulTask = new MatrixMulBlkTask(contexts,
+                                                        cudaIds,
+                                                        numGpus,
+                                                        sharedDim,
+                                                        matrixAHeight,
+                                                        matrixBWidth,
+                                                        sharedDim,
+                                                        blockSize);
 
       MatrixAccumTask *accumTask = new MatrixAccumTask((int) ceil((double) numProdThreads / 2.0));
-
 
       MatrixDistributeRule *distributeRuleMatA = new MatrixDistributeRule(MatrixType::MatrixA);
       MatrixDistributeRule *distributeRuleMatB = new MatrixDistributeRule(MatrixType::MatrixB);
@@ -261,7 +254,6 @@ int main(int argc, char *argv[])
       auto distributeBk = new htgs::Bookkeeper<MatrixRequestData>();
       auto matMulBk = new htgs::Bookkeeper<MatrixBlockData<MatrixMemoryData_t>>();
       auto matAccumBk = new htgs::Bookkeeper<MatrixBlockData<double *>>();
-
 
       auto taskGraph = new htgs::TaskGraph<MatrixRequestData, MatrixRequestData>();
 
@@ -289,16 +281,15 @@ int main(int argc, char *argv[])
                                           copyInA,
                                           mmulTask,
                                           new CudaMatrixAllocator(blockSize, blockSize),
-                                          blkWidthMatB+1,
+                                          blkWidthMatB + 1,
                                           htgs::MMType::Static,
                                           contexts);
-
 
       taskGraph->addCudaMemoryManagerEdge("MatrixBCopy",
                                           copyInB,
                                           mmulTask,
                                           new CudaMatrixAllocator(blockSize, blockSize),
-                                          blkHeightMatA+1,
+                                          blkHeightMatA + 1,
                                           htgs::MMType::Static,
                                           contexts);
 
@@ -312,7 +303,6 @@ int main(int argc, char *argv[])
 
       taskGraph->writeDotToFile("cuda-graph.dot");
 
-
       taskGraph->incrementGraphInputProducer();
 
       htgs::Runtime *runtime = new htgs::Runtime(taskGraph);
@@ -324,18 +314,14 @@ int main(int argc, char *argv[])
       for (int col = 0; col < blkWidthMatA; col++) {
         for (int row = 0; row < blkHeightMatA; row++) {
 
-
           MatrixRequestData *matA = new MatrixRequestData(row, col, MatrixType::MatrixA);
           taskGraph->produceData(matA);
 
         }
       }
 
-
-      for (int row = 0; row < blkHeightMatB; row++)
-      {
-        for (int col = 0; col < blkWidthMatB; col++)
-        {
+      for (int row = 0; row < blkHeightMatB; row++) {
+        for (int col = 0; col < blkWidthMatB; col++) {
 
           MatrixRequestData *matB = new MatrixRequestData(row, col, MatrixType::MatrixB);
           taskGraph->produceData(matB);
@@ -370,15 +356,16 @@ int main(int argc, char *argv[])
               << ", " << ", blockSize: " << blockSize << ", time:" << clk.getAverageTime(TimeVal::MILLI)
               << std::endl;
 
-    runtimeFile << (runSequential ? "sequential" : "htgs") << ", " << (runSequential ? numBlasThreads : numProdThreads) << ", "
+    runtimeFile << (runSequential ? "sequential" : "htgs") << ", " << (runSequential ? numBlasThreads : numProdThreads)
+                << ", "
                 << matrixBWidth << ", " << matrixAHeight
                 << ", " << sharedDim << ", " << blockSize << ", " << clk.getAverageTime(TimeVal::MILLI)
                 << std::endl;
 
   }
 
-  delete [] matrixA;
-  delete [] matrixB;
-  delete [] matrixC;
+  delete[] matrixA;
+  delete[] matrixB;
+  delete[] matrixC;
 
 }

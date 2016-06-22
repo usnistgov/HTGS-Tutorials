@@ -8,7 +8,7 @@
 #include "../data/MatrixBlockData.h"
 #include "../data/MatrixBlockMulData.h"
 
-class MatrixLoadRule: public htgs::IRule<MatrixBlockData<double *>, MatrixBlockMulData> {
+class MatrixLoadRule : public htgs::IRule<MatrixBlockData<double *>, MatrixBlockMulData> {
 
  public:
   MatrixLoadRule(int blockWidth, int blockHeight) {
@@ -31,7 +31,7 @@ class MatrixLoadRule: public htgs::IRule<MatrixBlockData<double *>, MatrixBlockM
     return false;
   }
 
-  void shutdownRule(int pipelineId) { }
+  void shutdownRule(int pipelineId) {}
 
   void applyRule(std::shared_ptr<MatrixBlockData<double *>> data, int pipelineId) {
     std::shared_ptr<MatrixRequestData> request = data->getRequest();
@@ -62,7 +62,8 @@ class MatrixLoadRule: public htgs::IRule<MatrixBlockData<double *>, MatrixBlockM
 
  private:
   std::shared_ptr<MatrixBlockData<double *>> **allocateDataGrid() {
-    std::shared_ptr<MatrixBlockData<double *>> **dataGrid = new std::shared_ptr<MatrixBlockData<double *>> *[blockHeight];
+    std::shared_ptr<MatrixBlockData<double *>>
+        **dataGrid = new std::shared_ptr<MatrixBlockData<double *>> *[blockHeight];
     for (int r = 0; r < blockHeight; r++) {
       dataGrid[r] = new std::shared_ptr<MatrixBlockData<double *>>[blockWidth];
     }

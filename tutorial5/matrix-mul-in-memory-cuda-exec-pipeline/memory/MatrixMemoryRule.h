@@ -6,7 +6,7 @@
 #define HTGS_MATRIXMEMORYRULE_H
 #include <htgs/api/IMemoryReleaseRule.hpp>
 
-class MatrixMemoryRule: public htgs::IMemoryReleaseRule {
+class MatrixMemoryRule : public htgs::IMemoryReleaseRule {
  public:
 
   MatrixMemoryRule(int releaseCount) : releaseCount(releaseCount) {

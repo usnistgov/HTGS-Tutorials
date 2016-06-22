@@ -8,16 +8,14 @@
 #ifndef HTGS_READMATRIXTASK_H
 #define HTGS_READMATRIXTASK_H
 
-class GenMatrixTask : public htgs::ITask<MatrixRequestData, MatrixBlockData<double *>>
-{
+class GenMatrixTask : public htgs::ITask<MatrixRequestData, MatrixBlockData<double *>> {
 
  public:
 
   GenMatrixTask(int numThreads, int blockSize, int fullMatrixWidth, int fullMatrixHeight) :
-      ITask(numThreads), blockSize(blockSize), fullMatrixHeight(fullMatrixHeight), fullMatrixWidth(fullMatrixWidth)
-  {
-    numBlocksRows = (int)ceil((double)fullMatrixHeight / (double)blockSize);
-    numBlocksCols = (int)ceil((double)fullMatrixWidth / (double)blockSize);
+      ITask(numThreads), blockSize(blockSize), fullMatrixHeight(fullMatrixHeight), fullMatrixWidth(fullMatrixWidth) {
+    numBlocksRows = (int) ceil((double) fullMatrixHeight / (double) blockSize);
+    numBlocksCols = (int) ceil((double) fullMatrixWidth / (double) blockSize);
   }
 
   virtual ~GenMatrixTask() {
@@ -27,7 +25,7 @@ class GenMatrixTask : public htgs::ITask<MatrixRequestData, MatrixBlockData<doub
                           int numPipeline) {
 
   }
-  virtual void shutdown() { }
+  virtual void shutdown() {}
 
   virtual void executeTask(std::shared_ptr<MatrixRequestData> data) {
     int row = data->getRow();
@@ -36,24 +34,22 @@ class GenMatrixTask : public htgs::ITask<MatrixRequestData, MatrixBlockData<doub
     int matrixWidth;
     int matrixHeight;
 
-    if (col == numBlocksCols-1 && fullMatrixWidth % blockSize != 0)
+    if (col == numBlocksCols - 1 && fullMatrixWidth % blockSize != 0)
       matrixWidth = fullMatrixWidth % blockSize;
     else
       matrixWidth = blockSize;
 
-
-    if (row == numBlocksRows-1 && fullMatrixHeight % blockSize != 0)
+    if (row == numBlocksRows - 1 && fullMatrixHeight % blockSize != 0)
       matrixHeight = fullMatrixHeight % blockSize;
     else
       matrixHeight = blockSize;
 
     // Allocate matrix Memory
-    double *matrixData = new double[matrixHeight*matrixWidth];
+    double *matrixData = new double[matrixHeight * matrixWidth];
 
     // Initialize with a simple value
-    for (int i = 0; i < matrixWidth*matrixHeight; i++)
+    for (int i = 0; i < matrixWidth * matrixHeight; i++)
       matrixData[i] = 2.0;
-
 
     addResult(new MatrixBlockData<double *>(data, matrixData, matrixWidth, matrixHeight));
 

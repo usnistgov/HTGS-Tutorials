@@ -9,17 +9,15 @@
 
 typedef std::shared_ptr<htgs::MemoryData<double *>> MatrixMemoryData_t;
 
-template <class T>
-class MatrixBlockData : public htgs::IData
-{
+template<class T>
+class MatrixBlockData : public htgs::IData {
  public:
-
 
   MatrixBlockData(std::shared_ptr<MatrixRequestData> request,
                   T matrixData,
                   long matrixWidth,
                   long matrixHeight) :
-  request(request), matrixData(matrixData), matrixWidth(matrixWidth), matrixHeight(matrixHeight) { }
+      request(request), matrixData(matrixData), matrixWidth(matrixWidth), matrixHeight(matrixHeight) {}
 
   std::shared_ptr<MatrixRequestData> getRequest() const {
     return request;

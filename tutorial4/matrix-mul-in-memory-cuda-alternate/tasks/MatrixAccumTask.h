@@ -11,8 +11,7 @@
 #include "../../../tutorial-utils/util-matrix.h"
 #include <htgs/api/ITask.hpp>
 
-class MatrixAccumTask : public htgs::ITask<MatrixBlockMulData<double *>, MatrixBlockData<double *>>
-{
+class MatrixAccumTask : public htgs::ITask<MatrixBlockMulData<double *>, MatrixBlockData<double *>> {
 
  public:
   MatrixAccumTask(int numThreads);

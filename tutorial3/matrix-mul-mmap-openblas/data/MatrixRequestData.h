@@ -10,7 +10,7 @@
 
 class MatrixRequestData : public htgs::IData {
  public:
-  MatrixRequestData(int row, int col, MatrixType type) : row(row), col(col), type(type) { }
+  MatrixRequestData(int row, int col, MatrixType type) : row(row), col(col), type(type) {}
 
   int getRow() const {
     return row;

@@ -11,21 +11,21 @@ template<class T>
 class MatrixBlockMulData : public htgs::IData {
  public:
 
-    MatrixBlockMulData(const std::shared_ptr<MatrixBlockData<T>> &matrixA,
-                       const std::shared_ptr<MatrixBlockData<T>> &matrixB) :
-  matrixA(matrixA), matrixB(matrixB) { }
+  MatrixBlockMulData(const std::shared_ptr<MatrixBlockData<T>> &matrixA,
+                     const std::shared_ptr<MatrixBlockData<T>> &matrixB) :
+      matrixA(matrixA), matrixB(matrixB) {}
 
-    const std::shared_ptr<MatrixBlockData<T>> &getMatrixA() const {
+  const std::shared_ptr<MatrixBlockData<T>> &getMatrixA() const {
     return matrixA;
   }
 
-    const std::shared_ptr<MatrixBlockData<T>> &getMatrixB() const {
+  const std::shared_ptr<MatrixBlockData<T>> &getMatrixB() const {
     return matrixB;
   }
 
  private:
-    std::shared_ptr<MatrixBlockData<T>> matrixA;
-    std::shared_ptr<MatrixBlockData<T>> matrixB;
+  std::shared_ptr<MatrixBlockData<T>> matrixA;
+  std::shared_ptr<MatrixBlockData<T>> matrixB;
 };
 
 #endif //HTGS_MATRIXBLOCKMULDATA_H

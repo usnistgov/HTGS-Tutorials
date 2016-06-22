@@ -3,14 +3,12 @@
 //
 
 #include "util-cuda.h"
-CUcontext *initCuda(int nGPUs, int *gpuIDs)
-{
+CUcontext *initCuda(int nGPUs, int *gpuIDs) {
   cuInit(0);
 
-  CUcontext * contexts = (CUcontext *)malloc(nGPUs * sizeof(CUcontext));
+  CUcontext *contexts = (CUcontext *) malloc(nGPUs * sizeof(CUcontext));
 
-  for (int i = 0; i < nGPUs; i++)
-  {
+  for (int i = 0; i < nGPUs; i++) {
     CUdevice device;
     cuDeviceGet(&device, gpuIDs[i]);
 

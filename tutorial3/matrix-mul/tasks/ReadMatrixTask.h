@@ -8,19 +8,27 @@
 #include <cmath>
 #include "../memory/MatrixMemoryRule.h"
 
-class ReadMatrixTask : public htgs::ITask<MatrixRequestData, MatrixBlockData<MatrixMemoryData_t>>
-{
+class ReadMatrixTask : public htgs::ITask<MatrixRequestData, MatrixBlockData<MatrixMemoryData_t>> {
 
  public:
 
-  ReadMatrixTask(int numThreads, int blockSize, int fullMatrixWidth, int fullMatrixHeight, std::string directory, std::string matrixName) :
-      ITask(numThreads), blockSize(blockSize), fullMatrixHeight(fullMatrixHeight), fullMatrixWidth(fullMatrixWidth), directory(directory), matrixName(matrixName)
-  {
-    numBlocksRows = (int)ceil((double)fullMatrixHeight / (double)blockSize);
-    numBlocksCols = (int)ceil((double)fullMatrixWidth / (double)blockSize);
+  ReadMatrixTask(int numThreads,
+                 int blockSize,
+                 int fullMatrixWidth,
+                 int fullMatrixHeight,
+                 std::string directory,
+                 std::string matrixName) :
+      ITask(numThreads),
+      blockSize(blockSize),
+      fullMatrixHeight(fullMatrixHeight),
+      fullMatrixWidth(fullMatrixWidth),
+      directory(directory),
+      matrixName(matrixName) {
+    numBlocksRows = (int) ceil((double) fullMatrixHeight / (double) blockSize);
+    numBlocksCols = (int) ceil((double) fullMatrixWidth / (double) blockSize);
   }
 
-  virtual ~ReadMatrixTask() { }
+  virtual ~ReadMatrixTask() {}
   virtual void initialize(int pipelineId,
                           int numPipeline) {
 
@@ -34,8 +42,7 @@ class ReadMatrixTask : public htgs::ITask<MatrixRequestData, MatrixBlockData<Mat
     int numBlocksC;
     matrixName = matrixTypeToString(data->getType());
 
-    switch (data->getType())
-    {
+    switch (data->getType()) {
       case MatrixType::MatrixA:
         numBlocksC = numBlocksCols;
         break;
@@ -53,13 +60,12 @@ class ReadMatrixTask : public htgs::ITask<MatrixRequestData, MatrixBlockData<Mat
     int matrixWidth;
     int matrixHeight;
 
-    if (col == numBlocksCols-1 && fullMatrixWidth % blockSize != 0)
+    if (col == numBlocksCols - 1 && fullMatrixWidth % blockSize != 0)
       matrixWidth = fullMatrixWidth % blockSize;
     else
       matrixWidth = blockSize;
 
-
-    if (row == numBlocksRows-1 && fullMatrixHeight % blockSize != 0)
+    if (row == numBlocksRows - 1 && fullMatrixHeight % blockSize != 0)
       matrixHeight = fullMatrixHeight % blockSize;
     else
       matrixHeight = blockSize;
@@ -71,7 +77,7 @@ class ReadMatrixTask : public htgs::ITask<MatrixRequestData, MatrixBlockData<Mat
     // Read data
     std::ifstream file(fileName, std::ios::binary);
 
-    file.read((char *)matrixData->get(), sizeof(double) * matrixWidth * matrixHeight);
+    file.read((char *) matrixData->get(), sizeof(double) * matrixWidth * matrixHeight);
 
     addResult(new MatrixBlockData<MatrixMemoryData_t>(data, matrixData, matrixWidth, matrixHeight));
 
@@ -80,7 +86,12 @@ class ReadMatrixTask : public htgs::ITask<MatrixRequestData, MatrixBlockData<Mat
     return "ReadMatrixTask(" + matrixName + ")";
   }
   virtual htgs::ITask<MatrixRequestData, MatrixBlockData<MatrixMemoryData_t>> *copy() {
-    return new ReadMatrixTask(this->getNumThreads(), blockSize, fullMatrixWidth, fullMatrixHeight, directory, matrixName);
+    return new ReadMatrixTask(this->getNumThreads(),
+                              blockSize,
+                              fullMatrixWidth,
+                              fullMatrixHeight,
+                              directory,
+                              matrixName);
   }
   virtual bool isTerminated(std::shared_ptr<htgs::BaseConnector> inputConnector) {
     return inputConnector->isInputTerminated();

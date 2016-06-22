@@ -5,12 +5,11 @@
 #include <string>
 #include "MatrixType.h"
 
-std::string matrixTypeToString(MatrixType type)
-{
-  switch(type)
-  {
+std::string matrixTypeToString(MatrixType type) {
+  switch (type) {
     case MatrixType::MatrixA: return "MatrixA";
     case MatrixType::MatrixB: return "MatrixB";
     case MatrixType::MatrixC: return "MatrixC";
   }
+  return "";
 }

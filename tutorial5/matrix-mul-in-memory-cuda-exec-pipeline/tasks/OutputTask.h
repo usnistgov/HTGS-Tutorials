@@ -10,8 +10,8 @@ class OutputTask : public htgs::ITask<MatrixBlockData<double *>, MatrixRequestDa
 
   OutputTask(double *matrix, long fullMatrixWidth, long fullMatrixHeight, int blockSize) :
       matrix(matrix), fullMatrixWidth(fullMatrixWidth), fullMatrixHeight(fullMatrixHeight), blockSize(blockSize) {
-    numBlocksRows = (int)ceil((double)fullMatrixHeight / (double)blockSize);
-    numBlocksCols = (int)ceil((double)fullMatrixWidth / (double)blockSize);
+    numBlocksRows = (int) ceil((double) fullMatrixHeight / (double) blockSize);
+    numBlocksCols = (int) ceil((double) fullMatrixWidth / (double) blockSize);
   }
   virtual ~OutputTask() {
   }
@@ -25,21 +25,19 @@ class OutputTask : public htgs::ITask<MatrixBlockData<double *>, MatrixRequestDa
     int col = data->getRequest()->getCol();
     int row = data->getRequest()->getRow();
 
-    double *startLocation = &this->matrix[IDX2C(blockSize*row, blockSize*col, fullMatrixHeight)];
+    double *startLocation = &this->matrix[IDX2C(blockSize * row, blockSize * col, fullMatrixHeight)];
 
     long dataWidth = data->getMatrixWidth();
     long dataHeight = data->getMatrixHeight();
     double *matrixData = data->getMatrixData();
 
-    for (long c = 0; c < dataWidth; c++)
-    {
-      for (long r = 0; r < dataHeight; r++)
-      {
+    for (long c = 0; c < dataWidth; c++) {
+      for (long r = 0; r < dataHeight; r++) {
         startLocation[IDX2C(r, c, fullMatrixHeight)] = matrixData[IDX2C(r, c, dataHeight)];
       }
     }
 
-    delete [] matrixData;
+    delete[] matrixData;
     matrixData = nullptr;
 
     addResult(data->getRequest());
@@ -53,7 +51,6 @@ class OutputTask : public htgs::ITask<MatrixBlockData<double *>, MatrixRequestDa
   virtual bool isTerminated(std::shared_ptr<htgs::BaseConnector> inputConnector) {
     return inputConnector->isInputTerminated();
   }
-
 
  private:
 

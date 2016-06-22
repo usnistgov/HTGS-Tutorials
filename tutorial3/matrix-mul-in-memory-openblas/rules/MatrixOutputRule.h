@@ -12,49 +12,46 @@
 #include "../data/MatrixBlockData.h"
 
 class MatrixOutputRule : public htgs::IRule<MatrixBlockData<double *>, MatrixBlockData<double *> > {
-public:
-    MatrixOutputRule(int blockWidth, int blockHeight, int blockWidthMatrixA) {
-      matrixCountContainer = this->allocStateContainer<int>(blockHeight, blockWidth, 0);
-      numBlocks = blockWidthMatrixA + blockWidthMatrixA - 1;
-    }
+ public:
+  MatrixOutputRule(int blockWidth, int blockHeight, int blockWidthMatrixA) {
+    matrixCountContainer = this->allocStateContainer<int>(blockHeight, blockWidth, 0);
+    numBlocks = blockWidthMatrixA + blockWidthMatrixA - 1;
+  }
 
-    ~MatrixOutputRule() {
-      delete matrixCountContainer;
-    }
+  ~MatrixOutputRule() {
+    delete matrixCountContainer;
+  }
 
-    bool isRuleTerminated(int pipelineId) {
-        return false;
-    }
+  bool isRuleTerminated(int pipelineId) {
+    return false;
+  }
 
-    void shutdownRule(int pipelineId) { }
+  void shutdownRule(int pipelineId) {}
 
-    void applyRule(std::shared_ptr<MatrixBlockData<double *>> data, int pipelineId) {
-      auto request = data->getRequest();
+  void applyRule(std::shared_ptr<MatrixBlockData<double *>> data, int pipelineId) {
+    auto request = data->getRequest();
 
-      int row = request->getRow();
-      int col = request->getCol();
+    int row = request->getRow();
+    int col = request->getCol();
 
-
-      int count = matrixCountContainer->get(row, col);
-      count++;
+    int count = matrixCountContainer->get(row, col);
+    count++;
 //      std::cout << this->getName() << "Received " << row << ", " << col  << " -- " << count << " of " << numBlocks << std::endl;
-      matrixCountContainer->set(row, col, count);
-      if (count == numBlocks)
-      {
+    matrixCountContainer->set(row, col, count);
+    if (count == numBlocks) {
 //        std::cout << this->getName() << " sending " << row << ", " << col << " -- " << count << " of " << numBlocks << std::endl;
-        addResult(data);
-      }
-      else if (count > numBlocks)
-      {
-        std::cout << "Additional vals received" << std::endl;
-      }
+      addResult(data);
     }
-
-    std::string getName() {
-        return "MatrixOutputRule";
+    else if (count > numBlocks) {
+      std::cout << "Additional vals received" << std::endl;
     }
+  }
 
-private:
+  std::string getName() {
+    return "MatrixOutputRule";
+  }
+
+ private:
   htgs::StateContainer<int> *matrixCountContainer;
   int numBlocks;
 };

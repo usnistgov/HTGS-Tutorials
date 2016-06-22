@@ -11,8 +11,7 @@
 #include "tasks/HadamardProductTask.h"
 #include "../../tutorial-utils/SimpleClock.h"
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
 
   int width = 4096;
   int height = 4096;
@@ -22,49 +21,44 @@ int main(int argc, char *argv[])
 
   int numRetry = 5;
 
-  for (int arg = 1; arg < argc; arg++)
-  {
+  for (int arg = 1; arg < argc; arg++) {
     std::string argvs(argv[arg]);
 
-    if (argvs == "--width")
-    {
+    if (argvs == "--width") {
       arg++;
       width = atoi(argv[arg]);
     }
 
-    if (argvs == "--height")
-    {
+    if (argvs == "--height") {
       arg++;
       height = atoi(argv[arg]);
     }
 
-    if (argvs == "--block-size")
-    {
+    if (argvs == "--block-size") {
       arg++;
       blockSize = atoi(argv[arg]);
     }
 
-    if (argvs == "--num-readers")
-    {
+    if (argvs == "--num-readers") {
       arg++;
       numReadThreads = atoi(argv[arg]);
     }
 
-    if (argvs == "--num-workers")
-    {
+    if (argvs == "--num-workers") {
       arg++;
       numProdThreads = atoi(argv[arg]);
     }
 
-    if (argvs == "--help")
-    {
-      std::cout << argv[0] << " help: [--width <#>] [--height <#>] [--block-size <#>] [--num-readers <#>] [--num-workers <#>] [--help]" << std::endl;
+    if (argvs == "--help") {
+      std::cout << argv[0]
+                << " help: [--width <#>] [--height <#>] [--block-size <#>] [--num-readers <#>] [--num-workers <#>] [--help]"
+                << std::endl;
       exit(0);
     }
   }
   SimpleClock clk;
 
-  for (int i =0; i < numRetry; i++) {
+  for (int i = 0; i < numRetry; i++) {
     GenMatrixTask *genMatTask = new GenMatrixTask(numReadThreads, blockSize, width, height);
     MatrixMulBlkTask *prodTask = new MatrixMulBlkTask(numProdThreads);
 
@@ -118,10 +112,9 @@ int main(int argc, char *argv[])
     clk.stopAndIncrement();
     delete runtime;
   }
-  std::cout << "width: " << width << ", height: " << height << ", blocksize: " << blockSize << ", average time: " << clk.getAverageTime(TimeVal::MILLI) << " ms" << std::endl;
+  std::cout << "width: " << width << ", height: " << height << ", blocksize: " << blockSize << ", average time: "
+            << clk.getAverageTime(TimeVal::MILLI) << " ms" << std::endl;
 
   std::cout.flush();
-
-
 
 }

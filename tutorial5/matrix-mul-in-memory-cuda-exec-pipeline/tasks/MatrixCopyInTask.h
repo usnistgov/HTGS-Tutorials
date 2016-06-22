@@ -9,14 +9,15 @@
 #include "../data/MatrixBlockData.h"
 #include <cuda.h>
 
-
 class MatrixCopyInTask : public htgs::ICudaTask<MatrixBlockData<double *>, MatrixBlockData<MatrixMemoryData_t>> {
  public:
   MatrixCopyInTask(std::string name, int blockSize, int releaseCount,
                    CUcontext *contexts, int *cudaIds, int numGpus, long leadingDimensionFullMatrix) :
       ICudaTask(contexts, cudaIds, numGpus),
-      name(name), releaseCount(releaseCount), blockSize(blockSize), leadingDimensionFullMatrix(leadingDimensionFullMatrix)
-  {}
+      name(name),
+      releaseCount(releaseCount),
+      blockSize(blockSize),
+      leadingDimensionFullMatrix(leadingDimensionFullMatrix) {}
 
   virtual void
   initializeCudaGPU(CUcontext context, CUstream stream, int cudaId, int numGPUs, int pipelineId, int numPipelines) {
@@ -31,25 +32,33 @@ class MatrixCopyInTask : public htgs::ICudaTask<MatrixBlockData<double *>, Matri
     // Cuda Memory
     auto memoryOut = this->memGet<double *>(matrixName + "Copy", new MatrixMemoryRule(releaseCount));
 
-    cublasSetMatrixAsync((int)data->getMatrixHeight(), (int)data->getMatrixWidth(), sizeof(double),
-                         memoryIn, (int)leadingDimensionFullMatrix,
-                         memoryOut->get(), (int)data->getMatrixHeight(), stream);
-
+    cublasSetMatrixAsync((int) data->getMatrixHeight(), (int) data->getMatrixWidth(), sizeof(double),
+                         memoryIn, (int) leadingDimensionFullMatrix,
+                         memoryOut->get(), (int) data->getMatrixHeight(), stream);
 
     this->syncStream();
 
-    this->addResult(new MatrixBlockData<MatrixMemoryData_t>(data->getRequest(), memoryOut, data->getMatrixWidth(), data->getMatrixHeight()));
+    this->addResult(new MatrixBlockData<MatrixMemoryData_t>(data->getRequest(),
+                                                            memoryOut,
+                                                            data->getMatrixWidth(),
+                                                            data->getMatrixHeight()));
   }
 
   virtual void shutdownCuda() {
   }
 
   virtual std::string getName() {
-    return "CudaCopyInTask(" + name +")";
+    return "CudaCopyInTask(" + name + ")";
   }
 
   virtual MatrixCopyInTask *copy() {
-    return new MatrixCopyInTask(this->name, this->blockSize, this->releaseCount, this->getContexts(), this->getCudaIds(), this->getNumGPUs(), this->leadingDimensionFullMatrix);
+    return new MatrixCopyInTask(this->name,
+                                this->blockSize,
+                                this->releaseCount,
+                                this->getContexts(),
+                                this->getCudaIds(),
+                                this->getNumGPUs(),
+                                this->leadingDimensionFullMatrix);
   }
 
  private:

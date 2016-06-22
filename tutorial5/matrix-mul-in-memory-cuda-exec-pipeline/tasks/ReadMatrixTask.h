@@ -9,17 +9,26 @@
 #include "../memory/MatrixMemoryRule.h"
 #include "../../../tutorial-utils/util-matrix.h"
 
-class ReadMatrixTask : public htgs::ITask<MatrixRequestData, MatrixBlockData<double *>>
-{
+class ReadMatrixTask : public htgs::ITask<MatrixRequestData, MatrixBlockData<double *>> {
 
  public:
 
-  ReadMatrixTask(int numThreads, MatrixType type, int blockSize, long fullMatrixWidth, long fullMatrixHeight, double *matrix, std::string matrixName) :
-      ITask(numThreads), blockSize(blockSize), fullMatrixHeight(fullMatrixHeight), fullMatrixWidth(fullMatrixWidth), matrix(matrix), matrixName(matrixName)
-  {
+  ReadMatrixTask(int numThreads,
+                 MatrixType type,
+                 int blockSize,
+                 long fullMatrixWidth,
+                 long fullMatrixHeight,
+                 double *matrix,
+                 std::string matrixName) :
+      ITask(numThreads),
+      blockSize(blockSize),
+      fullMatrixHeight(fullMatrixHeight),
+      fullMatrixWidth(fullMatrixWidth),
+      matrix(matrix),
+      matrixName(matrixName) {
     this->type = type;
-    numBlocksRows = (int)ceil((double)fullMatrixHeight / (double)blockSize);
-    numBlocksCols = (int)ceil((double)fullMatrixWidth / (double)blockSize);
+    numBlocksRows = (int) ceil((double) fullMatrixHeight / (double) blockSize);
+    numBlocksCols = (int) ceil((double) fullMatrixWidth / (double) blockSize);
   }
 
   virtual ~ReadMatrixTask() {
@@ -38,19 +47,18 @@ class ReadMatrixTask : public htgs::ITask<MatrixRequestData, MatrixBlockData<dou
     long matrixWidth;
     long matrixHeight;
 
-    if (col == numBlocksCols-1 && fullMatrixWidth % blockSize != 0)
+    if (col == numBlocksCols - 1 && fullMatrixWidth % blockSize != 0)
       matrixWidth = fullMatrixWidth % blockSize;
     else
       matrixWidth = blockSize;
 
-
-    if (row == numBlocksRows-1 && fullMatrixHeight % blockSize != 0)
+    if (row == numBlocksRows - 1 && fullMatrixHeight % blockSize != 0)
       matrixHeight = fullMatrixHeight % blockSize;
     else
       matrixHeight = blockSize;
 
     // compute starting location of pointer
-    double *memPtr = &matrix[IDX2C(blockSize*row, blockSize*col, fullMatrixHeight)];
+    double *memPtr = &matrix[IDX2C(blockSize * row, blockSize * col, fullMatrixHeight)];
 
     addResult(new MatrixBlockData<double *>(data, memPtr, matrixWidth, matrixHeight));
 
@@ -59,7 +67,13 @@ class ReadMatrixTask : public htgs::ITask<MatrixRequestData, MatrixBlockData<dou
     return "ReadMatrixTask(" + matrixName + ")";
   }
   virtual ReadMatrixTask *copy() {
-    return new ReadMatrixTask(this->getNumThreads(), this->type, blockSize, fullMatrixWidth, fullMatrixHeight, matrix, matrixName);
+    return new ReadMatrixTask(this->getNumThreads(),
+                              this->type,
+                              blockSize,
+                              fullMatrixWidth,
+                              fullMatrixHeight,
+                              matrix,
+                              matrixName);
   }
   virtual bool isTerminated(std::shared_ptr<htgs::BaseConnector> inputConnector) {
     return inputConnector->isInputTerminated();
@@ -80,7 +94,6 @@ class ReadMatrixTask : public htgs::ITask<MatrixRequestData, MatrixBlockData<dou
   int numBlocksRows;
   int numBlocksCols;
   std::string matrixName;
-
 
 };
 

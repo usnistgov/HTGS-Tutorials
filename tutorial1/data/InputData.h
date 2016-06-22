@@ -7,8 +7,7 @@
 
 #include <htgs/api/IData.hpp>
 
-class InputData : public htgs::IData
-{
+class InputData : public htgs::IData {
  public:
   InputData(int x, int y) : x(x), y(y) {}
 

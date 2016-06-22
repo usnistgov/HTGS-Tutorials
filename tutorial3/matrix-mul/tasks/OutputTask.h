@@ -21,10 +21,11 @@ class OutputTask : public htgs::ITask<MatrixBlockData<double *>, MatrixRequestDa
   virtual void shutdown() {
   }
   virtual void executeTask(std::shared_ptr<MatrixBlockData<double *>> data) {
-    std::string fileName(directory + "/" + std::to_string(data->getRequest()->getRow()) + "_" + std::to_string(data->getRequest()->getCol()));
+    std::string fileName(directory + "/" + std::to_string(data->getRequest()->getRow()) + "_"
+                             + std::to_string(data->getRequest()->getCol()));
 
     std::ofstream out(fileName, std::ios::binary);
-    out.write((char *)data->getMatrixData(), sizeof(double) * data->getMatrixWidth() * data->getMatrixHeight());
+    out.write((char *) data->getMatrixData(), sizeof(double) * data->getMatrixWidth() * data->getMatrixHeight());
 
     addResult(data->getRequest());
   }
@@ -37,7 +38,6 @@ class OutputTask : public htgs::ITask<MatrixBlockData<double *>, MatrixRequestDa
   virtual bool isTerminated(std::shared_ptr<htgs::BaseConnector> inputConnector) {
     return inputConnector->isInputTerminated();
   }
-
 
  private:
 

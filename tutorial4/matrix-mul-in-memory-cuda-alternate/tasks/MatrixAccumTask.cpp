@@ -5,7 +5,6 @@
 
 #include "MatrixAccumTask.h"
 
-
 MatrixAccumTask::MatrixAccumTask(int numThreads) : ITask(numThreads) {}
 
 MatrixAccumTask::~MatrixAccumTask() {}
@@ -26,10 +25,8 @@ void MatrixAccumTask::executeTask(std::shared_ptr<MatrixBlockMulData<double *>> 
 //    double *result = new double[width*height];
 
 
-  for (long j = 0; j < width; j++)
-  {
-    for (long i = 0; i < height; i++)
-    {
+  for (long j = 0; j < width; j++) {
+    for (long i = 0; i < height; i++) {
 //        matrixA.get()[i*width+j] += matrixB.get()[i*width+j];
 //        result.get()[i*width+j] = matrixA.get()[i*width+j] + matrixB.get()[i*width+j];
       matrixA[IDX2C(i, j, height)] = matrixA[IDX2C(i, j, height)] + matrixB[IDX2C(i, j, height)];
@@ -39,7 +36,7 @@ void MatrixAccumTask::executeTask(std::shared_ptr<MatrixBlockMulData<double *>> 
 
 //    delete [] matrixA;
 //    matrixA = nullptr;
-  delete [] matrixB;
+  delete[] matrixB;
   matrixB = nullptr;
 
 //    releasePointers.push_back(matrixB);

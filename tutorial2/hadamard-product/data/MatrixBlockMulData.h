@@ -10,8 +10,9 @@
 class MatrixBlockMulData : public htgs::IData {
  public:
 
-  MatrixBlockMulData(const std::shared_ptr<MatrixBlockData<MatrixMemoryData_t>> &matrixA, const std::shared_ptr<MatrixBlockData<MatrixMemoryData_t>> &matrixB) :
-  matrixA(matrixA), matrixB(matrixB) { }
+  MatrixBlockMulData(const std::shared_ptr<MatrixBlockData<MatrixMemoryData_t>> &matrixA,
+                     const std::shared_ptr<MatrixBlockData<MatrixMemoryData_t>> &matrixB) :
+      matrixA(matrixA), matrixB(matrixB) {}
 
   const std::shared_ptr<MatrixBlockData<MatrixMemoryData_t>> &getMatrixA() const {
     return matrixA;

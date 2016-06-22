@@ -8,7 +8,7 @@
 
 class MatrixAllocator : public htgs::IMemoryAllocator<double *> {
  public:
-  MatrixAllocator(long width, long height) : IMemoryAllocator((size_t) width * height) { }
+  MatrixAllocator(long width, long height) : IMemoryAllocator((size_t) width * height) {}
 
   double *memAlloc(size_t size) {
     double *mem = new double[size];

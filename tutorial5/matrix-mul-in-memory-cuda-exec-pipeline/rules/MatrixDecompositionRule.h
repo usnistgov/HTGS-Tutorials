@@ -7,8 +7,7 @@
 
 class MatrixDecompositionRule : public htgs::IRule<MatrixRequestData, MatrixRequestData> {
  public:
-  MatrixDecompositionRule(int numGpus) : numGpus(numGpus)
-  { }
+  MatrixDecompositionRule(int numGpus) : numGpus(numGpus) {}
 
   virtual void applyRule(std::shared_ptr<MatrixRequestData> data, int pipelineId) {
 
@@ -16,8 +15,7 @@ class MatrixDecompositionRule : public htgs::IRule<MatrixRequestData, MatrixRequ
     int row = data->getRow();
     int col = data->getCol();
     int gpuId;
-    switch (type)
-    {
+    switch (type) {
       case MatrixType::MatrixA:
         // One column per GPU
         gpuId = col % numGpus;

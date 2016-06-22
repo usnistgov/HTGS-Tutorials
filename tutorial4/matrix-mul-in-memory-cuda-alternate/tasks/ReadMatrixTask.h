@@ -11,12 +11,17 @@
 #include "../data/MatrixRequestData.h"
 #include "../data/MatrixBlockData.h"
 
-class ReadMatrixTask : public htgs::ITask<MatrixRequestData, MatrixBlockData<double *>>
-{
+class ReadMatrixTask : public htgs::ITask<MatrixRequestData, MatrixBlockData<double *>> {
 
  public:
 
-  ReadMatrixTask(int numThreads, MatrixType type, int blockSize, long fullMatrixWidth, long fullMatrixHeight, double *matrix, std::string matrixName);
+  ReadMatrixTask(int numThreads,
+                 MatrixType type,
+                 int blockSize,
+                 long fullMatrixWidth,
+                 long fullMatrixHeight,
+                 double *matrix,
+                 std::string matrixName);
 
   virtual void executeTask(std::shared_ptr<MatrixRequestData> data);
 
@@ -24,7 +29,13 @@ class ReadMatrixTask : public htgs::ITask<MatrixRequestData, MatrixBlockData<dou
     return "ReadMatrixTask(" + matrixName + ")";
   }
   virtual ReadMatrixTask *copy() {
-    return new ReadMatrixTask(this->getNumThreads(), this->type, blockSize, fullMatrixWidth, fullMatrixHeight, matrix, matrixName);
+    return new ReadMatrixTask(this->getNumThreads(),
+                              this->type,
+                              blockSize,
+                              fullMatrixWidth,
+                              fullMatrixHeight,
+                              matrix,
+                              matrixName);
   }
 
   int getNumBlocksRows() const {
@@ -42,7 +53,6 @@ class ReadMatrixTask : public htgs::ITask<MatrixRequestData, MatrixBlockData<dou
   int numBlocksRows;
   int numBlocksCols;
   std::string matrixName;
-
 
 };
 

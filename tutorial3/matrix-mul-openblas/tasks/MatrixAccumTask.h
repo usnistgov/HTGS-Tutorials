@@ -10,8 +10,7 @@
 #include "../data/MatrixBlockData.h"
 #include <htgs/api/ITask.hpp>
 
-class MatrixAccumTask : public htgs::ITask<MatrixBlockMulData<double *>, MatrixBlockData<double *>>
-{
+class MatrixAccumTask : public htgs::ITask<MatrixBlockMulData<double *>, MatrixBlockData<double *>> {
 
  public:
   MatrixAccumTask(int numThreads) : ITask(numThreads) {}
@@ -37,15 +36,13 @@ class MatrixAccumTask : public htgs::ITask<MatrixBlockMulData<double *>, MatrixB
     int width = matAData->getMatrixWidth();
     int height = matAData->getMatrixHeight();
 
-    for (int i = 0; i < height; i++)
-    {
-      for (int j = 0; j < width; j++)
-      {
-        matrixA[i*width+j] += matrixB[i*width+j];
+    for (int i = 0; i < height; i++) {
+      for (int j = 0; j < width; j++) {
+        matrixA[i * width + j] += matrixB[i * width + j];
       }
     }
 
-    delete [] matrixB;
+    delete[] matrixB;
 
 //    auto matRequest = matAData->getRequest();
 //    std::shared_ptr<MatrixRequestData> matReq(new MatrixRequestData(matRequest->getRow(), matRequest->getCol(), MatrixType::MatrixC));

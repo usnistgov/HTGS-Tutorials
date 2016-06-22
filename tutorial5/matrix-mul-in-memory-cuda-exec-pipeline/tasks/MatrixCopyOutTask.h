@@ -9,12 +9,15 @@
 #include "../data/MatrixBlockData.h"
 #include <cuda.h>
 
-
 class MatrixCopyOutTask : public htgs::ICudaTask<MatrixBlockData<MatrixMemoryData_t>, MatrixBlockData<double *>> {
  public:
-  MatrixCopyOutTask(std::string name, int blockSize, CUcontext *contexts, int *cudaIds, int numGpus) : ICudaTask(contexts, cudaIds, numGpus),
-                                                                                                         name(name), blockSize(blockSize)
-  {}
+  MatrixCopyOutTask(std::string name, int blockSize, CUcontext *contexts, int *cudaIds, int numGpus) : ICudaTask(
+      contexts,
+      cudaIds,
+      numGpus),
+                                                                                                       name(name),
+                                                                                                       blockSize(
+                                                                                                           blockSize) {}
 
   virtual void
   initializeCudaGPU(CUcontext context, CUstream stream, int cudaId, int numGPUs, int pipelineId, int numPipelines) {
@@ -26,17 +29,20 @@ class MatrixCopyOutTask : public htgs::ICudaTask<MatrixBlockData<MatrixMemoryDat
     auto memoryIn = data->getMatrixData();
 
     // CPU Memory
-    double *memoryOut = new double[data->getMatrixHeight()*data->getMatrixWidth()];
+    double *memoryOut = new double[data->getMatrixHeight() * data->getMatrixWidth()];
 
-    cublasGetMatrixAsync((int)data->getMatrixHeight(), (int)data->getMatrixWidth(), sizeof(double),
-                         memoryIn->get(), (int)data->getMatrixHeight(),
-                         memoryOut, (int)data->getMatrixHeight(), stream);
+    cublasGetMatrixAsync((int) data->getMatrixHeight(), (int) data->getMatrixWidth(), sizeof(double),
+                         memoryIn->get(), (int) data->getMatrixHeight(),
+                         memoryOut, (int) data->getMatrixHeight(), stream);
 
     this->syncStream();
 
     this->memRelease(name, memoryIn);
 
-    this->addResult(new MatrixBlockData<double *>(data->getRequest(), memoryOut, data->getMatrixWidth(), data->getMatrixHeight()));
+    this->addResult(new MatrixBlockData<double *>(data->getRequest(),
+                                                  memoryOut,
+                                                  data->getMatrixWidth(),
+                                                  data->getMatrixHeight()));
   }
 
   virtual void shutdownCuda() {
@@ -44,7 +50,7 @@ class MatrixCopyOutTask : public htgs::ICudaTask<MatrixBlockData<MatrixMemoryDat
   }
 
   virtual std::string getName() {
-    return "CudaCopyOutTask(" + name +")";
+    return "CudaCopyOutTask(" + name + ")";
   }
 
   virtual htgs::ITask<MatrixBlockData<MatrixMemoryData_t>, MatrixBlockData<double *>> *copy() {

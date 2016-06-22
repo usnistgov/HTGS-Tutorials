@@ -10,8 +10,7 @@
 #include "../data/MatrixBlockData.h"
 #include <htgs/api/ITask.hpp>
 
-class MatrixMulBlkTask : public htgs::ITask<MatrixBlockMulData, MatrixBlockData<double *>>
-{
+class MatrixMulBlkTask : public htgs::ITask<MatrixBlockMulData, MatrixBlockData<double *>> {
 
  public:
   MatrixMulBlkTask(int numThreads) : ITask(numThreads) {}
@@ -39,23 +38,21 @@ class MatrixMulBlkTask : public htgs::ITask<MatrixBlockMulData, MatrixBlockData<
 
     this->allocUserManagedMemory("outputMem");
 
-    double *result = new double[width*height];
+    double *result = new double[width * height];
 
-    for (int i = 0; i < matAData->getMatrixWidth() * matAData->getMatrixHeight(); i++)
-    {
+    for (int i = 0; i < matAData->getMatrixWidth() * matAData->getMatrixHeight(); i++) {
       result[i] = matrixA->get()[i] * matrixB->get()[i];
     }
 
     auto matRequest = matAData->getRequest();
 
-    std::shared_ptr<MatrixRequestData> matReq(new MatrixRequestData(matRequest->getRow(), matRequest->getCol(), MatrixType::MatrixC));
+    std::shared_ptr<MatrixRequestData>
+        matReq(new MatrixRequestData(matRequest->getRow(), matRequest->getCol(), MatrixType::MatrixC));
 
     addResult(new MatrixBlockData<double *>(matReq, result, width, height));
 
     this->memRelease("matrixA", matrixA);
     this->memRelease("matrixB", matrixB);
-
-
 
   }
   virtual std::string getName() {

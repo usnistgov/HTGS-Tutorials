@@ -10,33 +10,33 @@
 
 class MatrixDistributeRule : public htgs::IRule<MatrixRequestData, MatrixRequestData> {
 
-public:
-    MatrixDistributeRule(MatrixType type) {
-        this->type = type;
-    }
+ public:
+  MatrixDistributeRule(MatrixType type) {
+    this->type = type;
+  }
 
-    ~MatrixDistributeRule() {
-    }
+  ~MatrixDistributeRule() {
+  }
 
-    bool isRuleTerminated(int pipelineId) {
-        return false;
-    }
+  bool isRuleTerminated(int pipelineId) {
+    return false;
+  }
 
-    void shutdownRule(int pipelineId) {
-    }
+  void shutdownRule(int pipelineId) {
+  }
 
-    void applyRule(std::shared_ptr<MatrixRequestData> data, int pipelineId) {
-        if (data->getType() == this->type) {
-            addResult(data);
-        }
+  void applyRule(std::shared_ptr<MatrixRequestData> data, int pipelineId) {
+    if (data->getType() == this->type) {
+      addResult(data);
     }
+  }
 
-    std::string getName() {
-        return "MatrixDistributeRule";
-    }
+  std::string getName() {
+    return "MatrixDistributeRule";
+  }
 
-private:
-    MatrixType type;
+ private:
+  MatrixType type;
 };
 
 #endif //HTGS_MATRIXDISTRIBUTERULE_H

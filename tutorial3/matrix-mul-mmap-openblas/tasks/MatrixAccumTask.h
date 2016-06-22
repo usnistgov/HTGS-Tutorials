@@ -10,13 +10,12 @@
 #include "../data/MatrixBlockData.h"
 #include <htgs/api/ITask.hpp>
 
-class MatrixAccumTask : public htgs::ITask<MatrixBlockMulData<double *>, MatrixBlockData<double *>>
-{
+class MatrixAccumTask : public htgs::ITask<MatrixBlockMulData<double *>, MatrixBlockData<double *>> {
 
  public:
   MatrixAccumTask(int numThreads) : ITask(numThreads) {}
 
-  virtual ~MatrixAccumTask() {  }
+  virtual ~MatrixAccumTask() {}
 
   virtual void initialize(int pipelineId,
                           int numPipeline) {
@@ -40,20 +39,18 @@ class MatrixAccumTask : public htgs::ITask<MatrixBlockMulData<double *>, MatrixB
 
 //    double *result = new double[width*height];
 
-    for (int i = 0; i < height; i++)
-    {
-      for (int j = 0; j < width; j++)
-      {
+    for (int i = 0; i < height; i++) {
+      for (int j = 0; j < width; j++) {
 //        matrixA.get()[i*width+j] += matrixB.get()[i*width+j];
 //        result.get()[i*width+j] = matrixA.get()[i*width+j] + matrixB.get()[i*width+j];
-        matrixA[i*width+j] = matrixA[i*width+j] + matrixB[i*width+j];
+        matrixA[i * width + j] = matrixA[i * width + j] + matrixB[i * width + j];
 //        result[i*width+j] = matrixA[i*width+j] + matrixB[i*width+j];
       }
     }
 
 //    delete [] matrixA;
 //    matrixA = nullptr;
-    delete [] matrixB;
+    delete[] matrixB;
     matrixB = nullptr;
 
 //    releasePointers.push_back(matrixB);

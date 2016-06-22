@@ -9,7 +9,6 @@
 #include "../data/MatrixBlockData.h"
 #include <cuda.h>
 
-
 class MatrixCopyOutTask : public htgs::ICudaTask<MatrixBlockData<MatrixMemoryData_t>, MatrixBlockData<double *>> {
  public:
   MatrixCopyOutTask(std::string name, int blockSize, CUcontext *contexts, int *cudaIds, int numGpus);
@@ -21,7 +20,7 @@ class MatrixCopyOutTask : public htgs::ICudaTask<MatrixBlockData<MatrixMemoryDat
   }
 
   virtual std::string getName() {
-    return "CudaCopyOutTask(" + name +")";
+    return "CudaCopyOutTask(" + name + ")";
   }
 
   virtual htgs::ITask<MatrixBlockData<MatrixMemoryData_t>, MatrixBlockData<double *>> *copy() {

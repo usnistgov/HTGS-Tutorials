@@ -9,16 +9,16 @@
 #include "../data/MatrixBlockData.h"
 #include <cuda.h>
 
-
-class MatrixCopyInTask : public htgs::ICudaTask<MatrixBlockData<MatrixMemoryData_t>, MatrixBlockData<MatrixMemoryData_t>> {
+class MatrixCopyInTask : public htgs::ICudaTask<MatrixBlockData<MatrixMemoryData_t>,
+                                                MatrixBlockData<MatrixMemoryData_t>> {
  public:
-  MatrixCopyInTask(std::string name, int blockSize, int releaseCount, CUcontext *contexts, int *cudaIds, int numGpus) : ICudaTask(contexts, cudaIds, numGpus),
-                                                                                                         name(name), releaseCount(releaseCount), blockSize(blockSize)
-  {}
+  MatrixCopyInTask(std::string name, int blockSize, int releaseCount, CUcontext *contexts, int *cudaIds, int numGpus)
+      : ICudaTask(contexts, cudaIds, numGpus),
+        name(name), releaseCount(releaseCount), blockSize(blockSize) {}
 
   virtual void
   initializeCudaGPU(CUcontext context, CUstream stream, int cudaId, int numGPUs, int pipelineId, int numPipelines) {
-    cudaMallocHost((void **)&gpuMemPinned, sizeof(double)*blockSize*blockSize);
+    cudaMallocHost((void **) &gpuMemPinned, sizeof(double) * blockSize * blockSize);
   }
 
   virtual void executeGPUTask(std::shared_ptr<MatrixBlockData<MatrixMemoryData_t>> data, CUstream stream) {
@@ -30,14 +30,25 @@ class MatrixCopyInTask : public htgs::ICudaTask<MatrixBlockData<MatrixMemoryData
     // Cuda Memory
     auto memoryOut = this->memGet<double *>(matrixName + "Copy", new MatrixMemoryRule(releaseCount));
 
-    gpuErrorChk(cudaMemcpyAsync(gpuMemPinned, memoryIn->get(), sizeof(double) * data->getMatrixHeight()*data->getMatrixWidth(), cudaMemcpyHostToDevice, stream));
-    gpuErrorChk(cudaMemcpyAsync(memoryOut->get(), gpuMemPinned, sizeof(double) * data->getMatrixHeight()*data->getMatrixWidth(), cudaMemcpyDeviceToDevice, stream));
+    gpuErrorChk(cudaMemcpyAsync(gpuMemPinned,
+                                memoryIn->get(),
+                                sizeof(double) * data->getMatrixHeight() * data->getMatrixWidth(),
+                                cudaMemcpyHostToDevice,
+                                stream));
+    gpuErrorChk(cudaMemcpyAsync(memoryOut->get(),
+                                gpuMemPinned,
+                                sizeof(double) * data->getMatrixHeight() * data->getMatrixWidth(),
+                                cudaMemcpyDeviceToDevice,
+                                stream));
 
     this->syncStream();
 
     this->memRelease(matrixName, memoryIn);
 
-    this->addResult(new MatrixBlockData<MatrixMemoryData_t>(data->getRequest(), memoryOut, data->getMatrixWidth(), data->getMatrixHeight()));
+    this->addResult(new MatrixBlockData<MatrixMemoryData_t>(data->getRequest(),
+                                                            memoryOut,
+                                                            data->getMatrixWidth(),
+                                                            data->getMatrixHeight()));
   }
 
   virtual void shutdownCuda() {
@@ -45,11 +56,16 @@ class MatrixCopyInTask : public htgs::ICudaTask<MatrixBlockData<MatrixMemoryData
   }
 
   virtual std::string getName() {
-    return "CudaCopyInTask(" + name +")";
+    return "CudaCopyInTask(" + name + ")";
   }
 
   virtual htgs::ITask<MatrixBlockData<MatrixMemoryData_t>, MatrixBlockData<MatrixMemoryData_t>> *copy() {
-    return new MatrixCopyInTask(this->name, this->blockSize, this->releaseCount, this->getContexts(), this->getCudaIds(), this->getNumGPUs());
+    return new MatrixCopyInTask(this->name,
+                                this->blockSize,
+                                this->releaseCount,
+                                this->getContexts(),
+                                this->getCudaIds(),
+                                this->getNumGPUs());
   }
 
  private:

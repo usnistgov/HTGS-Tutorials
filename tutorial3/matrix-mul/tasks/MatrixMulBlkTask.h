@@ -10,8 +10,7 @@
 #include "../data/MatrixBlockData.h"
 #include <htgs/api/ITask.hpp>
 
-class MatrixMulBlkTask : public htgs::ITask<MatrixBlockMulData<MatrixMemoryData_t>, MatrixBlockData<double *>>
-{
+class MatrixMulBlkTask : public htgs::ITask<MatrixBlockMulData<MatrixMemoryData_t>, MatrixBlockData<double *>> {
 
  public:
   MatrixMulBlkTask(int numThreads) : ITask(numThreads) {}
@@ -26,7 +25,7 @@ class MatrixMulBlkTask : public htgs::ITask<MatrixBlockMulData<MatrixMemoryData_
   virtual void shutdown() {
   }
 
-    virtual void executeTask(std::shared_ptr<MatrixBlockMulData<MatrixMemoryData_t>> data) {
+  virtual void executeTask(std::shared_ptr<MatrixBlockMulData<MatrixMemoryData_t>> data) {
 
     auto matAData = data->getMatrixA();
     auto matBData = data->getMatrixB();
@@ -37,30 +36,30 @@ class MatrixMulBlkTask : public htgs::ITask<MatrixBlockMulData<MatrixMemoryData_
     int width = matBData->getMatrixWidth();
     int height = matAData->getMatrixHeight();
 
-    double *result = new double[width*height];
+    double *result = new double[width * height];
 
-    for (int aRow = 0; aRow < height; aRow++)
-    {
-      for (int bCol = 0; bCol < width; bCol++)
-      {
+    for (int aRow = 0; aRow < height; aRow++) {
+      for (int bCol = 0; bCol < width; bCol++) {
         double sum = 0.0;
-        for (int k = 0; k < matAData->getMatrixWidth(); k++)
-        {
-          sum += matrixA->get()[aRow * matAData->getMatrixWidth() + k] * matrixB->get()[k * matBData->getMatrixWidth() + bCol];
+        for (int k = 0; k < matAData->getMatrixWidth(); k++) {
+          sum += matrixA->get()[aRow * matAData->getMatrixWidth() + k]
+              * matrixB->get()[k * matBData->getMatrixWidth() + bCol];
         }
         result[aRow * width + bCol] = sum;
       }
     }
 
-    std::shared_ptr<MatrixRequestData> matReq(new MatrixRequestData(matAData->getRequest()->getRow(), matBData->getRequest()->getCol(), MatrixType::MatrixC));
-      std::cout << "Computing A(" << matAData->getRequest()->getRow() << ", " << matAData->getRequest()->getCol() <<
-          ") x B(" << matBData->getRequest()->getRow() << ", " << matBData->getRequest()->getCol() <<
-          ") = C(" << matReq->getRow() << ", "<< matReq->getCol() << ")" <<std::endl;
+    std::shared_ptr<MatrixRequestData> matReq(new MatrixRequestData(matAData->getRequest()->getRow(),
+                                                                    matBData->getRequest()->getCol(),
+                                                                    MatrixType::MatrixC));
+    std::cout << "Computing A(" << matAData->getRequest()->getRow() << ", " << matAData->getRequest()->getCol() <<
+              ") x B(" << matBData->getRequest()->getRow() << ", " << matBData->getRequest()->getCol() <<
+              ") = C(" << matReq->getRow() << ", " << matReq->getCol() << ")" << std::endl;
 
     addResult(new MatrixBlockData<double *>(matReq, result, width, height));
 
-      this->memRelease("MatrixA", matrixA);
-      this->memRelease("MatrixB", matrixB);
+    this->memRelease("MatrixA", matrixA);
+    this->memRelease("MatrixB", matrixB);
 
   }
   virtual std::string getName() {

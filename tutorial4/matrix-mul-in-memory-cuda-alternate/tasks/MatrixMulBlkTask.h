@@ -14,15 +14,19 @@
 #include <htgs/api/ICudaTask.hpp>
 #include <cublas_v2.h>
 
-class MatrixMulBlkTask : public htgs::ICudaTask<MatrixBlockMulData<MatrixMemoryData_t>, MatrixBlockData<MatrixMemoryData_t>>
-{
+class MatrixMulBlkTask : public htgs::ICudaTask<MatrixBlockMulData<MatrixMemoryData_t>,
+                                                MatrixBlockData<MatrixMemoryData_t>> {
 
  public:
   MatrixMulBlkTask(CUcontext *contexts, int *cudaIds, int numGpus, long fullMatrixWidthA, long fullMatrixHeightA,
                    long fullMatrixWidthB, long fullMatrixHeightB, int blockSize);
 
-
-  virtual void initializeCudaGPU(CUcontext context, CUstream stream, int cudaId, int numGPUs, int pipelineId, int numPipelines);
+  virtual void initializeCudaGPU(CUcontext context,
+                                 CUstream stream,
+                                 int cudaId,
+                                 int numGPUs,
+                                 int pipelineId,
+                                 int numPipelines);
   virtual void shutdownCuda();
 
   virtual void executeGPUTask(std::shared_ptr<MatrixBlockMulData<MatrixMemoryData_t>> data, CUstream stream);
@@ -31,7 +35,14 @@ class MatrixMulBlkTask : public htgs::ICudaTask<MatrixBlockMulData<MatrixMemoryD
     return "MatrixMulBlkTask";
   }
   virtual MatrixMulBlkTask *copy() {
-    return new MatrixMulBlkTask(this->getContexts(), this->getCudaIds(), this->getNumGPUs(), fullMatrixWidthA, fullMatrixHeightA, fullMatrixWidthB, fullMatrixHeightB, blockSize);
+    return new MatrixMulBlkTask(this->getContexts(),
+                                this->getCudaIds(),
+                                this->getNumGPUs(),
+                                fullMatrixWidthA,
+                                fullMatrixHeightA,
+                                fullMatrixWidthB,
+                                fullMatrixHeightB,
+                                blockSize);
   }
 
  private:

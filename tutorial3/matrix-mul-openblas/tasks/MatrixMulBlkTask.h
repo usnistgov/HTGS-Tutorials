@@ -10,8 +10,7 @@
 #include "../data/MatrixBlockData.h"
 #include <htgs/api/ITask.hpp>
 
-class MatrixMulBlkTask : public htgs::ITask<MatrixBlockMulData<MatrixMemoryData_t>, MatrixBlockData<double *>>
-{
+class MatrixMulBlkTask : public htgs::ITask<MatrixBlockMulData<MatrixMemoryData_t>, MatrixBlockData<double *>> {
 
  public:
   MatrixMulBlkTask(int numThreads) : ITask(numThreads) {}
@@ -26,7 +25,7 @@ class MatrixMulBlkTask : public htgs::ITask<MatrixBlockMulData<MatrixMemoryData_
   virtual void shutdown() {
   }
 
-    virtual void executeTask(std::shared_ptr<MatrixBlockMulData<MatrixMemoryData_t>> data) {
+  virtual void executeTask(std::shared_ptr<MatrixBlockMulData<MatrixMemoryData_t>> data) {
 
     auto matAData = data->getMatrixA();
     auto matBData = data->getMatrixB();
@@ -37,12 +36,26 @@ class MatrixMulBlkTask : public htgs::ITask<MatrixBlockMulData<MatrixMemoryData_
     int width = matBData->getMatrixWidth();
     int height = matAData->getMatrixHeight();
 
-    double *result = new double[width*height];
+    double *result = new double[width * height];
 
-    cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, height, width, matAData->getMatrixWidth(), 1.0, matrixA->get(), matAData->getMatrixWidth(),
-                  matrixB->get(), width, 0.0, result, width);
+    cblas_dgemm(CblasRowMajor,
+                CblasNoTrans,
+                CblasNoTrans,
+                height,
+                width,
+                matAData->getMatrixWidth(),
+                1.0,
+                matrixA->get(),
+                matAData->getMatrixWidth(),
+                matrixB->get(),
+                width,
+                0.0,
+                result,
+                width);
 
-    std::shared_ptr<MatrixRequestData> matReq(new MatrixRequestData(matAData->getRequest()->getRow(), matBData->getRequest()->getCol(), MatrixType::MatrixC));
+    std::shared_ptr<MatrixRequestData> matReq(new MatrixRequestData(matAData->getRequest()->getRow(),
+                                                                    matBData->getRequest()->getCol(),
+                                                                    MatrixType::MatrixC));
 
 //    std::cout << "Computing A(" << matAData->getRequest()->getRow() << ", " << matAData->getRequest()->getCol() <<
 //          ") x B(" << matBData->getRequest()->getRow() << ", " << matBData->getRequest()->getCol() <<

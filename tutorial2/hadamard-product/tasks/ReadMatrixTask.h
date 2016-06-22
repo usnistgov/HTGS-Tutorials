@@ -8,32 +8,35 @@
 #include <cmath>
 #include "../memory/MatrixMemoryRule.h"
 
-class ReadMatrixTask : public htgs::ITask<MatrixRequestData, MatrixBlockData<MatrixMemoryData_t>>
-{
+class ReadMatrixTask : public htgs::ITask<MatrixRequestData, MatrixBlockData<MatrixMemoryData_t>> {
 
  public:
 
   ReadMatrixTask(int numThreads, int blockSize, int fullMatrixWidth, int fullMatrixHeight, std::string directory) :
-      ITask(numThreads), blockSize(blockSize), fullMatrixHeight(fullMatrixHeight), fullMatrixWidth(fullMatrixWidth), directory(directory)
-  {
-    numBlocksRows = (int)ceil((double)fullMatrixHeight / (double)blockSize);
-    numBlocksCols = (int)ceil((double)fullMatrixWidth / (double)blockSize);
+      ITask(numThreads),
+      blockSize(blockSize),
+      fullMatrixHeight(fullMatrixHeight),
+      fullMatrixWidth(fullMatrixWidth),
+      directory(directory) {
+    numBlocksRows = (int) ceil((double) fullMatrixHeight / (double) blockSize);
+    numBlocksCols = (int) ceil((double) fullMatrixWidth / (double) blockSize);
   }
 
-  virtual ~ReadMatrixTask() { }
+  virtual ~ReadMatrixTask() {}
   virtual void initialize(int pipelineId,
                           int numPipeline) {
 
   }
-  virtual void shutdown() { }
+  virtual void shutdown() {}
 
   virtual void executeTask(std::shared_ptr<MatrixRequestData> data) {
     std::string matrixName;
 
-    switch (data->getType())
-    {
-      case MatrixType::MatrixA: matrixName = "matrixA"; break;
-      case MatrixType::MatrixB: matrixName = "matrixB"; break;
+    switch (data->getType()) {
+      case MatrixType::MatrixA: matrixName = "matrixA";
+        break;
+      case MatrixType::MatrixB: matrixName = "matrixB";
+        break;
       case MatrixType::MatrixC: return;
     }
     MatrixMemoryData_t matrixData = this->memGet<double *>(matrixName, new MatrixMemoryRule(1));
@@ -44,13 +47,12 @@ class ReadMatrixTask : public htgs::ITask<MatrixRequestData, MatrixBlockData<Mat
     int matrixWidth;
     int matrixHeight;
 
-    if (col == numBlocksCols-1 && fullMatrixWidth % blockSize != 0)
+    if (col == numBlocksCols - 1 && fullMatrixWidth % blockSize != 0)
       matrixWidth = fullMatrixWidth % blockSize;
     else
       matrixWidth = blockSize;
 
-
-    if (row == numBlocksRows-1 && fullMatrixHeight % blockSize != 0)
+    if (row == numBlocksRows - 1 && fullMatrixHeight % blockSize != 0)
       matrixHeight = fullMatrixHeight % blockSize;
     else
       matrixHeight = blockSize;
@@ -60,7 +62,7 @@ class ReadMatrixTask : public htgs::ITask<MatrixRequestData, MatrixBlockData<Mat
     // Read data
     std::ifstream file(fileName, std::ios::binary);
 
-    file.read((char *)matrixData->get(), sizeof(double) * matrixWidth * matrixHeight);
+    file.read((char *) matrixData->get(), sizeof(double) * matrixWidth * matrixHeight);
 
     addResult(new MatrixBlockData<MatrixMemoryData_t>(data, matrixData, matrixWidth, matrixHeight));
 

@@ -13,8 +13,7 @@
 #include "../../tutorial-utils/SimpleClock.h"
 #include "../../tutorial-utils/util-matrix.h"
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
   int width = 1024;
   int height = 1024;
   int blockSize = 256;
@@ -22,49 +21,43 @@ int main(int argc, char *argv[])
   int numProdThreads = 10;
   std::string directory("data");
 
-  for (int arg = 1; arg < argc; arg++)
-  {
+  for (int arg = 1; arg < argc; arg++) {
     std::string argvs(argv[arg]);
 
-    if (argvs == "--width")
-    {
+    if (argvs == "--width") {
       arg++;
       width = atoi(argv[arg]);
     }
 
-    if (argvs == "--height")
-    {
+    if (argvs == "--height") {
       arg++;
       height = atoi(argv[arg]);
     }
 
-    if (argvs == "--block-size")
-    {
+    if (argvs == "--block-size") {
       arg++;
       blockSize = atoi(argv[arg]);
     }
 
-    if (argvs == "--num-readers")
-    {
+    if (argvs == "--num-readers") {
       arg++;
       numReadThreads = atoi(argv[arg]);
     }
 
-    if (argvs == "--num-workers")
-    {
+    if (argvs == "--num-workers") {
       arg++;
       numProdThreads = atoi(argv[arg]);
     }
 
-    if (argvs == "--dir")
-    {
+    if (argvs == "--dir") {
       arg++;
       directory = argv[arg];
     }
 
-    if (argvs == "--help")
-    {
-      std::cout << argv[0] << " help: [--width <#>] [--height <#>] [--block-size <#>] [--num-readers <#>] [--num-workers <#>] [--dir <dir>] [--help]" << std::endl;
+    if (argvs == "--help") {
+      std::cout << argv[0]
+                << " help: [--width <#>] [--height <#>] [--block-size <#>] [--num-readers <#>] [--num-workers <#>] [--dir <dir>] [--help]"
+                << std::endl;
       exit(0);
     }
   }
@@ -73,7 +66,6 @@ int main(int argc, char *argv[])
 
   // Check directory for matrix files based on the given file size
   checkAndValidateMatrixBlockFiles(directory, width, height, width, height, blockSize, false);
-
 
   ReadMatrixTask *readMatTask = new ReadMatrixTask(numReadThreads, blockSize, width, height, directory);
   MatrixMulBlkTask *prodTask = new MatrixMulBlkTask(numProdThreads);
@@ -93,8 +85,18 @@ int main(int argc, char *argv[])
 
   taskGraph->addGraphUserManagedMemoryManagerEdge("outputMem", prodTask, 50);
 
-  taskGraph->addMemoryManagerEdge("matrixA", readMatTask, prodTask, new MatrixAllocator(blockSize, blockSize), 100, htgs::MMType::Static);
-  taskGraph->addMemoryManagerEdge("matrixB", readMatTask, prodTask, new MatrixAllocator(blockSize, blockSize), 100, htgs::MMType::Static);
+  taskGraph->addMemoryManagerEdge("matrixA",
+                                  readMatTask,
+                                  prodTask,
+                                  new MatrixAllocator(blockSize, blockSize),
+                                  100,
+                                  htgs::MMType::Static);
+  taskGraph->addMemoryManagerEdge("matrixB",
+                                  readMatTask,
+                                  prodTask,
+                                  new MatrixAllocator(blockSize, blockSize),
+                                  100,
+                                  htgs::MMType::Static);
 
   taskGraph->incrementGraphInputProducer();
 
@@ -105,12 +107,10 @@ int main(int argc, char *argv[])
 
   runtime->executeRuntime();
 
-  for (int row = 0; row < numBlocksRows; row++)
-  {
-    for (int col = 0; col < numBlocksCols; col++)
-    {
-      MatrixRequestData * matrixA = new MatrixRequestData(row, col, MatrixType::MatrixA);
-      MatrixRequestData * matrixB = new MatrixRequestData(row, col, MatrixType::MatrixB);
+  for (int row = 0; row < numBlocksRows; row++) {
+    for (int col = 0; col < numBlocksCols; col++) {
+      MatrixRequestData *matrixA = new MatrixRequestData(row, col, MatrixType::MatrixA);
+      MatrixRequestData *matrixB = new MatrixRequestData(row, col, MatrixType::MatrixB);
 
       taskGraph->produceData(matrixA);
       taskGraph->produceData(matrixB);
@@ -119,14 +119,14 @@ int main(int argc, char *argv[])
 
   taskGraph->finishedProducingData();
 
-  while (!taskGraph->isOutputTerminated())
-  {
+  while (!taskGraph->isOutputTerminated()) {
     auto data = taskGraph->consumeData();
 
     if (data != nullptr) {
-      std::cout << "Result received: " << data->getRequest()->getRow() << ", " << data->getRequest()->getCol() <<std::endl;
+      std::cout << "Result received: " << data->getRequest()->getRow() << ", " << data->getRequest()->getCol()
+                << std::endl;
       double *mem = data->getMatrixData();
-      delete [] mem;
+      delete[] mem;
 
       taskGraph->memRelease("outputMem", 0);
     }
@@ -138,7 +138,8 @@ int main(int argc, char *argv[])
 
   clk.stopAndIncrement();
 
-  std::cout << "width: " << width << ", height: " << height << ", blocksize: " << blockSize << ", time: " << clk.getAverageTime(TimeVal::MILLI) << " ms" << std::endl;
+  std::cout << "width: " << width << ", height: " << height << ", blocksize: " << blockSize << ", time: "
+            << clk.getAverageTime(TimeVal::MILLI) << " ms" << std::endl;
 
   delete runtime;
 }

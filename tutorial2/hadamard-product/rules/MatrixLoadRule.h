@@ -8,7 +8,7 @@
 #include "../data/MatrixBlockData.h"
 #include "../data/MatrixBlockMulData.h"
 
-class MatrixLoadRule: public htgs::IRule<MatrixBlockData<MatrixMemoryData_t>, MatrixBlockMulData> {
+class MatrixLoadRule : public htgs::IRule<MatrixBlockData<MatrixMemoryData_t>, MatrixBlockMulData> {
 
  public:
   MatrixLoadRule(int blockWidth, int blockHeight) {
@@ -28,7 +28,7 @@ class MatrixLoadRule: public htgs::IRule<MatrixBlockData<MatrixMemoryData_t>, Ma
     return false;
   }
 
-  void shutdownRule(int pipelineId) { }
+  void shutdownRule(int pipelineId) {}
 
   void applyRule(std::shared_ptr<MatrixBlockData<MatrixMemoryData_t>> data, int pipelineId) {
     std::shared_ptr<MatrixRequestData> request = data->getRequest();
