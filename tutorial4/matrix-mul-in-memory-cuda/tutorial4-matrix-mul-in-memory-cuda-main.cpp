@@ -190,6 +190,7 @@ int main(int argc, char *argv[]) {
 
   for (int numTry = 0; numTry < numRetry; numTry++) {
     SimpleClock clk;
+    SimpleClock endToEnd;
 
     if (runSequential) {
       openblas_set_num_threads(numBlasThreads);
@@ -201,6 +202,7 @@ int main(int argc, char *argv[]) {
     }
 
     else {
+      endToEnd.start();
       openblas_set_num_threads(1);
 
       // Initialize GPUs
@@ -328,7 +330,7 @@ int main(int argc, char *argv[]) {
       clk.stopAndIncrement();
 
       delete runtime;
-
+      endToEnd.stopAndIncrement();
     }
 
 //    if (validate) {
@@ -346,12 +348,14 @@ int main(int argc, char *argv[]) {
               << ", width-b: " << matrixBWidth << ", height-a: " << matrixAHeight
               << ", shared-dim: " << sharedDim
               << ", " << ", blockSize: " << blockSize << ", time:" << clk.getAverageTime(TimeVal::MILLI)
+              << ", end-to-end:" << endToEnd.getAverageTime(TimeVal::MILLI)
               << std::endl;
 
     runtimeFile << (runSequential ? "sequential" : "htgs") << ", " << (runSequential ? numBlasThreads : numProdThreads)
                 << ", "
                 << matrixBWidth << ", " << matrixAHeight
                 << ", " << sharedDim << ", " << blockSize << ", " << clk.getAverageTime(TimeVal::MILLI)
+                << ", " << endToEnd.getAverageTime(TimeVal::MILLI)
                 << std::endl;
 
   }

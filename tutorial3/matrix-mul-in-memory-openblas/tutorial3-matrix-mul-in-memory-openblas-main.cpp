@@ -151,6 +151,7 @@ int main(int argc, char *argv[]) {
 
   for (int numTry = 0; numTry < numRetry; numTry++) {
     SimpleClock clk;
+    SimpleClock endToEnd;
 
     if (runSequential) {
       openblas_set_num_threads(numBlasThreads);
@@ -160,7 +161,7 @@ int main(int argc, char *argv[]) {
       clk.stopAndIncrement();
     }
     else {
-
+      endToEnd.start();
       openblas_set_num_threads(1);
 
       ReadMatrixTask *readAMatTask =
@@ -259,6 +260,7 @@ int main(int argc, char *argv[]) {
       clk.stopAndIncrement();
 
       delete runtime;
+      endToEnd.stopAndIncrement();
     }
 
 //    if (validate) {
@@ -278,12 +280,15 @@ int main(int argc, char *argv[]) {
               << ", shared-dim: " << sharedDim
               << ", " << ", blockSize: " << (runSequential ? 0 : blockSize) << ", time:"
               << clk.getAverageTime(TimeVal::MILLI)
-              << std::endl;
+              << ", end-to-end:" << endToEnd.getAverageTime(TimeVal::MILLI)
+
+        << std::endl;
 
     runtimeFile << (runSequential ? "sequential" : "htgs") << ", " << (runSequential ? numBlasThreads : numProdThreads)
                 << ", "
                 << matrixBWidth << ", " << matrixAHeight
                 << ", " << sharedDim << ", " << blockSize << ", " << clk.getAverageTime(TimeVal::MILLI)
+                << ", " << endToEnd.getAverageTime(TimeVal::MILLI)
                 << std::endl;
 
   }
