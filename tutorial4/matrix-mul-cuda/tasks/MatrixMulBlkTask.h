@@ -24,23 +24,16 @@ class MatrixMulBlkTask : public htgs::ICudaTask<MatrixBlockMulData<MatrixMemoryD
   initializeCudaGPU(CUcontext context, CUstream stream, int cudaId, int numGPUs, int pipelineId, int numPipelines) {
     cublasCreate_v2(&handle);
     cublasSetStream_v2(handle, stream);
-//    cublasSetPointerMode_v2(handle, CUBLAS_POINTER_MODE_DEVICE);
     alpha = new double[1];
     alpha[0] = 1.0;
     beta = new double[1];
     beta[0] = 0.0;
-//    cudaMalloc((void **)&alpha, sizeof(double));
-//    cudaMalloc((void **)&beta, sizeof(double));
-//    cudaMemset(alpha, 1.0, sizeof(double));
-//    cudaMemset(beta, 0.0, sizeof(double));
   }
 
   virtual void shutdownCuda() {
     cublasDestroy_v2(handle);
     delete [] alpha;
     delete [] beta;
-//    cudaFree(alpha);
-//    cudaFree(beta);
   }
 
   virtual void executeGPUTask(std::shared_ptr<MatrixBlockMulData<MatrixMemoryData_t>> data, CUstream stream) {
@@ -56,16 +49,12 @@ class MatrixMulBlkTask : public htgs::ICudaTask<MatrixBlockMulData<MatrixMemoryD
 
     auto result = this->memGet<double *>("MatrixC", new MatrixMemoryRule(1));
 
-    cublasDgemm_v2(handle, CUBLAS_OP_N, CUBLAS_OP_N, height, width, matAData->getMatrixWidth(), alpha, matrixA->get(), matAData->getMatrixWidth(),
-                   matrixB->get(), width, beta, result->get(), width);
+    cublasDgemm_v2(handle, CUBLAS_OP_N, CUBLAS_OP_N, height, width, matAData->getMatrixWidth(), alpha, matrixA->get(), matAData->getMatrixHeight(),
+                   matrixB->get(), matBData->getMatrixHeight(), beta, result->get(), height);
 
     this->syncStream();
 
     std::shared_ptr<MatrixRequestData> matReq(new MatrixRequestData(matAData->getRequest()->getRow(), matBData->getRequest()->getCol(), MatrixType::MatrixC));
-
-//    std::cout << "Computing A(" << matAData->getRequest()->getRow() << ", " << matAData->getRequest()->getCol() <<
-//          ") x B(" << matBData->getRequest()->getRow() << ", " << matBData->getRequest()->getCol() <<
-//          ") = C(" << matReq->getRow() << ", "<< matReq->getCol() << ")" <<std::endl;
 
     addResult(new MatrixBlockData<MatrixMemoryData_t>(matReq, result, width, height));
 

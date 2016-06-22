@@ -103,7 +103,7 @@ int generateFullMatrixFile(std::string path, MatrixType type, int totalWidth, in
   return 0;
 }
 
-int generateMatrixBlockFiles(std::string path, MatrixType type, int totalWidth, int totalHeight, int blockSize) {
+int generateMatrixBlockFiles(std::string path, MatrixType type, int totalWidth, int totalHeight, int blockSize, bool columnStore) {
   std::string blkDir = std::string(path + "/" + std::to_string(totalWidth) + "x"  + std::to_string(totalHeight) + "blksize" + std::to_string(blockSize));
   int ret = create_dir(path);
   if (ret != 0 && ret != 1)
@@ -136,7 +136,7 @@ int generateMatrixBlockFiles(std::string path, MatrixType type, int totalWidth, 
   std::cout.flush();
 
   double *matrix = allocMatrix(blockSize, blockSize);
-  initMatrix(matrix, blockSize, blockSize, false);
+  initMatrix(matrix, blockSize, blockSize, columnStore);
   std::cout << " -- DONE" << std::endl;
 
   for (int blockRow = 0; blockRow < numBlocksHeight; blockRow++) {
@@ -328,7 +328,7 @@ bool checkMatrixBlockFiles(std::string path, MatrixType type, int totalWidth, in
 }
 
 
-void checkAndValidateMatrixBlockFiles(std::string directory, int widthA, int heightA, int widthB, int heightB, int blockSize)
+void checkAndValidateMatrixBlockFiles(std::string directory, int widthA, int heightA, int widthB, int heightB, int blockSize, bool columnStore)
 {
   if (!has_dir(directory))
     create_dir(directory);
@@ -336,14 +336,14 @@ void checkAndValidateMatrixBlockFiles(std::string directory, int widthA, int hei
   bool checkA = checkMatrixBlockFiles(directory, MatrixType::MatrixA, widthA, heightA, blockSize);
 
   if (!checkA) {
-    if (generateMatrixBlockFiles(directory, MatrixType::MatrixA, widthA, heightA, blockSize))
+    if (generateMatrixBlockFiles(directory, MatrixType::MatrixA, widthA, heightA, blockSize, columnStore))
       exit(-1);
   }
 
   bool checkB = checkMatrixBlockFiles(directory, MatrixType::MatrixB, widthB, heightB, blockSize);
 
   if (!checkB) {
-    if (generateMatrixBlockFiles(directory, MatrixType::MatrixB, widthB, heightB, blockSize) != 0)
+    if (generateMatrixBlockFiles(directory, MatrixType::MatrixB, widthB, heightB, blockSize, columnStore) != 0)
       exit(-1);
   }
 }

@@ -28,8 +28,6 @@ class MatrixCopyOutTask : public htgs::ICudaTask<MatrixBlockData<MatrixMemoryDat
     // CPU Memory
     double *memoryOut = new double[data->getMatrixHeight()*data->getMatrixWidth()];
 
-//    cudaMemcpy(memoryOut, memoryIn->get(), sizeof(double) *data->getMatrixHeight()*data->getMatrixWidth(), cudaMemcpyDeviceToHost);
-
     gpuErrorChk(cudaMemcpyAsync(cudaMemPinned, memoryIn->get(), sizeof(double) * data->getMatrixHeight()*data->getMatrixWidth(), cudaMemcpyDeviceToDevice, stream));
     gpuErrorChk(cudaMemcpyAsync(memoryOut, cudaMemPinned, sizeof(double) * data->getMatrixHeight()*data->getMatrixWidth(), cudaMemcpyDeviceToHost, stream));
 

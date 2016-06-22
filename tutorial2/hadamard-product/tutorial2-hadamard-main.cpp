@@ -72,7 +72,7 @@ int main(int argc, char *argv[])
 
 
   // Check directory for matrix files based on the given file size
-  checkAndValidateMatrixBlockFiles(directory, width, height, width, height, blockSize);
+  checkAndValidateMatrixBlockFiles(directory, width, height, width, height, blockSize, false);
 
 
   ReadMatrixTask *readMatTask = new ReadMatrixTask(numReadThreads, blockSize, width, height, directory);

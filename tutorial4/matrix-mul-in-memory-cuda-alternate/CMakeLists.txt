@@ -11,13 +11,11 @@ set(TUTORIAL_UTILS_SRC
         ../../tutorial-utils/util-cuda.cpp
         ../../tutorial-utils/util-cuda.h)
 
-cuda_add_executable(matrixMul-in-memory-cuda-exec-pipeline
-        tutorial5-matrix-mul-in-memory-cuda-exec-pipeline-main.cpp
+cuda_add_executable(matrixMul-in-memory-cuda-alternate
+        tutorial4-matrix-mul-in-memory-cuda-alternate-main.cpp
         data/MatrixRequestData.h
         data/MatrixBlockData.h
         data/MatrixBlockMulData.h
-        tasks/ReadMatrixTask.h
-        tasks/OutputTask.h
         memory/MatrixMemoryRule.h
         memory/MatrixAllocator.h
         memory/CudaMatrixAllocator.h
@@ -26,17 +24,23 @@ cuda_add_executable(matrixMul-in-memory-cuda-exec-pipeline
         rules/MatrixLoopRule.h
         rules/MatrixAccumulateRule.h
         rules/MatrixOutputRule.h
-        rules/MatrixDecompositionRule.h
         tasks/MatrixMulBlkTask.h
+        tasks/MatrixMulBlkTask.cpp
         tasks/MatrixAccumTask.h
+        tasks/MatrixAccumTask.cpp
         tasks/OutputTask.h
+        tasks/OutputTask.cpp
         tasks/MatrixCopyInTask.h
+        tasks/MatrixCopyInTask.cpp
         tasks/MatrixCopyOutTask.h
+        tasks/MatrixCopyOutTask.cpp
+        tasks/ReadMatrixTask.h
+        tasks/ReadMatrixTask.cpp
         ${TUTORIAL_UTILS_SRC})
 
-target_link_libraries(matrixMul-in-memory-cuda-exec-pipeline openblas)
-target_compile_definitions(matrixMul-in-memory-cuda-exec-pipeline PUBLIC -DUSE_CUDA)
-cuda_add_cublas_to_target(matrixMul-in-memory-cuda-exec-pipeline)
-target_link_libraries(matrixMul-in-memory-cuda-exec-pipeline ${CUDA_LIBRARIES})
-target_link_libraries(matrixMul-in-memory-cuda-exec-pipeline cuda)
-target_link_libraries(matrixMul-in-memory-cuda-exec-pipeline openblas)
+target_link_libraries(matrixMul-in-memory-cuda-alternate openblas)
+target_compile_definitions(matrixMul-in-memory-cuda-alternate PUBLIC -DUSE_CUDA)
+cuda_add_cublas_to_target(matrixMul-in-memory-cuda-alternate)
+target_link_libraries(matrixMul-in-memory-cuda-alternate ${CUDA_LIBRARIES})
+target_link_libraries(matrixMul-in-memory-cuda-alternate cuda)
+target_link_libraries(matrixMul-in-memory-cuda-alternate openblas)

@@ -43,6 +43,7 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=t
 #include "tasks/MatrixCopyInTask.h"
 #include "tasks/MatrixCopyOutTask.h"
 #include "memory/CudaMatrixAllocator.h"
+#include "../../tutorial-utils/util-cuda.h"
 
 int validateResults(double *matrixC, double *matrixC_HTGS, int fullMatrixAHeight, int fullMatrixBWidth)
 {
@@ -227,7 +228,7 @@ int main(int argc, char *argv[])
       clk.stopAndIncrement();
     }
     else {
-      CUcontext * contexts = htgs::initCuda(numGpus, cudaIds);
+      CUcontext * contexts = initCuda(numGpus, cudaIds);
 
       openblas_set_num_threads(1);
 

@@ -8,6 +8,7 @@
 
 #include "../data/MatrixBlockMulData.h"
 #include "../data/MatrixBlockData.h"
+#include "../../../tutorial-utils/util-matrix.h"
 #include <htgs/api/ITask.hpp>
 
 class MatrixAccumTask : public htgs::ITask<MatrixBlockMulData<double *>, MatrixBlockData<double *>>
@@ -37,11 +38,12 @@ class MatrixAccumTask : public htgs::ITask<MatrixBlockMulData<double *>, MatrixB
     int width = matAData->getMatrixWidth();
     int height = matAData->getMatrixHeight();
 
-    for (int i = 0; i < height; i++)
+    for (int c = 0; c < width; c++)
     {
-      for (int j = 0; j < width; j++)
+      for (int r = 0; r < height; r++)
       {
-        matrixA[i*width+j] += matrixB[i*width+j];
+
+        matrixA[IDX2C(r, c, height)] += matrixB[IDX2C(r, c, height)];
       }
     }
 

@@ -7,7 +7,9 @@ set(TUTORIAL_UTILS_SRC
         ../../tutorial-utils/util-filesystem.h
         ../../tutorial-utils/SimpleClock.h
         ../../tutorial-utils/enums/MatrixType.h
-        ../../tutorial-utils/enums/MatrixType.cpp)
+        ../../tutorial-utils/enums/MatrixType.cpp
+        ../../tutorial-utils/util-cuda.cpp
+        ../../tutorial-utils/util-cuda.h)
 
 cuda_add_executable(matrixMul-cuda
         tutorial4-matrix-mul-cuda-main.cpp

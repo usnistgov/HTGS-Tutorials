@@ -300,7 +300,7 @@ int main(int argc, char *argv[])
 
   create_dir(outputDirectory);
 
-  checkAndValidateMatrixBlockFiles(directory, sharedDim, matrixAHeight, matrixBWidth, sharedDim, blockSize);
+  checkAndValidateMatrixBlockFiles(directory, sharedDim, matrixAHeight, matrixBWidth, sharedDim, blockSize, false);
 
   std::string inputDirectoryA = generateDirectoryName(directory, sharedDim, matrixAHeight, blockSize);
   std::string inputDirectoryB = generateDirectoryName(directory, matrixBWidth, sharedDim, blockSize);

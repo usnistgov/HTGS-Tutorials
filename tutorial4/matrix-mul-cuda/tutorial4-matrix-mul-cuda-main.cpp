@@ -44,7 +44,7 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=t
 #include "tasks/MatrixCopyInTask.h"
 #include "tasks/MatrixCopyOutTask.h"
 #include "memory/CudaMatrixAllocator.h"
-
+#include "../../tutorial-utils/util-cuda.h"
 
 int validateResults(std::string baseDirectory, int matrixAHeight, int matrixBWidth, int blockSize)
 {
@@ -179,8 +179,8 @@ void computeSequentialMatMul(std::string directoryA, std::string directoryB, std
 
 //        std::cout << "Seq Computing A(" << blkRowA << ", " << blk << ") x B(" << blk << ", " << blkColB << ") = C(" <<blkRowA << ", "<< blkColB << ")" <<std::endl;
 
-        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, matrixAHeight, matrixBWidth, matrixAWidth, 1.0, matrixA, matrixAWidth,
-                    matrixB, matrixBWidth, 1.0, finalResultC, matrixBWidth);
+        cblas_dgemm(CblasColMajor, CblasNoTrans, CblasNoTrans, matrixAHeight, matrixBWidth, matrixAWidth, 1.0, matrixA, matrixAHeight,
+                    matrixB, matrixAWidth, 1.0, finalResultC, matrixAHeight);
 
       }
 
@@ -317,12 +317,9 @@ void computeSequentialMatMulCuda(std::string directoryA, std::string directoryB,
 
         double alpha = 1.0;
         double beta = 0.0;
-//        std::cout << "Seq Computing A(" << blkRowA << ", " << blk << ") x B(" << blk << ", " << blkColB << ") = C(" <<blkRowA << ", "<< blkColB << ")" <<std::endl;
 
-        cublasDgemm_v2(cublasHandle, CUBLAS_OP_N, CUBLAS_OP_N, matrixAHeight, matrixBWidth, matrixAWidth, &alpha, matrixACuda, matrixAWidth,
-                       matrixBCuda, matrixBWidth, &beta, matrixCCuda, matrixBWidth);
-//        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, matrixAHeight, matrixBWidth, matrixAWidth, 1.0, matrixA, matrixAWidth,
-//                    matrixB, matrixBWidth, 0.0, finalResultC, matrixBWidth);
+        cublasDgemm_v2(cublasHandle, CUBLAS_OP_N, CUBLAS_OP_N, matrixAHeight, matrixBWidth, matrixAWidth, &alpha, matrixACuda, matrixAHeight,
+                       matrixBCuda, matrixAWidth, &beta, matrixCCuda, matrixAHeight);
 
         cudaMemcpy(prelimResultC, matrixCCuda, sizeof(double)*matrixAHeight*matrixBWidth, cudaMemcpyDeviceToHost);
 
@@ -475,7 +472,7 @@ int main(int argc, char *argv[])
 
   create_dir(outputDirectory);
 
-  checkAndValidateMatrixBlockFiles(directory, sharedDim, matrixAHeight, matrixBWidth, sharedDim, blockSize);
+  checkAndValidateMatrixBlockFiles(directory, sharedDim, matrixAHeight, matrixBWidth, sharedDim, blockSize, true);
 
   std::string inputDirectoryA = generateDirectoryName(directory, sharedDim, matrixAHeight, blockSize);
   std::string inputDirectoryB = generateDirectoryName(directory, matrixBWidth, sharedDim, blockSize);
@@ -504,7 +501,7 @@ int main(int argc, char *argv[])
       int *cudaIds = new int [2] {2, 1};
       int numGpus = 1;
 
-      CUcontext * contexts = htgs::initCuda(numGpus, cudaIds);
+      CUcontext * contexts = initCuda(numGpus, cudaIds);
 
 
       ReadMatrixTask

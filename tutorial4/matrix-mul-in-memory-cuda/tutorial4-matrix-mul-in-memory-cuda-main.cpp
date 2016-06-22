@@ -39,6 +39,7 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=t
 #include "tasks/MatrixCopyInTask.h"
 #include "tasks/MatrixCopyOutTask.h"
 #include "memory/CudaMatrixAllocator.h"
+#include "../../tutorial-utils/util-cuda.h"
 
 int validateResults(double *matrixC, double *matrixC_HTGS, int fullMatrixAHeight, int fullMatrixBWidth)
 {
@@ -221,7 +222,7 @@ int main(int argc, char *argv[])
       int *cudaIds = new int [2] {2, 1};
       int numGpus = 1;
 
-      CUcontext * contexts = htgs::initCuda(numGpus, cudaIds);
+      CUcontext * contexts = initCuda(numGpus, cudaIds);
 
       ReadMatrixTask
           *readAMatTask = new ReadMatrixTask(numReadThreads, MatrixType::MatrixA, blockSize,
