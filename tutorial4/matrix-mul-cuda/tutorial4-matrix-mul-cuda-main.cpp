@@ -481,7 +481,7 @@ int main(int argc, char *argv[]) {
       openblas_set_num_threads(1);
 
       // Initialize GPUs
-      int *cudaIds = new int[2]{2, 1};
+      int *cudaIds = new int[1]{0};
       int numGpus = 1;
 
       CUcontext *contexts = initCuda(numGpus, cudaIds);
