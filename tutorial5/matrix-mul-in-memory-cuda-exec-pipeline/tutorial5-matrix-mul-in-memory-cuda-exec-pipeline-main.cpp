@@ -121,6 +121,7 @@ int main(int argc, char *argv[]) {
   std::string runtimeFileStr("runtimes");
 
   int numRetry = 1;
+  int *deviceIds = nullptr;
 
   if (argc > 1) {
     for (int arg = 1; arg < argc; arg++) {
@@ -179,9 +180,34 @@ int main(int argc, char *argv[]) {
         arg++;
       }
 
+      if (argvs == "--device-ids") {
+
+        std::string deviceIdStr(argv[arg+1]);
+        arg++;
+
+        std::vector<int> vect;
+        std::stringstream ss(deviceIdStr);
+
+        int i;
+        while (ss >> i)
+        {
+          vect.push_back(i);
+          if (ss.peek() == ',')
+            ss.ignore();
+        }
+
+
+        deviceIds = new int[vect.size()];
+
+        for (unsigned int i = 0; i < vect.size(); i++)
+        {
+          deviceIds[i] = vect[i];
+        }
+      }
+
       if (argvs == "--help") {
         std::cout << argv[0]
-                  << " args: [--width-b <#>] [--height-a <#>] [--shared-dim <#>] [--block-size <#>] [--num-retry <#>] [--num-threads-htgs <#>] [--num-threads-blas <#>] [--runtime-file <filename>] [--dir <dir>] [--output-dir <dir>] [--validate-results] [--run-sequential] [--help]"
+                  << " args: [--width-b <#>] [--height-a <#>] [--shared-dim <#>] [--block-size <#>] [--num-retry <#>] [--num-gpus <#>] [--device-ids <#,#,..,#>][--num-threads-htgs <#>]  [--num-threads-blas <#>] [--runtime-file <filename>] [--dir <dir>] [--output-dir <dir>] [--validate-results] [--run-sequential] [--help]"
                   << std::endl;
         exit(0);
       }
@@ -190,7 +216,10 @@ int main(int argc, char *argv[]) {
 
 
   // Initialize GPUs
-  int *cudaIds = new int[2]{2, 1};
+  if (deviceIds == nullptr)
+  {
+    deviceIds = new int[1] {0};
+  }
 
   std::ofstream runtimeFile(runtimeFileStr, std::ios::app);
   double *matrixA = new double[matrixAHeight * sharedDim];
@@ -209,11 +238,11 @@ int main(int argc, char *argv[]) {
 
       clk.start();
       computeSequentialMatMul(matrixA, matrixB, matrixC, (size_t) matrixAHeight, (size_t) sharedDim,
-                              (size_t) matrixBWidth, blockSize, numGpus, cudaIds);
+                              (size_t) matrixBWidth, blockSize, numGpus, deviceIds);
       clk.stopAndIncrement();
     }
     else {
-      CUcontext *contexts = initCuda(numGpus, cudaIds);
+      CUcontext *contexts = initCuda(numGpus, deviceIds);
 
       openblas_set_num_threads(1);
 
@@ -233,14 +262,14 @@ int main(int argc, char *argv[]) {
       int blkWidthMatA = readAMatTask->getNumBlocksCols();
 
       MatrixCopyInTask *copyInA =
-          new MatrixCopyInTask("MatrixA", blockSize, blkWidthMatB, contexts, cudaIds, numGpus, matrixAHeight);
+          new MatrixCopyInTask("MatrixA", blockSize, blkWidthMatB, contexts, deviceIds, numGpus, matrixAHeight);
       MatrixCopyInTask
-          *copyInB = new MatrixCopyInTask("MatrixB", blockSize, blkHeightMatA, contexts, cudaIds, numGpus, sharedDim);
+          *copyInB = new MatrixCopyInTask("MatrixB", blockSize, blkHeightMatA, contexts, deviceIds, numGpus, sharedDim);
 
-      MatrixCopyOutTask *copyOutC = new MatrixCopyOutTask("MatrixC", blockSize, contexts, cudaIds, numGpus);
+      MatrixCopyOutTask *copyOutC = new MatrixCopyOutTask("MatrixC", blockSize, contexts, deviceIds, numGpus);
 
       MatrixMulBlkTask *mmulTask = new MatrixMulBlkTask(contexts,
-                                                        cudaIds,
+                                                        deviceIds,
                                                         numGpus,
                                                         sharedDim,
                                                         matrixAHeight,
