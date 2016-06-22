@@ -39,7 +39,7 @@ class ReadMatrixTask : public htgs::ITask<MatrixRequestData, MatrixBlockData<Mat
   virtual void executeTask(std::shared_ptr<MatrixRequestData> data) {
     std::string matrixName;
 
-    int numBlocksC;
+    int numBlocksC = 0;
     matrixName = matrixTypeToString(data->getType());
 
     switch (data->getType()) {
