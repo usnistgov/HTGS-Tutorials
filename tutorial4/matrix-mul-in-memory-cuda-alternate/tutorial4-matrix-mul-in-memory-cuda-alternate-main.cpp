@@ -301,7 +301,7 @@ int main(int argc, char *argv[]) {
                                           htgs::MMType::Static,
                                           contexts);
 
-      taskGraph->writeDotToFile("cuda-graph.dot");
+//      taskGraph->writeDotToFile("cuda-graph.dot");
 
       taskGraph->incrementGraphInputProducer();
 

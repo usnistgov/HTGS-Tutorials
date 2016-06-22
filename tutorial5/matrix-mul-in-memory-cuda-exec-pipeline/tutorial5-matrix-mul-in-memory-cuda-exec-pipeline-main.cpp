@@ -349,7 +349,7 @@ int main(int argc, char *argv[]) {
 
       taskGraph->incrementGraphInputProducer();
 
-      taskGraph->writeDotToFile("cuda-graph.dot");
+//      taskGraph->writeDotToFile("cuda-graph.dot");
 
       htgs::Runtime *runtime = new htgs::Runtime(taskGraph);
 
