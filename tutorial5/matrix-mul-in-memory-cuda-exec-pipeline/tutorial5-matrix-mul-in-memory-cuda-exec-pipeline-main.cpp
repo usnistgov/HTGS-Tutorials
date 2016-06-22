@@ -403,11 +403,11 @@ int main(int argc, char *argv[]) {
     std::cout << (runSequential ? "sequential" : "htgs") << ", " << (runSequential ? numBlasThreads : numProdThreads)
               << ", width-b: " << matrixBWidth << ", height-a: " << matrixAHeight
               << ", shared-dim: " << sharedDim
-              << ", " << ", blockSize: " << blockSize << ", time:" << clk.getAverageTime(TimeVal::MILLI)
+              << ", " << ", blockSize: " << blockSize << ", num-gpus: " << numGpus << ", time:" << clk.getAverageTime(TimeVal::MILLI)
               << std::endl;
 
     runtimeFile << (runSequential ? "sequential" : "htgs") << ", " << (runSequential ? numBlasThreads : numProdThreads)
-                << ", "
+                << ", " << numGpus << ", "
                 << matrixBWidth << ", " << matrixAHeight
                 << ", " << sharedDim << ", " << blockSize << ", " << clk.getAverageTime(TimeVal::MILLI)
                 << std::endl;
