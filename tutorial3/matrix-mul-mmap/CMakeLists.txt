@@ -19,7 +19,6 @@ add_executable(matrixMul-mmap
         memory/MatrixAllocator.h
         rules/MatrixLoadRule.h
         rules/MatrixDistributeRule.h
-        rules/MatrixLoopRule.h
         rules/MatrixAccumulateRule.h
         rules/MatrixOutputRule.h
         tasks/MatrixMulBlkTask.h

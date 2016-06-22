@@ -281,10 +281,7 @@ int main(int argc, char *argv[]) {
 
     MatrixLoadRule *loadRule = new MatrixLoadRule(blkWidthMatA, blkHeightMatA, blkWidthMatB, blkHeightMatB);
     MatrixAccumulateRule *accumulateRule = new MatrixAccumulateRule(blkWidthMatB, blkHeightMatA, blkWidthMatA);
-//
-//  MatrixLoopRule *loopRuleMatA = new MatrixLoopRule(0);//blkWidthMatA);
-//  MatrixLoopRule *loopRuleMatB = new MatrixLoopRule(0);//blkHeightMatB);
-//
+
     MatrixOutputRule *outputRule = new MatrixOutputRule(blkWidthMatB, blkHeightMatA, blkWidthMatA);
 
     auto distributeBk = new htgs::Bookkeeper<MatrixRequestData>();
@@ -301,8 +298,6 @@ int main(int argc, char *argv[]) {
     taskGraph->addEdge(readBMatTask, matMulBk);
 
     taskGraph->addRule(matMulBk, mmulTask, loadRule);
-//  taskGraph->addRule(matMulBk, readAMatTask, loopRuleMatA);
-//  taskGraph->addRule(matMulBk, readBMatTask, loopRuleMatB);
 
     taskGraph->addEdge(mmulTask, matAccumBk);
     taskGraph->addRule(matAccumBk, accumTask, accumulateRule);
@@ -310,10 +305,7 @@ int main(int argc, char *argv[]) {
 
     taskGraph->addRule(matAccumBk, outputTask, outputRule);
     taskGraph->addGraphOutputProducer(outputTask);
-//
-//  taskGraph->addMemoryManagerEdge("matrixA", readAMatTask, mmulTask, new MatrixAllocator(blockSize, blockSize), 200, htgs::MMType::Static);
-//  taskGraph->addMemoryManagerEdge("matrixB", readBMatTask, mmulTask, new MatrixAllocator(blockSize, blockSize), 200, htgs::MMType::Static);
-//
+
     taskGraph->writeDotToFile("matMul.dot");
 
     taskGraph->incrementGraphInputProducer();

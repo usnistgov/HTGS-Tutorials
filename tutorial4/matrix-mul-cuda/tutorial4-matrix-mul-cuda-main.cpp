@@ -514,9 +514,6 @@ int main(int argc, char *argv[]) {
       MatrixLoadRule *loadRule = new MatrixLoadRule(blkWidthMatA, blkHeightMatA, blkWidthMatB, blkHeightMatB);
       MatrixAccumulateRule *accumulateRule = new MatrixAccumulateRule(blkWidthMatB, blkHeightMatA, blkWidthMatA);
 
-//      MatrixLoopRule *loopRuleMatA = new MatrixLoopRule(0);//blkWidthMatA);
-//      MatrixLoopRule *loopRuleMatB = new MatrixLoopRule(0);//blkHeightMatB);
-
       MatrixOutputRule *outputRule = new MatrixOutputRule(blkWidthMatB, blkHeightMatA, blkWidthMatA);
 
       auto distributeBk = new htgs::Bookkeeper<MatrixRequestData>();
@@ -536,8 +533,6 @@ int main(int argc, char *argv[]) {
       taskGraph->addEdge(copyInB, matMulBk);
 
       taskGraph->addRule(matMulBk, mmulTask, loadRule);
-//      taskGraph->addRule(matMulBk, readAMatTask, loopRuleMatA);
-//      taskGraph->addRule(matMulBk, readBMatTask, loopRuleMatB);
 
       taskGraph->addEdge(mmulTask, copyOutC);
       taskGraph->addEdge(copyOutC, matAccumBk);

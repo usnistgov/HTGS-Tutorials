@@ -18,7 +18,6 @@ add_executable(matrixMul-in-memory-openblas
         memory/MatrixAllocator.h
         rules/MatrixLoadRule.h
         rules/MatrixDistributeRule.h
-        rules/MatrixLoopRule.h
         rules/MatrixAccumulateRule.h
         rules/MatrixOutputRule.h
         tasks/MatrixMulBlkTask.h

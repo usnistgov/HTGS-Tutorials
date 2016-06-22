@@ -23,7 +23,6 @@ cuda_add_executable(matrixMul-in-memory-cuda-exec-pipeline
         memory/CudaMatrixAllocator.h
         rules/MatrixLoadRule.h
         rules/MatrixDistributeRule.h
-        rules/MatrixLoopRule.h
         rules/MatrixAccumulateRule.h
         rules/MatrixOutputRule.h
         rules/MatrixDecompositionRule.h

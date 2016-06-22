@@ -125,16 +125,6 @@ void computeSequentialMatMulNoMMap(std::string directoryA,
               matrixC,
               fullMatrixBWidth);
 
-//  for (int i = 0; i < fullMatrixAHeight; i++) {
-//    for (int j = 0; j < fullMatrixBWidth; j++) {
-//      double sum = 0.0;
-//      for (int k = 0; k < fullMatrixAWidth; k++) {
-//        sum += matrixA[i * fullMatrixAWidth + k] * matrixB[k * fullMatrixBWidth + j];
-//      }
-//      matrixC[i * fullMatrixBWidth + j] = sum;
-//    }
-//  }
-
   matrixCFile.write((char *) matrixC, sizeof(double) * fullMatrixAHeight * fullMatrixBWidth);
 
   matrixCFile.flush();
@@ -192,8 +182,6 @@ void computeSequentialMatMul(std::string directoryA,
       (double *) mmap(NULL, fullMatrixAWidth * fullMatrixBWidth * sizeof(double), PROT_READ, MAP_SHARED, fdb, 0);
   double *matrixC =
       (double *) mmap(NULL, fullMatrixAHeight * fullMatrixBWidth * sizeof(double), PROT_WRITE, MAP_SHARED, fdc, 0);
-
-//  memset(matrixC, 0.0, sizeof(double)*fullMatrixAHeight*fullMatrixBWidth);
 
   cblas_dgemm(CblasRowMajor,
               CblasNoTrans,
