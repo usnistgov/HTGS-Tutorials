@@ -79,8 +79,11 @@ void computeSequentialMatMul(double *matrixA,
                              size_t fullMatrixBWidth,
                              int blockDim,
                              int numGpus,
-                             int *devices) {
+                             int *devices,
+			     SimpleClock *runClock,
+			     SimpleClock *endToEndClock) {
 
+  endToEndClock->start();
   cublasXtHandle_t handle;
 
   cublasXtCreate(&handle);
@@ -91,17 +94,19 @@ void computeSequentialMatMul(double *matrixA,
   double alpha = 1.0;
   double beta = 0.0;
 
+  runClock->start();
   cublasXtDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, fullMatrixAHeight, fullMatrixBWidth, fullMatrixAWidth, &alpha,
                 matrixA, fullMatrixAHeight,
                 matrixB, fullMatrixAHeight,
                 &beta, matrixC, fullMatrixAHeight);
-
+  runClock->stopAndIncrement();
 
 //  cblas_dgemm(CblasColMajor, CblasNoTrans, CblasNoTrans, fullMatrixAHeight, fullMatrixBWidth, fullMatrixAWidth, 1.0, matrixA, fullMatrixAHeight,
 //              matrixB, fullMatrixAWidth, 0.0, matrixC, fullMatrixAHeight);
 
 
   cublasXtDestroy(handle);
+  endToEndClock->stopAndIncrement();
 }
 
 int main(int argc, char *argv[]) {
@@ -218,7 +223,7 @@ int main(int argc, char *argv[]) {
   // Initialize GPUs
   if (deviceIds == nullptr)
   {
-    deviceIds = new int[1] {0};
+    deviceIds = new int[1] {1};
   }
 
   std::ofstream runtimeFile(runtimeFileStr, std::ios::app);
@@ -237,10 +242,10 @@ int main(int argc, char *argv[]) {
     if (runSequential) {
       openblas_set_num_threads(numBlasThreads);
 
-      clk.start();
+//      clk.start();
       computeSequentialMatMul(matrixA, matrixB, matrixC, (size_t) matrixAHeight, (size_t) sharedDim,
-                              (size_t) matrixBWidth, blockSize, numGpus, deviceIds);
-      clk.stopAndIncrement();
+                              (size_t) matrixBWidth, blockSize, numGpus, deviceIds, &clk, &endToEnd);
+//      clk.stopAndIncrement();
     }
     else {
       endToEnd.start();
@@ -379,11 +384,11 @@ int main(int argc, char *argv[]) {
 
       taskGraph->finishedProducingData();
 
-      while (!taskGraph->isOutputTerminated()) {
-        auto data = taskGraph->consumeData();
-        if (data != nullptr) {
-        }
-      }
+//      while (!taskGraph->isOutputTerminated()) {
+//        auto data = taskGraph->consumeData();
+//        if (data != nullptr) {
+//        }
+//      }
 
       runtime->waitForRuntime();
       clk.stopAndIncrement();
