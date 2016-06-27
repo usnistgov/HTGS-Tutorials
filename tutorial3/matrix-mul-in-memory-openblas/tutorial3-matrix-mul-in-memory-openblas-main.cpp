@@ -1,3 +1,8 @@
+
+// NIST-developed software is provided by NIST as a public service. You may use, copy and distribute copies of the software in any medium, provided that you keep intact this entire notice. You may improve, modify and create derivative works of the software or any portion of the software, and you may copy and distribute such modifications or works. Modified works should carry a notice stating that you changed the software and should note the date and nature of any such change. Please explicitly acknowledge the National Institute of Standards and Technology as the source of the software.
+// NIST-developed software is expressly provided "AS IS." NIST MAKES NO WARRANTY OF ANY KIND, EXPRESS, IMPLIED, IN FACT OR ARISING BY OPERATION OF LAW, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTY OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, NON-INFRINGEMENT AND DATA ACCURACY. NIST NEITHER REPRESENTS NOR WARRANTS THAT THE OPERATION OF THE SOFTWARE WILL BE UNINTERRUPTED OR ERROR-FREE, OR THAT ANY DEFECTS WILL BE CORRECTED. NIST DOES NOT WARRANT OR MAKE ANY REPRESENTATIONS REGARDING THE USE OF THE SOFTWARE OR THE RESULTS THEREOF, INCLUDING BUT NOT LIMITED TO THE CORRECTNESS, ACCURACY, RELIABILITY, OR USEFULNESS OF THE SOFTWARE.
+// You are solely responsible for determining the appropriateness of using and distributing the software and you assume all risks associated with its use, including but not limited to the risks and costs of program errors, compliance with applicable laws, damage to or loss of data, programs or equipment, and the unavailability or interruption of operation. This software is not intended to be used in any situation where a failure could cause risk of injury or damage to property. The software developed by NIST employees is not subject to copyright protection within the United States.
+
 //
 // Created by tjb3 on 2/23/16.
 //
@@ -70,7 +75,8 @@ int main(int argc, char *argv[]) {
 
   int blockSize = 512;
   int numReadThreads = 1;
-  int numProdThreads = 26;
+  int numProdThreads = 30;
+  int numAccumThreads = 10;
   int numBlasThreads = 40;
   bool runSequential = false;
 //  bool validate = false;
@@ -117,6 +123,11 @@ int main(int argc, char *argv[]) {
         arg++;
       }
 
+      if (argvs == "--num-threads-accum" && arg +1 < argc) {
+        numAccumThreads = atoi(argv[arg + 1]);
+        arg++;
+      }
+
       if (argvs == "--num-threads-blas" && arg + 1 < argc) {
         numBlasThreads = atoi(argv[arg + 1]);
         arg++;
@@ -133,7 +144,7 @@ int main(int argc, char *argv[]) {
 
       if (argvs == "--help") {
         std::cout << argv[0]
-                  << " args: [--width-b <#>] [--height-a <#>] [--shared-dim <#>] [--block-size <#>] [--num-retry <#>] [--num-threads-htgs <#>] [--num-threads-blas <#>] [--runtime-file <filename>] [--dir <dir>] [--output-dir <dir>] [--validate-results] [--run-sequential] [--help]"
+                  << " args: [--width-b <#>] [--height-a <#>] [--shared-dim <#>] [--block-size <#>] [--num-retry <#>] [--num-threads-htgs <#>] [--num-threads-accum <#>] [--num-threads-blas <#>] [--runtime-file <filename>] [--dir <dir>] [--output-dir <dir>] [--validate-results] [--run-sequential] [--help]"
                   << std::endl;
         exit(0);
       }
@@ -154,11 +165,13 @@ int main(int argc, char *argv[]) {
     SimpleClock endToEnd;
 
     if (runSequential) {
+      endToEnd.start();
       openblas_set_num_threads(numBlasThreads);
 
       clk.start();
       computeSequentialMatMul(matrixA, matrixB, matrixC, matrixAHeight, sharedDim, matrixBWidth);
       clk.stopAndIncrement();
+      endToEnd.stopAndIncrement();
     }
     else {
       endToEnd.start();
@@ -182,7 +195,8 @@ int main(int argc, char *argv[]) {
                              "B");
       MatrixMulBlkTask *mmulTask =
           new MatrixMulBlkTask(numProdThreads, sharedDim, matrixAHeight, matrixBWidth, sharedDim, blockSize);
-      MatrixAccumTask *accumTask = new MatrixAccumTask((int) ceil((double) numProdThreads / 2.0));
+//      MatrixAccumTask *accumTask = new MatrixAccumTask((int) ceil((double) numProdThreads / 2.0));
+      MatrixAccumTask *accumTask = new MatrixAccumTask(numAccumThreads);
 
       OutputTask *outputTask = new OutputTask(matrixC, matrixBWidth, matrixAHeight, blockSize);
 
@@ -276,7 +290,7 @@ int main(int argc, char *argv[]) {
 //    }
 
     std::cout << (runSequential ? "sequential" : "htgs") << ", " << (runSequential ? numBlasThreads : numProdThreads)
-              << ", width-b: " << matrixBWidth << ", height-a: " << matrixAHeight
+              << ", accum-threads: " << numAccumThreads << ", width-b: " << matrixBWidth << ", height-a: " << matrixAHeight
               << ", shared-dim: " << sharedDim
               << ", " << ", blockSize: " << (runSequential ? 0 : blockSize) << ", time:"
               << clk.getAverageTime(TimeVal::MILLI)
@@ -285,7 +299,7 @@ int main(int argc, char *argv[]) {
         << std::endl;
 
     runtimeFile << (runSequential ? "sequential" : "htgs") << ", " << (runSequential ? numBlasThreads : numProdThreads)
-                << ", "
+                << ", " << numAccumThreads << ", "
                 << matrixBWidth << ", " << matrixAHeight
                 << ", " << sharedDim << ", " << blockSize << ", " << clk.getAverageTime(TimeVal::MILLI)
                 << ", " << endToEnd.getAverageTime(TimeVal::MILLI)
