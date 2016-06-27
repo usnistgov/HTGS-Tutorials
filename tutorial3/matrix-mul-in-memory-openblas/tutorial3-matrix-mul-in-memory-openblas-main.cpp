@@ -75,7 +75,8 @@ int main(int argc, char *argv[]) {
 
   int blockSize = 512;
   int numReadThreads = 1;
-  int numProdThreads = 26;
+  int numProdThreads = 30;
+  int numAccumThreads = 10;
   int numBlasThreads = 40;
   bool runSequential = false;
 //  bool validate = false;
@@ -122,6 +123,11 @@ int main(int argc, char *argv[]) {
         arg++;
       }
 
+      if (argvs == "--num-threads-accum" && arg +1 < argc) {
+        numAccumThreads = atoi(argv[arg + 1]);
+        arg++;
+      }
+
       if (argvs == "--num-threads-blas" && arg + 1 < argc) {
         numBlasThreads = atoi(argv[arg + 1]);
         arg++;
@@ -138,7 +144,7 @@ int main(int argc, char *argv[]) {
 
       if (argvs == "--help") {
         std::cout << argv[0]
-                  << " args: [--width-b <#>] [--height-a <#>] [--shared-dim <#>] [--block-size <#>] [--num-retry <#>] [--num-threads-htgs <#>] [--num-threads-blas <#>] [--runtime-file <filename>] [--dir <dir>] [--output-dir <dir>] [--validate-results] [--run-sequential] [--help]"
+                  << " args: [--width-b <#>] [--height-a <#>] [--shared-dim <#>] [--block-size <#>] [--num-retry <#>] [--num-threads-htgs <#>] [--num-threads-accum <#>] [--num-threads-blas <#>] [--runtime-file <filename>] [--dir <dir>] [--output-dir <dir>] [--validate-results] [--run-sequential] [--help]"
                   << std::endl;
         exit(0);
       }
@@ -159,11 +165,13 @@ int main(int argc, char *argv[]) {
     SimpleClock endToEnd;
 
     if (runSequential) {
+      endToEnd.start();
       openblas_set_num_threads(numBlasThreads);
 
       clk.start();
       computeSequentialMatMul(matrixA, matrixB, matrixC, matrixAHeight, sharedDim, matrixBWidth);
       clk.stopAndIncrement();
+      endToEnd.stopAndIncrement();
     }
     else {
       endToEnd.start();
@@ -187,7 +195,8 @@ int main(int argc, char *argv[]) {
                              "B");
       MatrixMulBlkTask *mmulTask =
           new MatrixMulBlkTask(numProdThreads, sharedDim, matrixAHeight, matrixBWidth, sharedDim, blockSize);
-      MatrixAccumTask *accumTask = new MatrixAccumTask((int) ceil((double) numProdThreads / 2.0));
+//      MatrixAccumTask *accumTask = new MatrixAccumTask((int) ceil((double) numProdThreads / 2.0));
+      MatrixAccumTask *accumTask = new MatrixAccumTask(numAccumThreads);
 
       OutputTask *outputTask = new OutputTask(matrixC, matrixBWidth, matrixAHeight, blockSize);
 
