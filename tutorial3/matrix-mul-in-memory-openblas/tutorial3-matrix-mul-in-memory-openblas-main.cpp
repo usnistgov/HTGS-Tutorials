@@ -290,7 +290,7 @@ int main(int argc, char *argv[]) {
 //    }
 
     std::cout << (runSequential ? "sequential" : "htgs") << ", " << (runSequential ? numBlasThreads : numProdThreads)
-              << ", width-b: " << matrixBWidth << ", height-a: " << matrixAHeight
+              << ", accum-threads: " << numAccumThreads << ", width-b: " << matrixBWidth << ", height-a: " << matrixAHeight
               << ", shared-dim: " << sharedDim
               << ", " << ", blockSize: " << (runSequential ? 0 : blockSize) << ", time:"
               << clk.getAverageTime(TimeVal::MILLI)
@@ -299,7 +299,7 @@ int main(int argc, char *argv[]) {
         << std::endl;
 
     runtimeFile << (runSequential ? "sequential" : "htgs") << ", " << (runSequential ? numBlasThreads : numProdThreads)
-                << ", "
+                << ", " << numAccumThreads << ", "
                 << matrixBWidth << ", " << matrixAHeight
                 << ", " << sharedDim << ", " << blockSize << ", " << clk.getAverageTime(TimeVal::MILLI)
                 << ", " << endToEnd.getAverageTime(TimeVal::MILLI)
