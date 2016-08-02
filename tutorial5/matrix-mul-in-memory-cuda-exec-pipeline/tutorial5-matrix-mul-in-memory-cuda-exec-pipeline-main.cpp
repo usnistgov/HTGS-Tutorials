@@ -356,7 +356,7 @@ int main(int argc, char *argv[]) {
 
       taskGraph->incrementGraphInputProducer();
 
-//      taskGraph->writeDotToFile("cuda-graph.dot");
+      taskGraph->writeDotToFile("cuda-graph.dot");
 
       htgs::Runtime *runtime = new htgs::Runtime(taskGraph);
 
@@ -392,6 +392,9 @@ int main(int argc, char *argv[]) {
 
       runtime->waitForRuntime();
       clk.stopAndIncrement();
+
+      taskGraph->writeDotToFile("post-exec-cuda-graph.dot");
+
 
       delete runtime;
       endToEnd.stopAndIncrement();

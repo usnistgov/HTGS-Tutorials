@@ -18,12 +18,50 @@ double *allocMatrix(int width, int height) {
   return matrix;
 }
 
+void initMatrixDiagDom(double * matrix, long width, long height, bool columnStore)
+{
+  long min = 1;
+  long max = 42;
+  unsigned long seed = 9000;
+
+
+  long minDiag = max * width + 10;
+  long maxDiag = minDiag + 9000;
+
+  std::uniform_int_distribution<long> unif(min, max);
+  std::default_random_engine re(seed);
+
+  std::uniform_int_distribution<long> unifDiag(minDiag, maxDiag);
+
+  if (columnStore) {
+    for (long c = 0; c < width; c++) {
+      for (long r = 0; r < height; r++) {
+        if (r == c)
+          matrix[IDX2C(r, c, height)] = unifDiag(re);
+        else
+          matrix[IDX2C(r, c, height)] = unif(re);
+      }
+    }
+  }
+  else {
+    for (long r = 0; r < height; r++) {
+      for (long c = 0; c < width; c++) {
+        if (r == c)
+          matrix[r * width + c] = unifDiag(re);
+        else
+          matrix[r * width + c] = unif(re);
+      }
+    }
+  }
+
+}
+
 void initMatrix(double *matrix, long width, long height, bool columnStore) {
   long min = 1;
   long max = 9000;
   unsigned long seed = 9000;
 
-  std::uniform_int_distribution<int> unif(min, max);
+  std::uniform_int_distribution<long> unif(min, max);
   std::default_random_engine re(seed);
 
   if (columnStore) {
