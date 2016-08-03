@@ -317,9 +317,6 @@ int main(int argc, char *argv[]) {
     double flops = operations / clk.getAverageTime(TimeVal::SEC);
     double gflops = flops / 1073741824.0;
 
-
-
-
     std::cout << (runSequential ? "sequential" : "htgs")
               << ", matrix-size: " << matrixSize
               << ", " << "blockSize: " << (runSequential ? 0 : blockSize)
