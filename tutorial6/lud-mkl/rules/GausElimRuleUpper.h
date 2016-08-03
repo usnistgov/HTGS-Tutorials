@@ -7,7 +7,7 @@
 
 #include <htgs/api/IRule.hpp>
 #include "../data/MatrixFactorData.h"
-#include "../../tutorial-utils/util-matrix.h"
+#include "../../../tutorial-utils/util-matrix.h"
 class GausElimRuleUpper : public htgs::IRule<MatrixBlockData<double *>, MatrixFactorData<double *>>
 {
 

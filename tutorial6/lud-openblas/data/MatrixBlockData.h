@@ -7,30 +7,40 @@
 // Created by tjb3 on 2/23/16.
 //
 
-#ifndef HTGS_MATRIXREQUESTDATA_H
-#define HTGS_MATRIXREQUESTDATA_H
+#ifndef HTGS_MATRIXBLOCKDATA_H
+#define HTGS_MATRIXBLOCKDATA_H
 
-#include <htgs/api/IData.hpp>
-#include "../../tutorial-utils/enums/MatrixType.h"
+#include <htgs/api/MemoryData.hpp>
 
-class MatrixRequestData : public htgs::IData {
+typedef std::shared_ptr<htgs::MemoryData<double *>> MatrixMemoryData_t;
+
+template<class T>
+class MatrixBlockData : public htgs::IData {
  public:
-  MatrixRequestData(int row, int col, MatrixType type) : row(row), col(col), type(type) {}
 
-  int getRow() const {
-    return row;
+  MatrixBlockData(std::shared_ptr<MatrixRequestData> request,
+                  T matrixData,
+                  long matrixWidth,
+                  long matrixHeight) :
+      request(request), matrixData(matrixData), matrixWidth(matrixWidth), matrixHeight(matrixHeight) {}
+
+  std::shared_ptr<MatrixRequestData> getRequest() const {
+    return request;
   }
-  int getCol() const {
-    return col;
+  T getMatrixData() const {
+    return matrixData;
   }
-  MatrixType getType() const {
-    return type;
+  long getMatrixWidth() const {
+    return matrixWidth;
+  }
+  long getMatrixHeight() const {
+    return matrixHeight;
   }
 
  private:
-  int row;
-  int col;
-  MatrixType type;
+  std::shared_ptr<MatrixRequestData> request;
+  T matrixData;
+  long matrixWidth;
+  long matrixHeight;
 };
-
-#endif //HTGS_MATRIXREQUESTDATA_H
+#endif //HTGS_MATRIXBLOCKDATA_H

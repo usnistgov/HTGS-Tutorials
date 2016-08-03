@@ -8,7 +8,7 @@
 #include <htgs/api/ITask.hpp>
 #include <cblas.h>
 #include "../data/MatrixBlockData.h"
-#include "../../tutorial-utils/util-matrix.h"
+#include "../../../tutorial-utils/util-matrix.h"
 class GausElimTask : public htgs::ITask<MatrixBlockData<double *>, MatrixBlockData<double *>>
 {
  public:

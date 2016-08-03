@@ -9,9 +9,10 @@
 //#define DEBUG_FLAG
 //#define DEBUG_LEVEL_VERBOSE
 //#define PROFILE
+
+#include <mkl.h>
 #include <htgs/api/TaskGraph.hpp>
 #include <htgs/api/Runtime.hpp>
-#include <cblas.h>
 #include <iomanip>
 #include <cfloat>
 
@@ -22,8 +23,8 @@
 #include "rules/UpdateRule.h"
 #include "rules/GausElimRule.h"
 
-#include "../tutorial-utils/SimpleClock.h"
-#include "../tutorial-utils/util-matrix.h"
+#include "../../tutorial-utils/SimpleClock.h"
+#include "../../tutorial-utils/util-matrix.h"
 #include "tasks/GausElimTask.h"
 #include "tasks/FactorUpperTask.h"
 #include "tasks/FactorLowerTask.h"
@@ -66,64 +67,24 @@ int validateResults(double *luMatrix, double *origMatrix, int matrixSize) {
     }
   }
 
-//  std::cout << "orig matrix:" << std::endl;
-//  for (int r = 0; r < matrixSize; r++)
-//  {
-//    for (int c = 0; c < matrixSize; c++)
-//    {
-//      std::cout << std::setw(14) << std::setprecision(9) << origMatrix[IDX2C(r, c, matrixSize)] << " ";
-//    }
-//    std::cout <<std::endl;
-//  }
-//  std::cout << "U matrix:" << std::endl;
-//  for (int r = 0; r < matrixSize; r++)
-//  {
-//    for (int c = 0; c < matrixSize; c++)
-//    {
-//      std::cout << std::setw(14) << std::setprecision(9) << uMatrix[IDX2C(r, c, matrixSize)] << " ";
-//    }
-//    std::cout <<std::endl;
-//  }
-
-
-//  std::cout << "L matrix:" << std::endl;
-//  for (int r = 0; r < matrixSize; r++)
-//  {
-//    for (int c = 0; c < matrixSize; c++)
-//    {
-//      std::cout << std::setw(14) << std::setprecision(9) << lMatrix[IDX2C(r, c, matrixSize)] << " ";
-//    }
-//    std::cout <<std::endl;
-//  }
-
-  // Create identiy matrix
   double *result = new double[matrixSize*matrixSize];
 
-  openblas_set_num_threads(40);
-  cblas_dgemm(CblasColMajor, CblasNoTrans, CblasNoTrans, matrixSize, matrixSize, matrixSize, 1.0, lMatrix, matrixSize, uMatrix, matrixSize, 0.0, result, matrixSize);
+  mkl_set_num_threads(40);
 
-//  std::cout << "result matrix:" << std::endl;
-//  for (int r = 0; r < matrixSize; r++)
-//  {
-//    for (int c = 0; c < matrixSize; c++)
-//    {
-//      std::cout << std::setw(14) << std::setprecision(9) << result[IDX2C(r, c, matrixSize)] << " ";
-//    }
-//    std::cout <<std::endl;
-//  }
+  cblas_dgemm(CblasColMajor, CblasNoTrans, CblasNoTrans, matrixSize, matrixSize, matrixSize, 1.0, lMatrix, matrixSize, uMatrix, matrixSize, 0.0, result, matrixSize);
 
   for (int r = 0; r < matrixSize; r++)
   {
     for (int c = 0; c < matrixSize; c++)
     {
 
-      double difference = abs(result[IDX2C(r, c, matrixSize)] - origMatrix[IDX2C(r, c, matrixSize)]);
-      if (difference > DBL_EPSILON)
+      double difference = fabs(result[IDX2C(r, c, matrixSize)] - origMatrix[IDX2C(r, c, matrixSize)]);
+      if (difference > 1.0e-8)
       {
         count++;
         if (count < 20)
         {
-          std::cout << "Incorrect value: " << result[IDX2C(r, c, matrixSize)] << " != " << origMatrix[IDX2C(r, c, matrixSize)] << std::endl;
+          std::cout << "Incorrect value: " << result[IDX2C(r, c, matrixSize)] << " != " << origMatrix[IDX2C(r, c, matrixSize)] << " difference: " << difference << std::endl;
         }
       }
     }
@@ -137,16 +98,24 @@ int validateResults(double *luMatrix, double *origMatrix, int matrixSize) {
   return 0;
 }
 
+void runSequentialLU(double *matrix, int matrixSize)
+{
+  int *piv = new int[matrixSize*matrixSize];
+  LAPACKE_dgetrf(LAPACK_COL_MAJOR, matrixSize, matrixSize, matrix, matrixSize, piv);
+}
+
 int main(int argc, char *argv[]) {
   long matrixSize= 16384;
   int blockSize = 128;
   bool runSequential = false;
   bool validate = false;
 
-  int numGausElimThreads = 4;
-  int numFactorLowerThreads = 8;
-  int numFactorUpperThreads = 8;
-  int numMatrixMulThreads = 20;
+  int numBlasThreads = 40;
+
+  int numGausElimThreads = 2;
+  int numFactorLowerThreads = 4;
+  int numFactorUpperThreads = 4;
+  int numMatrixMulThreads = 30;
 
   std::string runtimeFileStr("runtimes");
 
@@ -159,6 +128,32 @@ int main(int argc, char *argv[]) {
       if (argvs == "--size") {
         arg++;
         matrixSize = atoi(argv[arg]);
+      }
+
+      if (argvs == "--num-threads-blas") {
+        arg++;
+        numBlasThreads = atoi(argv[arg]);
+      }
+
+
+      if (argvs == "num-threads-factor-l") {
+        arg++;
+        numFactorLowerThreads = atoi(argv[arg]);
+      }
+
+      if (argvs == "num-threads-factor-u") {
+        arg++;
+        numFactorUpperThreads = atoi(argv[arg]);
+      }
+
+      if (argvs == "num-threads-gaus") {
+        arg++;
+        numGausElimThreads = atoi(argv[arg]);
+      }
+
+      if (argvs == "num-threads-gemm") {
+        arg++;
+        numMatrixMulThreads = atoi(argv[arg]);
       }
 
       if (argvs == "--run-sequential") {
@@ -181,28 +176,32 @@ int main(int argc, char *argv[]) {
         arg++;
       }
 
-//      if (argvs == "--validate-results") {
-//        validate = true;
-//      }
+      if (argvs == "--validate-results") {
+        validate = true;
+      }
 
       if (argvs == "--help") {
         std::cout << argv[0]
-                  << " args: [--size <#>] [--block-size <#>] [--num-retry <#>] [--runtime-file <filename>] [--validate-results] [--run-sequential] [--help]"
+                  << " args: [--size <#>] [--block-size <#>] [--num-retry <#>] [--runtime-file <filename>] [--validate-results] [--run-sequential] [--num-threads-factor-l <#>] [--num-threads-factor-u <#>] [--num-threads-gaus <#>] [--num-threads-gemm <#>] [--num-threads-blas <#>] [--help]"
                   << std::endl;
         exit(0);
+
       }
     }
   }
 
   std::ofstream runtimeFile(runtimeFileStr, std::ios::app);
   double *matrix = new double[matrixSize * matrixSize];
-  double *matrixTest = new double[matrixSize * matrixSize];
+  double *matrixTest = nullptr;
 
   // TODO: Ensure diagonally dominant
   initMatrixDiagDom(matrix, matrixSize, matrixSize, true);
 
-  for (int i = 0; i < matrixSize*matrixSize; i++)
-    matrixTest[i] = matrix[i];
+  if (validate) {
+    matrixTest = new double[matrixSize * matrixSize];
+    for (int i = 0; i < matrixSize * matrixSize; i++)
+      matrixTest[i] = matrix[i];
+  }
 
   for (int numTry = 0; numTry < numRetry; numTry++) {
     SimpleClock clk;
@@ -210,16 +209,18 @@ int main(int argc, char *argv[]) {
 
     if (runSequential) {
       endToEnd.start();
-      openblas_set_num_threads(40);
+      mkl_domain_set_num_threads(numBlasThreads, MKL_DOMAIN_ALL);
+//      mkl_set_num_threads(40);
 
-//      clk.start();
+      clk.start();
+      runSequentialLU(matrix, matrixSize);
 //      computeSequentialMatMul(matrixA, matrixB, matrixC, matrixAHeight, sharedDim, matrixBWidth);
-//      clk.stopAndIncrement();
+      clk.stopAndIncrement();
       endToEnd.stopAndIncrement();
     }
     else {
       endToEnd.start();
-      openblas_set_num_threads(1);
+      mkl_domain_set_num_threads(numBlasThreads, MKL_DOMAIN_ALL);
 
       int gridHeight = (int) matrixSize / blockSize;
       int gridWidth = (int) matrixSize / blockSize;
@@ -262,12 +263,8 @@ int main(int argc, char *argv[]) {
       int numDiagonals = gridWidth - 1;
       GausElimRule *gausElimRule = new GausElimRule(numDiagonals, gridHeight, gridWidth);
 
-      // Number of updates excluding the diagonal and the top/right row/column
+      // Number of updates excluding the diagonal and the top/left row/column
       int numUpdates = (1.0/6.0) * (double)gridWidth * (2.0 * ((double)gridWidth * (double)gridWidth) - 3.0 * (double)gridWidth + 1.0);
-//      if (gridWidth * gridHeight == 1)
-//        numUpdates = 0;
-//      else
-//        numUpdates= gridWidth * gridHeight - (gridWidth - 1) - (gridHeight - 1) - gridWidth;
 
       UpdateRule *updateRule = new UpdateRule(numUpdates);
       UpdateRule *updateRule2 = new UpdateRule(numUpdates);
@@ -307,14 +304,7 @@ int main(int argc, char *argv[]) {
       taskGraph->produceData(matrixBlocks->get(0, 0));
       taskGraph->finishedProducingData();
 
-//      for (int i = 0; i < 9000; i++)
-//        std::cout << i << std::endl;
-//
-//      taskGraph->writeDotToFile("lud-graph-exec.dot");
-
       runtime->waitForRuntime();
-
-      // TODO: Run
 
       clk.stopAndIncrement();
 
@@ -323,19 +313,6 @@ int main(int argc, char *argv[]) {
       endToEnd.stopAndIncrement();
     }
 
-    // TODO: Validate
-//    if (validate) {
-//      int res = validateResults(matrixC, matrixC_HTGS, matrixAHeight, matrixBWidth);
-//      if (res != 0) {
-//        std::cout << "Error validating test failed!" << std::endl;
-//      }
-//      else
-//      {
-//        std::cout << "Test PASSED" << std::endl;
-//      }
-//
-//    }
-
     double operations = (2.0 * (matrixSize * matrixSize * matrixSize)) / 3.0;
     double flops = operations / clk.getAverageTime(TimeVal::SEC);
     double gflops = flops / 1073741824.0;
@@ -343,17 +320,31 @@ int main(int argc, char *argv[]) {
 
 
 
-    std::cout << (runSequential ? "sequential" : "htgs") << ", matrix-size: " << matrixSize
-              << ", " << "blockSize: " << (runSequential ? 0 : blockSize) << ", time:"
-              << clk.getAverageTime(TimeVal::MILLI)
-              << ", end-to-end:" << endToEnd.getAverageTime(TimeVal::MILLI) << " gflops: " << gflops
+    std::cout << (runSequential ? "sequential" : "htgs")
+              << ", matrix-size: " << matrixSize
+              << ", " << "blockSize: " << (runSequential ? 0 : blockSize)
+              << ", blasThreads: " << numBlasThreads
+              << ", gausThreads: " << numGausElimThreads
+              << ", factorUpperThreads: " << numFactorUpperThreads
+              << ", factorLowerThreads: " << numFactorLowerThreads
+              << ", gemmThreads: " << numMatrixMulThreads
+              << ", time:" << clk.getAverageTime(TimeVal::MILLI)
+              << ", end-to-end:" << endToEnd.getAverageTime(TimeVal::MILLI)
+              << ", gflops: " << gflops
 
         << std::endl;
 
     runtimeFile << (runSequential ? "sequential" : "htgs")
                 << ", " << matrixSize
-                << ", " << blockSize << ", " << clk.getAverageTime(TimeVal::MILLI)
+                << ", " << blockSize
+                << ", " << numBlasThreads
+                << ", " << numGausElimThreads
+                << ", " << numFactorUpperThreads
+                << ", " << numFactorLowerThreads
+                << ", " << numMatrixMulThreads
+                << ", " << clk.getAverageTime(TimeVal::MILLI)
                 << ", " << endToEnd.getAverageTime(TimeVal::MILLI)
+                << ", " << gflops
                 << std::endl;
 
 
