@@ -20,12 +20,12 @@ class GausElimTask : public htgs::ITask<MatrixBlockData<double *>, MatrixBlockDa
 
     for (int diag = 0; diag < data->getMatrixWidth()-1; diag++)
     {
-      const double diagVal = matrix[IDX2C(diag, diag, fullMatrixHeight)];
+      const double diagVal = 1.0 / matrix[IDX2C(diag, diag, fullMatrixHeight)];
 
       // elimination step
       for (int r = diag+1; r < data->getMatrixHeight(); r++)
       {
-        matrix[IDX2C(r, diag, fullMatrixHeight)] = matrix[IDX2C(r, diag, fullMatrixHeight)] / diagVal;
+        matrix[IDX2C(r, diag, fullMatrixHeight)] = matrix[IDX2C(r, diag, fullMatrixHeight)] * diagVal;
       }
 //      cblas_dscal((int)data->getMatrixHeight()-(diag+1), diagVal, &matrix[IDX2C(diag+1, diag, fullMatrixHeight)], 1);
 
