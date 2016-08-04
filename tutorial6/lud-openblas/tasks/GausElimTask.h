@@ -7,16 +7,28 @@
 
 #include <htgs/api/ITask.hpp>
 #include <cblas.h>
+#include <lapacke.h>
 #include "../data/MatrixBlockData.h"
 #include "../../../tutorial-utils/util-matrix.h"
 class GausElimTask : public htgs::ITask<MatrixBlockData<double *>, MatrixBlockData<double *>>
 {
  public:
-  GausElimTask(int numThreads, long fullMatrixHeight, long fullMatrixWidth) : ITask(numThreads), fullMatrixHeight(fullMatrixHeight), fullMatrixWidth(fullMatrixWidth) {}
+  GausElimTask(int numThreads, long fullMatrixHeight, long fullMatrixWidth, int blockSize) :
+  ITask(numThreads), fullMatrixHeight(fullMatrixHeight), fullMatrixWidth(fullMatrixWidth), blockSize(blockSize)
+  {
+    this->ipiv = new int[blockSize*blockSize];
+  }
+
+  ~GausElimTask()
+  {
+    delete []ipiv;
+  }
 
   virtual void executeTask(std::shared_ptr<MatrixBlockData<double *>> data) {
 
     double *matrix = data->getMatrixData();
+
+//    LAPACKE_dgetf2(LAPACK_COL_MAJOR, data->getMatrixHeight(), data->getMatrixWidth(), matrix, fullMatrixHeight, ipiv);
 
     for (int diag = 0; diag < data->getMatrixWidth()-1; diag++)
     {
@@ -27,7 +39,6 @@ class GausElimTask : public htgs::ITask<MatrixBlockData<double *>, MatrixBlockDa
       {
         matrix[IDX2C(r, diag, fullMatrixHeight)] = matrix[IDX2C(r, diag, fullMatrixHeight)] * diagVal;
       }
-//      cblas_dscal((int)data->getMatrixHeight()-(diag+1), diagVal, &matrix[IDX2C(diag+1, diag, fullMatrixHeight)], 1);
 
       // update step
       for (int col = diag+1; col < data->getMatrixWidth(); col++)
@@ -47,7 +58,7 @@ class GausElimTask : public htgs::ITask<MatrixBlockData<double *>, MatrixBlockDa
     addResult(data);
   }
   virtual GausElimTask *copy() {
-    return new GausElimTask(this->getNumThreads(), fullMatrixHeight, fullMatrixWidth);
+    return new GausElimTask(this->getNumThreads(), fullMatrixHeight, fullMatrixWidth, blockSize);
   }
 
   virtual std::string getName() {
@@ -57,6 +68,8 @@ class GausElimTask : public htgs::ITask<MatrixBlockData<double *>, MatrixBlockDa
  private:
   long fullMatrixWidth;
   long fullMatrixHeight;
+  int *ipiv;
+  int blockSize;
 };
 
 #endif //HTGS_TUTORIALS_GAUSELIMTASK_H

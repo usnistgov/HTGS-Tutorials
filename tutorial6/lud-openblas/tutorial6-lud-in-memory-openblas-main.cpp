@@ -1,4 +1,3 @@
-
 // NIST-developed software is provided by NIST as a public service. You may use, copy and distribute copies of the software in any medium, provided that you keep intact this entire notice. You may improve, modify and create derivative works of the software or any portion of the software, and you may copy and distribute such modifications or works. Modified works should carry a notice stating that you changed the software and should note the date and nature of any such change. Please explicitly acknowledge the National Institute of Standards and Technology as the source of the software.
 // NIST-developed software is expressly provided "AS IS." NIST MAKES NO WARRANTY OF ANY KIND, EXPRESS, IMPLIED, IN FACT OR ARISING BY OPERATION OF LAW, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTY OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, NON-INFRINGEMENT AND DATA ACCURACY. NIST NEITHER REPRESENTS NOR WARRANTS THAT THE OPERATION OF THE SOFTWARE WILL BE UNINTERRUPTED OR ERROR-FREE, OR THAT ANY DEFECTS WILL BE CORRECTED. NIST DOES NOT WARRANT OR MAKE ANY REPRESENTATIONS REGARDING THE USE OF THE SOFTWARE OR THE RESULTS THEREOF, INCLUDING BUT NOT LIMITED TO THE CORRECTNESS, ACCURACY, RELIABILITY, OR USEFULNESS OF THE SOFTWARE.
 // You are solely responsible for determining the appropriateness of using and distributing the software and you assume all risks associated with its use, including but not limited to the risks and costs of program errors, compliance with applicable laws, damage to or loss of data, programs or equipment, and the unavailability or interruption of operation. This software is not intended to be used in any situation where a failure could cause risk of injury or damage to property. The software developed by NIST employees is not subject to copyright protection within the United States.
@@ -41,6 +40,7 @@ int validateResults(double *luMatrix, double *origMatrix, int matrixSize) {
 
   double *lMatrix = new double[matrixSize * matrixSize];
   double *uMatrix = new double[matrixSize * matrixSize];
+  double *result = new double[matrixSize*matrixSize];
 
   for (int c = 0; c < matrixSize; c++)
   {
@@ -67,7 +67,6 @@ int validateResults(double *luMatrix, double *origMatrix, int matrixSize) {
     }
   }
 
-  double *result = new double[matrixSize*matrixSize];
 
   openblas_set_num_threads(40);
   cblas_dgemm(CblasColMajor, CblasNoTrans, CblasNoTrans, matrixSize, matrixSize, matrixSize, 1.0, lMatrix, matrixSize, uMatrix, matrixSize, 0.0, result, matrixSize);
@@ -92,15 +91,19 @@ int validateResults(double *luMatrix, double *origMatrix, int matrixSize) {
   if (count > 0)
     std::cout << "Total incorrect = " << count << std::endl;
 
+  delete [] lMatrix;
+  delete [] uMatrix;
+  delete [] result;
+
   if (count > 0)
     return 1;
   return 0;
 }
 
-void runSequential(double *matrix, int matrixSize)
+void runSequentialLU(double *matrix, int matrixSize)
 {
-//  int *piv = new int[matrixSize];
-//  LAPACKE_dgetrf(LAPACK_COL_MAJOR, matrixSize, matrixSize, matrix, matrixSize, piv);
+  int *piv = new int[matrixSize];
+  LAPACKE_dgetrf(LAPACK_COL_MAJOR, matrixSize, matrixSize, matrix, matrixSize, piv);
 }
 
 int main(int argc, char *argv[]) {
@@ -109,7 +112,7 @@ int main(int argc, char *argv[]) {
   bool runSequential = false;
   bool validate = false;
 
-  int numBlasThreads = 40;
+  int numBlasThreads = 1;
 
   int numGausElimThreads = 2;
   int numFactorLowerThreads = 4;
@@ -208,9 +211,9 @@ int main(int argc, char *argv[]) {
       endToEnd.start();
       openblas_set_num_threads(numBlasThreads);
 
-//      clk.start();
-//      computeSequentialMatMul(matrixA, matrixB, matrixC, matrixAHeight, sharedDim, matrixBWidth);
-//      clk.stopAndIncrement();
+      clk.start();
+      runSequentialLU(matrix, matrixSize);
+      clk.stopAndIncrement();
       endToEnd.stopAndIncrement();
     }
     else {
@@ -220,7 +223,6 @@ int main(int argc, char *argv[]) {
       int gridHeight = (int) matrixSize / blockSize;
       int gridWidth = (int) matrixSize / blockSize;
 
-      // TODO: Build graph and runtime
       htgs::StateContainer<std::shared_ptr<MatrixBlockData<double *>>> *matrixBlocks = new htgs::StateContainer<std::shared_ptr<MatrixBlockData<double *>>>(gridHeight, gridWidth, nullptr);
 
       for (int r = 0; r < gridHeight; r++)
@@ -237,7 +239,7 @@ int main(int argc, char *argv[]) {
         }
       }
 
-      GausElimTask *gausElimTask = new GausElimTask(numGausElimThreads, matrixSize, matrixSize);
+      GausElimTask *gausElimTask = new GausElimTask(numGausElimThreads, matrixSize, matrixSize, blockSize);
 
       auto gausElimBk = new htgs::Bookkeeper<MatrixBlockData<double *>>();
 
@@ -279,12 +281,18 @@ int main(int argc, char *argv[]) {
 
       if (numDiagonals > 0)
         taskGraph->addRule(matrixMulResultBk, gausElimTask, gausElimRule);
+      else
+        delete gausElimRule;
 
       if (numUpdates > 0)
         taskGraph->addRule(matrixMulResultBk, matrixMulBk, updateRule);
+      else
+        delete updateRule;
 
       if (numUpdates > 0)
         taskGraph->addRule(matrixMulResultBk, gausElimBk, updateRule2);
+      else
+        delete updateRule2;
 
       taskGraph->incrementGraphInputProducer();
 
@@ -302,8 +310,8 @@ int main(int argc, char *argv[]) {
 
       clk.stopAndIncrement();
 
-
       delete runtime;
+      delete matrixBlocks;
       endToEnd.stopAndIncrement();
     }
 
@@ -353,6 +361,8 @@ int main(int argc, char *argv[]) {
   }
 
   delete[] matrix;
-  delete[] matrixTest;
+
+  if (validate)
+    delete[] matrixTest;
 
 }

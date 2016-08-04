@@ -6,7 +6,7 @@
 cmake_minimum_required(VERSION 2.7)
 project(htgs-tutorials)
 
-#SET(CMAKE_VERBOSE_MAKEFILE on)
+SET(CMAKE_VERBOSE_MAKEFILE on)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake-modules")
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-unused-parameter -Wno-reorder")
@@ -15,6 +15,8 @@ find_package(Threads REQUIRED)
 find_package(HTGS REQUIRED)
 find_package(OpenBLAS QUIET)
 find_package(CUDA QUIET)
+find_package(LAPACKE QUIET)
+#find_package(MKL REQUIRED)
 
 
 include_directories(${HTGS_INCLUDE_DIR})
@@ -22,15 +24,9 @@ link_libraries(${CMAKE_THREAD_LIBS_INIT})
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wl,--no-as-needed ${CMAKE_THREAD_LIBS_INIT}")
 
-
 add_subdirectory(tutorial1)
 add_subdirectory(tutorial2)
 add_subdirectory(tutorial3)
 add_subdirectory(tutorial4)
 add_subdirectory(tutorial5)
 add_subdirectory(tutorial6)
-#add_subdirectory(matrix-mul-openblas)
-#add_subdirectory(matrix-mul-mmap)
-#add_subdirectory(matrix-mul-mmap-openblas)
-#add_subdirectory(matrix-mul-mmap-cuda)
-#add_subdirectory(matrix-mul-mmap-openblas-alternate)

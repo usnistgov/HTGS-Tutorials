@@ -71,7 +71,8 @@ int validateResults(double *luMatrix, double *origMatrix, int matrixSize) {
 
   mkl_set_num_threads(40);
 
-  cblas_dgemm(CblasColMajor, CblasNoTrans, CblasNoTrans, matrixSize, matrixSize, matrixSize, 1.0, lMatrix, matrixSize, uMatrix, matrixSize, 0.0, result, matrixSize);
+  mkl_blas_
+//  cblas_dgemm(CblasColMajor, CblasNoTrans, CblasNoTrans, matrixSize, matrixSize, matrixSize, 1.0, lMatrix, matrixSize, uMatrix, matrixSize, 0.0, result, matrixSize);
 
   for (int r = 0; r < matrixSize; r++)
   {

@@ -3,8 +3,10 @@
 # NIST-developed software is expressly provided "AS IS." NIST MAKES NO WARRANTY OF ANY KIND, EXPRESS, IMPLIED, IN FACT OR ARISING BY OPERATION OF LAW, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTY OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, NON-INFRINGEMENT AND DATA ACCURACY. NIST NEITHER REPRESENTS NOR WARRANTS THAT THE OPERATION OF THE SOFTWARE WILL BE UNINTERRUPTED OR ERROR-FREE, OR THAT ANY DEFECTS WILL BE CORRECTED. NIST DOES NOT WARRANT OR MAKE ANY REPRESENTATIONS REGARDING THE USE OF THE SOFTWARE OR THE RESULTS THEREOF, INCLUDING BUT NOT LIMITED TO THE CORRECTNESS, ACCURACY, RELIABILITY, OR USEFULNESS OF THE SOFTWARE.
 # You are solely responsible for determining the appropriateness of using and distributing the software and you assume all risks associated with its use, including but not limited to the risks and costs of program errors, compliance with applicable laws, damage to or loss of data, programs or equipment, and the unavailability or interruption of operation. This software is not intended to be used in any situation where a failure could cause risk of injury or damage to property. The software developed by NIST employees is not subject to copyright protection within the United States.
 
-include_directories(${OpenBLAS_INCLUDE_DIR})
 link_directories(${OpenBLAS_LIBRARIES})
+link_directories(${LAPACK_LIBRARIES})
+
+
 
 set(TUTORIAL_UTILS_SRC
         ../../tutorial-utils/util-matrix.h
@@ -30,3 +32,7 @@ add_executable(lud-in-memory-openblas
         ${TUTORIAL_UTILS_SRC} )
 
 target_link_libraries(lud-in-memory-openblas openblas)
+target_link_libraries(lud-in-memory-openblas lapacke)
+
+target_include_directories(lud-in-memory-openblas PUBLIC ${LAPACK_INCLUDES})
+target_include_directories(lud-in-memory-openblas PUBLIC ${OpenBLAS_INCLUDE_DIR})
