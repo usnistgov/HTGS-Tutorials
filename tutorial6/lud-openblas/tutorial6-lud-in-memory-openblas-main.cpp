@@ -296,7 +296,7 @@ int main(int argc, char *argv[]) {
 
       taskGraph->incrementGraphInputProducer();
 
-      taskGraph->writeDotToFile("lud-graph.dot");
+//      taskGraph->writeDotToFile("lud-graph.dot");
 
       htgs::Runtime *runtime = new htgs::Runtime(taskGraph);
 
