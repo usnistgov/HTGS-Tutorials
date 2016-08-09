@@ -7,76 +7,66 @@
 // Created by tjb3 on 6/15/16.
 //
 
-#ifndef HTGS_TUTORIALS_MATRIXCOPYINTASK_H
-#define HTGS_TUTORIALS_MATRIXCOPYINTASK_H
+#ifndef HTGS_TUTORIALS_MATRIXCOPYINFACTORTASK_H
+#define HTGS_TUTORIALS_MATRIXCOPYINFACTORTASK_H
 
 #include <htgs/api/ICudaTask.hpp>
-#include "../data/MatrixBlockData.h"
+#include "../data/MatrixFactorCudaData.h"
 #include <cuda.h>
 
-class MatrixCopyInGausTask : public htgs::ICudaTask<MatrixBlockData<double *>, MatrixBlockData<MatrixMemoryData_t>> {
+class MatrixCopyInFactorTask : public htgs::ICudaTask<MatrixFactorCudaData<double *>, MatrixFactorCudaData<double *>> {
  public:
-  MatrixCopyInGausTask(std::string name, int blockSize, int releaseCount,
-                   CUcontext *contexts, int *cudaIds, int numGpus, long leadingDimensionFullMatrix) :
+  MatrixCopyInFactorTask(int blockSize, CUcontext *contexts, int *cudaIds, int numGpus, long leadingDimensionFullMatrix, int numBlocksWidth) :
       ICudaTask(contexts, cudaIds, numGpus),
-      name(name),
-      releaseCount(releaseCount),
       blockSize(blockSize),
-      leadingDimensionFullMatrix(leadingDimensionFullMatrix) {}
+      leadingDimensionFullMatrix(leadingDimensionFullMatrix),
+      numBlocksWidth(numBlocksWidth){}
 
   virtual void
   initializeCudaGPU(CUcontext context, CUstream stream, int cudaId, int numGPUs, int pipelineId, int numPipelines) {
-//    cudaMallocHost((void **)&gpuMemPinned, sizeof(double)*blockSize*blockSize);
-//    scratchSpace = new double[blockSize*blockSize];
   }
 
-  virtual void executeGPUTask(std::shared_ptr<MatrixBlockData<double *>> data, CUstream stream) {
-    std::string matrixName = matrixTypeToString(data->getRequest()->getType());
+  virtual void executeGPUTask(std::shared_ptr<MatrixFactorCudaData<double *>> data, CUstream stream) {
 
     // CPU Memory
-    double *memoryIn = data->getMatrixData();
+    auto unfactoredMatrix = data->getUnFactoredMatrix();
+    double *memoryIn = unfactoredMatrix->getMatrixData();
+
 
     // Cuda Memory
-    auto memoryOut = this->memGet<double *>(matrixName + "Copy", new MatrixMemoryRule(releaseCount));
+    int releaseCount = numBlocksWidth - (data->getUnFactoredMatrix()->getRequest()->getCol() +1);
+    auto memoryOut = this->memGet<double *>("FactorLowerMem", new MatrixMemoryRule(releaseCount));
 
-    cublasSetMatrixAsync((int) data->getMatrixHeight(), (int) data->getMatrixWidth(), sizeof(double),
+    cublasSetMatrixAsync((int) unfactoredMatrix->getMatrixHeight(), (int) unfactoredMatrix->getMatrixWidth(), sizeof(double),
                          memoryIn, (int) leadingDimensionFullMatrix,
-                         memoryOut->get(), (int) data->getMatrixHeight(), stream);
+                         memoryOut->get(), (int) unfactoredMatrix->getMatrixHeight(), stream);
 
     this->syncStream();
 
-    this->addResult(new MatrixBlockData<MatrixMemoryData_t>(data->getRequest(),
-                                                            memoryOut,
-                                                            data->getMatrixWidth(),
-                                                            data->getMatrixHeight()));
+    this->addResult(data);
   }
 
   virtual void shutdownCuda() {
-//    cudaFreeHost(gpuMemPinned);
-//    delete [] scratchSpace;
   }
 
   virtual std::string getName() {
-    return "CudaCopyInTask(" + name + ")";
+    return "CudaCopyInFactorTask";
   }
 
-  virtual MatrixCopyInGausTask *copy() {
-    return new MatrixCopyInGausTask(this->name,
+  virtual MatrixCopyInFactorTask *copy() {
+    return new MatrixCopyInFactorTask(
                                 this->blockSize,
-                                this->releaseCount,
                                 this->getContexts(),
                                 this->getCudaIds(),
                                 this->getNumGPUs(),
-                                this->leadingDimensionFullMatrix);
+                                this->leadingDimensionFullMatrix,
+                                this->numBlocksWidth);
   }
 
  private:
-  std::string name;
-  int releaseCount;
-  double *gpuMemPinned;
-  double *scratchSpace;
   int blockSize;
   long leadingDimensionFullMatrix;
+  int numBlocksWidth;
 };
 
-#endif //HTGS_TUTORIALS_MATRIXCOPYINTASK_H
+#endif //HTGS_TUTORIALS_MATRIXCOPYINFACTORTASK_H

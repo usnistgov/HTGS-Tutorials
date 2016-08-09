@@ -4,44 +4,49 @@
 // You are solely responsible for determining the appropriateness of using and distributing the software and you assume all risks associated with its use, including but not limited to the risks and costs of program errors, compliance with applicable laws, damage to or loss of data, programs or equipment, and the unavailability or interruption of operation. This software is not intended to be used in any situation where a failure could cause risk of injury or damage to property. The software developed by NIST employees is not subject to copyright protection within the United States.
 
 //
-// Created by tjb3 on 6/15/16.
+// Created by tjb3 on 2/23/16.
 //
 
-#ifndef HTGS_TUTORIALS_MATRIXCOPYINTASK_H
-#define HTGS_TUTORIALS_MATRIXCOPYINTASK_H
+#ifndef HTGS_MATRIXBLOCKMULTIDATA_H
+#define HTGS_MATRIXBLOCKMULTIDATA_H
 
-#include <htgs/api/ICudaTask.hpp>
-#include "../data/MatrixBlockData.h"
-#include <cuda.h>
+#include <htgs/api/MemoryData.hpp>
 
-class MatrixCopyInGausTask : public htgs::ICudaTask<MatrixBlockData<double *>, MatrixBlockData<MatrixMemoryData_t>> {
+typedef std::shared_ptr<htgs::MemoryData<double *>> MatrixMemoryData_t;
+
+template<class T>
+class MatrixBlockMultiData : public htgs::IData {
  public:
-  MatrixCopyInGausTask(std::string name, int blockSize, int releaseCount,
-                   CUcontext *contexts, int *cudaIds, int numGpus, long leadingDimensionFullMatrix);
 
-  virtual void executeGPUTask(std::shared_ptr<MatrixBlockData<double *>> data, CUstream stream);
+  MatrixBlockMultiData(std::shared_ptr<MatrixBlockData<T>> matrixData,
+                  std::shared_ptr<htgs::MemoryData<T>> matrixMemoryData) :
+      matrixData(matrixData)
+  {
 
-  virtual std::string getName() {
-    return "CudaCopyInTask(" + name + ")";
+    this->matrixMemoryData = std::shared_ptr<MatrixBlockData<std::shared_ptr<htgs::MemoryData<T>>>>(
+        new MatrixBlockData<std::shared_ptr<htgs::MemoryData<T>>>(matrixData->getRequest(),
+                                                                        matrixMemoryData,
+                                                                        matrixData->getMatrixWidth(),
+                                                                        matrixData->getMatrixHeight()));
   }
 
-  virtual MatrixCopyInGausTask *copy() {
-    return new MatrixCopyInGausTask(this->name,
-                                this->blockSize,
-                                this->releaseCount,
-                                this->getContexts(),
-                                this->getCudaIds(),
-                                this->getNumGPUs(),
-                                this->leadingDimensionFullMatrix);
+  std::shared_ptr<MatrixRequestData> getRequest() const {
+    return matrixData->getRequest();
   }
+
+  std::shared_ptr<MatrixBlockData<T>> getMatrixBlockData() const {
+    return matrixData;
+  }
+
+  std::shared_ptr<MatrixBlockData<std::shared_ptr<htgs::MemoryData<T>>>> getMatrixBlockMemoryData() {
+    return matrixMemoryData;
+  }
+
+
 
  private:
-  std::string name;
-  int releaseCount;
-  double *gpuMemPinned;
-  double *scratchSpace;
-  int blockSize;
-  long leadingDimensionFullMatrix;
-};
+  std::shared_ptr<MatrixBlockData<T>> matrixData;
+  std::shared_ptr<MatrixBlockData<std::shared_ptr<htgs::MemoryData<T>>>> matrixMemoryData;
 
-#endif //HTGS_TUTORIALS_MATRIXCOPYINTASK_H
+};
+#endif //HTGS_MATRIXBLOCKMULTIDATA_H

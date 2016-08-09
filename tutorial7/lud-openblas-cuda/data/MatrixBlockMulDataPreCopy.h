@@ -4,43 +4,41 @@
 // You are solely responsible for determining the appropriateness of using and distributing the software and you assume all risks associated with its use, including but not limited to the risks and costs of program errors, compliance with applicable laws, damage to or loss of data, programs or equipment, and the unavailability or interruption of operation. This software is not intended to be used in any situation where a failure could cause risk of injury or damage to property. The software developed by NIST employees is not subject to copyright protection within the United States.
 
 //
-// Created by tjb3 on 6/22/16.
+// Created by tjb3 on 2/23/16.
 //
 
-#include <cublas_v2.h>
-#include "MatrixCopyInTask.h"
-#include "../memory/MatrixMemoryRule.h"
+#ifndef HTGS_MATRIXBLOCKMULDATAPRECOPY_H
+#define HTGS_MATRIXBLOCKMULDATAPRECOPY_H
 
-MatrixCopyInTask::MatrixCopyInTask(std::string name,
-                                   int blockSize,
-                                   int releaseCount,
-                                   CUcontext *contexts,
-                                   int *cudaIds,
-                                   int numGpus,
-                                   long leadingDimensionFullMatrix) :
-    ICudaTask(contexts, cudaIds, numGpus),
-    name(name),
-    releaseCount(releaseCount),
-    blockSize(blockSize),
-    leadingDimensionFullMatrix(leadingDimensionFullMatrix) {}
+#include <htgs/api/IData.hpp>
 
-void MatrixCopyInTask::executeGPUTask(std::shared_ptr<MatrixBlockData<double *>> data, CUstream stream) {
-  std::string matrixName = matrixTypeToString(data->getRequest()->getType());
+#include "MatrixBlockData.h"
 
-  // CPU Memory
-  double *memoryIn = data->getMatrixData();
+template<class T>
+class MatrixBlockMulDataPreCopy : public htgs::IData {
+ public:
 
-  // Cuda Memory
-  auto memoryOut = this->memGet<double *>(matrixName + "Copy", new MatrixMemoryRule(releaseCount));
+  MatrixBlockMulDataPreCopy(std::shared_ptr<MatrixBlockData<MatrixMemoryData_t>> lowerMatrix,
+                     std::shared_ptr<MatrixBlockData<T>> upperMatrix,
+                     std::shared_ptr<MatrixBlockData<T>> resultMatrix) :
+      lowerMatrix(lowerMatrix), upperMatrix(upperMatrix), resultMatrix(resultMatrix) {}
 
-  cublasSetMatrixAsync((int) data->getMatrixHeight(), (int) data->getMatrixWidth(), sizeof(double),
-                       memoryIn, (int) leadingDimensionFullMatrix,
-                       memoryOut->get(), (int) data->getMatrixHeight(), stream);
+  std::shared_ptr<MatrixBlockData<MatrixMemoryData_t>> getLowerMatrix() const {
+    return lowerMatrix;
+  }
 
-  this->syncStream();
+  std::shared_ptr<MatrixBlockData<T>> getUpperMatrix() const {
+    return upperMatrix;
+  }
 
-  this->addResult(new MatrixBlockData<MatrixMemoryData_t>(data->getRequest(),
-                                                          memoryOut,
-                                                          data->getMatrixWidth(),
-                                                          data->getMatrixHeight()));
-}
+  std::shared_ptr<MatrixBlockData<T>> getResultMatrix() const {
+    return resultMatrix;
+  }
+
+ private:
+  std::shared_ptr<MatrixBlockData<MatrixMemoryData_t>> lowerMatrix;
+  std::shared_ptr<MatrixBlockData<T>> upperMatrix;
+  std::shared_ptr<MatrixBlockData<T>> resultMatrix;
+};
+
+#endif //HTGS_MATRIXBLOCKMULDATAPRECOPY_H

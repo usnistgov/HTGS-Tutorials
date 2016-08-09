@@ -504,8 +504,8 @@ int main(int argc, char *argv[]) {
       int blkHeightMatA = readAMatTask->getNumBlocksRows();
       int blkWidthMatA = readAMatTask->getNumBlocksCols();
 
-      MatrixCopyInTask *copyInA = new MatrixCopyInTask("MatrixA", blockSize, blkHeightMatA, contexts, cudaIds, numGpus);
-      MatrixCopyInTask *copyInB = new MatrixCopyInTask("MatrixB", blockSize, blkWidthMatB, contexts, cudaIds, numGpus);
+      MatrixCopyInGausTask *copyInA = new MatrixCopyInGausTask("MatrixA", blockSize, blkHeightMatA, contexts, cudaIds, numGpus);
+      MatrixCopyInGausTask *copyInB = new MatrixCopyInGausTask("MatrixB", blockSize, blkWidthMatB, contexts, cudaIds, numGpus);
 
       MatrixCopyOutTask *copyOutC = new MatrixCopyOutTask("MatrixC", blockSize, contexts, cudaIds, numGpus);
 

@@ -4,44 +4,43 @@
 // You are solely responsible for determining the appropriateness of using and distributing the software and you assume all risks associated with its use, including but not limited to the risks and costs of program errors, compliance with applicable laws, damage to or loss of data, programs or equipment, and the unavailability or interruption of operation. This software is not intended to be used in any situation where a failure could cause risk of injury or damage to property. The software developed by NIST employees is not subject to copyright protection within the United States.
 
 //
-// Created by tjb3 on 6/15/16.
+// Created by tjb3 on 6/22/16.
 //
 
-#ifndef HTGS_TUTORIALS_MATRIXCOPYINTASK_H
-#define HTGS_TUTORIALS_MATRIXCOPYINTASK_H
+#include <cublas_v2.h>
+#include "MatrixCopyInTask.h"
+#include "../memory/MatrixMemoryRule.h"
 
-#include <htgs/api/ICudaTask.hpp>
-#include "../data/MatrixBlockData.h"
-#include <cuda.h>
+MatrixCopyInGausTask::MatrixCopyInGausTask(std::string name,
+                                   int blockSize,
+                                   int releaseCount,
+                                   CUcontext *contexts,
+                                   int *cudaIds,
+                                   int numGpus,
+                                   long leadingDimensionFullMatrix) :
+    ICudaTask(contexts, cudaIds, numGpus),
+    name(name),
+    releaseCount(releaseCount),
+    blockSize(blockSize),
+    leadingDimensionFullMatrix(leadingDimensionFullMatrix) {}
 
-class MatrixCopyInGausTask : public htgs::ICudaTask<MatrixBlockData<double *>, MatrixBlockData<MatrixMemoryData_t>> {
- public:
-  MatrixCopyInGausTask(std::string name, int blockSize, int releaseCount,
-                   CUcontext *contexts, int *cudaIds, int numGpus, long leadingDimensionFullMatrix);
+void MatrixCopyInGausTask::executeGPUTask(std::shared_ptr<MatrixBlockData<double *>> data, CUstream stream) {
+  std::string matrixName = matrixTypeToString(data->getRequest()->getType());
 
-  virtual void executeGPUTask(std::shared_ptr<MatrixBlockData<double *>> data, CUstream stream);
+  // CPU Memory
+  double *memoryIn = data->getMatrixData();
 
-  virtual std::string getName() {
-    return "CudaCopyInTask(" + name + ")";
-  }
+  // Cuda Memory
+  auto memoryOut = this->memGet<double *>(matrixName + "Copy", new MatrixMemoryRule(releaseCount));
 
-  virtual MatrixCopyInGausTask *copy() {
-    return new MatrixCopyInGausTask(this->name,
-                                this->blockSize,
-                                this->releaseCount,
-                                this->getContexts(),
-                                this->getCudaIds(),
-                                this->getNumGPUs(),
-                                this->leadingDimensionFullMatrix);
-  }
+  cublasSetMatrixAsync((int) data->getMatrixHeight(), (int) data->getMatrixWidth(), sizeof(double),
+                       memoryIn, (int) leadingDimensionFullMatrix,
+                       memoryOut->get(), (int) data->getMatrixHeight(), stream);
 
- private:
-  std::string name;
-  int releaseCount;
-  double *gpuMemPinned;
-  double *scratchSpace;
-  int blockSize;
-  long leadingDimensionFullMatrix;
-};
+  this->syncStream();
 
-#endif //HTGS_TUTORIALS_MATRIXCOPYINTASK_H
+  this->addResult(new MatrixBlockData<MatrixMemoryData_t>(data->getRequest(),
+                                                          memoryOut,
+                                                          data->getMatrixWidth(),
+                                                          data->getMatrixHeight()));
+}

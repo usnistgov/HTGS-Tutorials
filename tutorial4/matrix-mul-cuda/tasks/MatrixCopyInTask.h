@@ -14,10 +14,10 @@
 #include "../data/MatrixBlockData.h"
 #include <cuda.h>
 
-class MatrixCopyInTask : public htgs::ICudaTask<MatrixBlockData<MatrixMemoryData_t>,
+class MatrixCopyInGausTask : public htgs::ICudaTask<MatrixBlockData<MatrixMemoryData_t>,
                                                 MatrixBlockData<MatrixMemoryData_t>> {
  public:
-  MatrixCopyInTask(std::string name, int blockSize, int releaseCount, CUcontext *contexts, int *cudaIds, int numGpus)
+  MatrixCopyInGausTask(std::string name, int blockSize, int releaseCount, CUcontext *contexts, int *cudaIds, int numGpus)
       : ICudaTask(contexts, cudaIds, numGpus),
         name(name), releaseCount(releaseCount), blockSize(blockSize) {}
 
@@ -65,7 +65,7 @@ class MatrixCopyInTask : public htgs::ICudaTask<MatrixBlockData<MatrixMemoryData
   }
 
   virtual htgs::ITask<MatrixBlockData<MatrixMemoryData_t>, MatrixBlockData<MatrixMemoryData_t>> *copy() {
-    return new MatrixCopyInTask(this->name,
+    return new MatrixCopyInGausTask(this->name,
                                 this->blockSize,
                                 this->releaseCount,
                                 this->getContexts(),

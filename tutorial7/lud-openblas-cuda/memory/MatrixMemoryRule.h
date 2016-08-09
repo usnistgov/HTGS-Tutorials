@@ -4,44 +4,28 @@
 // You are solely responsible for determining the appropriateness of using and distributing the software and you assume all risks associated with its use, including but not limited to the risks and costs of program errors, compliance with applicable laws, damage to or loss of data, programs or equipment, and the unavailability or interruption of operation. This software is not intended to be used in any situation where a failure could cause risk of injury or damage to property. The software developed by NIST employees is not subject to copyright protection within the United States.
 
 //
-// Created by tjb3 on 6/15/16.
+// Created by tjb3 on 2/23/16.
 //
 
-#ifndef HTGS_TUTORIALS_MATRIXCOPYINTASK_H
-#define HTGS_TUTORIALS_MATRIXCOPYINTASK_H
+#ifndef HTGS_MATRIXMEMORYRULE_H
+#define HTGS_MATRIXMEMORYRULE_H
+#include <htgs/api/IMemoryReleaseRule.hpp>
 
-#include <htgs/api/ICudaTask.hpp>
-#include "../data/MatrixBlockData.h"
-#include <cuda.h>
-
-class MatrixCopyInGausTask : public htgs::ICudaTask<MatrixBlockData<double *>, MatrixBlockData<MatrixMemoryData_t>> {
+class MatrixMemoryRule : public htgs::IMemoryReleaseRule {
  public:
-  MatrixCopyInGausTask(std::string name, int blockSize, int releaseCount,
-                   CUcontext *contexts, int *cudaIds, int numGpus, long leadingDimensionFullMatrix);
 
-  virtual void executeGPUTask(std::shared_ptr<MatrixBlockData<double *>> data, CUstream stream);
-
-  virtual std::string getName() {
-    return "CudaCopyInTask(" + name + ")";
+  MatrixMemoryRule(int releaseCount) : releaseCount(releaseCount) {
   }
 
-  virtual MatrixCopyInGausTask *copy() {
-    return new MatrixCopyInGausTask(this->name,
-                                this->blockSize,
-                                this->releaseCount,
-                                this->getContexts(),
-                                this->getCudaIds(),
-                                this->getNumGPUs(),
-                                this->leadingDimensionFullMatrix);
+  void memoryUsed() {
+    releaseCount--;
+  }
+
+  bool canReleaseMemory() {
+    return releaseCount == 0;
   }
 
  private:
-  std::string name;
   int releaseCount;
-  double *gpuMemPinned;
-  double *scratchSpace;
-  int blockSize;
-  long leadingDimensionFullMatrix;
 };
-
-#endif //HTGS_TUTORIALS_MATRIXCOPYINTASK_H
+#endif //HTGS_MATRIXMEMORYRULE_H

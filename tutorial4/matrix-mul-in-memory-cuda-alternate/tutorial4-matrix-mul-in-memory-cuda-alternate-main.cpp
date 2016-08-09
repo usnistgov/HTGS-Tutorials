@@ -232,10 +232,10 @@ int main(int argc, char *argv[]) {
       int blkHeightMatA = readAMatTask->getNumBlocksRows();
       int blkWidthMatA = readAMatTask->getNumBlocksCols();
 
-      MatrixCopyInTask *copyInA =
-          new MatrixCopyInTask("MatrixA", blockSize, blkWidthMatB, contexts, cudaIds, numGpus, matrixAHeight);
-      MatrixCopyInTask
-          *copyInB = new MatrixCopyInTask("MatrixB", blockSize, blkHeightMatA, contexts, cudaIds, numGpus, sharedDim);
+      MatrixCopyInGausTask *copyInA =
+          new MatrixCopyInGausTask("MatrixA", blockSize, blkWidthMatB, contexts, cudaIds, numGpus, matrixAHeight);
+      MatrixCopyInGausTask
+          *copyInB = new MatrixCopyInGausTask("MatrixB", blockSize, blkHeightMatA, contexts, cudaIds, numGpus, sharedDim);
 
       MatrixCopyOutTask *copyOutC = new MatrixCopyOutTask("MatrixC", blockSize, contexts, cudaIds, numGpus);
 

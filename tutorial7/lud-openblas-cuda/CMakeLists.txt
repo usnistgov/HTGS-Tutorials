@@ -3,7 +3,11 @@
 # NIST-developed software is expressly provided "AS IS." NIST MAKES NO WARRANTY OF ANY KIND, EXPRESS, IMPLIED, IN FACT OR ARISING BY OPERATION OF LAW, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTY OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, NON-INFRINGEMENT AND DATA ACCURACY. NIST NEITHER REPRESENTS NOR WARRANTS THAT THE OPERATION OF THE SOFTWARE WILL BE UNINTERRUPTED OR ERROR-FREE, OR THAT ANY DEFECTS WILL BE CORRECTED. NIST DOES NOT WARRANT OR MAKE ANY REPRESENTATIONS REGARDING THE USE OF THE SOFTWARE OR THE RESULTS THEREOF, INCLUDING BUT NOT LIMITED TO THE CORRECTNESS, ACCURACY, RELIABILITY, OR USEFULNESS OF THE SOFTWARE.
 # You are solely responsible for determining the appropriateness of using and distributing the software and you assume all risks associated with its use, including but not limited to the risks and costs of program errors, compliance with applicable laws, damage to or loss of data, programs or equipment, and the unavailability or interruption of operation. This software is not intended to be used in any situation where a failure could cause risk of injury or damage to property. The software developed by NIST employees is not subject to copyright protection within the United States.
 
+link_directories(${OpenBLAS_LIBRARIES})
+link_directories(${LAPACK_LIBRARIES})
+
 add_definitions(-DUSE_CUDA)
+
 
 set(TUTORIAL_UTILS_SRC
         ../../tutorial-utils/util-matrix.h
@@ -13,38 +17,42 @@ set(TUTORIAL_UTILS_SRC
         ../../tutorial-utils/SimpleClock.h
         ../../tutorial-utils/enums/MatrixType.h
         ../../tutorial-utils/enums/MatrixType.cpp
-        ../../tutorial-utils/util-cuda.cpp
-        ../../tutorial-utils/util-cuda.h)
+        ../../tutorial-utils/util-cuda.h
+        ../../tutorial-utils/util-cuda.cpp)
 
-cuda_add_executable(matrixMul-in-memory-cuda-alternate
-        tutorial4-matrix-mul-in-memory-cuda-alternate-main.cpp
+cuda_add_executable(lud-in-memory-openblas-cuda
+        tutorial7-lud-in-memory-openblas-cuda-main.cpp
         data/MatrixRequestData.h
         data/MatrixBlockData.h
         data/MatrixBlockMulData.h
-        memory/MatrixMemoryRule.h
-        memory/MatrixAllocator.h
-        memory/CudaMatrixAllocator.h
-        rules/MatrixLoadRule.h
-        rules/MatrixDistributeRule.h
-        rules/MatrixAccumulateRule.h
-        rules/MatrixOutputRule.h
-        tasks/MatrixMulBlkTask.h
-        tasks/MatrixMulBlkTask.cpp
-        tasks/MatrixAccumTask.h
-        tasks/MatrixAccumTask.cpp
-        tasks/OutputTask.h
-        tasks/OutputTask.cpp
-        tasks/MatrixCopyInTask.h
-        tasks/MatrixCopyInGausTask.cpp
+        data/MatrixFactorData.h
+        data/MatrixFactorCudaData.h
+        data/MatrixBlockMultiData.h
+        data/MatrixBlockMulDataPreCopy.h
         tasks/MatrixCopyOutTask.h
-        tasks/MatrixCopyOutTask.cpp
-        tasks/ReadMatrixTask.h
-        tasks/ReadMatrixTask.cpp
-        ${TUTORIAL_UTILS_SRC})
+        tasks/MatrixCopyInGausTask.h
+        tasks/FactorUpperTask.h
+        tasks/FactorLowerTask.h
+        tasks/GausElimTask.h
+        tasks/MatrixCopyInFactorTask.h
+        tasks/MatrixCopyInGemmTask.h
+        tasks/MatrixMulBlkTask.h
+        rules/MatrixMulRule.h
+        rules/UpdateRule.h
+        rules/GausElimRule.h
+        rules/GausElimRuleUpper.h
+        rules/GausElimRuleLower.h
+        memory/CudaMatrixAllocator.h
+        memory/MatrixMemoryRule.h
+        ${TUTORIAL_UTILS_SRC} )
 
-target_link_libraries(matrixMul-in-memory-cuda-alternate openblas)
-target_compile_definitions(matrixMul-in-memory-cuda-alternate PUBLIC -DUSE_CUDA)
-cuda_add_cublas_to_target(matrixMul-in-memory-cuda-alternate)
-target_link_libraries(matrixMul-in-memory-cuda-alternate ${CUDA_LIBRARIES})
-target_link_libraries(matrixMul-in-memory-cuda-alternate cuda)
-target_link_libraries(matrixMul-in-memory-cuda-alternate openblas)
+target_link_libraries(lud-in-memory-openblas-cuda openblas)
+target_link_libraries(lud-in-memory-openblas-cuda lapacke)
+
+target_compile_definitions(lud-in-memory-openblas-cuda PUBLIC -DUSE_CUDA)
+cuda_add_cublas_to_target(lud-in-memory-openblas-cuda)
+target_link_libraries(lud-in-memory-openblas-cuda ${CUDA_LIBRARIES})
+target_link_libraries(lud-in-memory-openblas-cuda cuda)
+
+target_include_directories(lud-in-memory-openblas-cuda PUBLIC ${LAPACK_INCLUDES})
+target_include_directories(lud-in-memory-openblas-cuda PUBLIC ${OpenBLAS_INCLUDE_DIR})
