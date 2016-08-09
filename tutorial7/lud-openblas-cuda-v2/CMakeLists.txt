@@ -5,6 +5,7 @@
 
 link_directories(${OpenBLAS_LIBRARIES})
 link_directories(${LAPACK_LIBRARIES})
+link_directories(${MAGMA_LIBRARIES})
 
 add_definitions(-DUSE_CUDA)
 
@@ -48,6 +49,7 @@ cuda_add_executable(lud-in-memory-openblas-cuda-v2
 
 target_link_libraries(lud-in-memory-openblas-cuda-v2 openblas)
 target_link_libraries(lud-in-memory-openblas-cuda-v2 lapacke)
+target_link_libraries(lud-in-memory-openblas-cuda-v2 magma)
 
 target_compile_definitions(lud-in-memory-openblas-cuda-v2 PUBLIC -DUSE_CUDA)
 cuda_add_cublas_to_target(lud-in-memory-openblas-cuda-v2)
@@ -56,3 +58,4 @@ target_link_libraries(lud-in-memory-openblas-cuda-v2 cuda)
 
 target_include_directories(lud-in-memory-openblas-cuda-v2 PUBLIC ${LAPACK_INCLUDES})
 target_include_directories(lud-in-memory-openblas-cuda-v2 PUBLIC ${OpenBLAS_INCLUDE_DIR})
+target_include_directories(lud-in-memory-openblas-cuda-v2 PUBLIC ${MAGMA_INCLUDES})

@@ -7,7 +7,7 @@
 //
 //#define DEBUG_FLAG
 //#define DEBUG_LEVEL_VERBOSE
-#define PROFILE
+//#define PROFILE
 
 #include <htgs/api/TaskGraph.hpp>
 #include <htgs/api/Runtime.hpp>
@@ -15,6 +15,7 @@
 #include <iomanip>
 #include <cfloat>
 #include <zconf.h>
+#include <magma.h>
 
 #include "data/MatrixRequestData.h"
 #include "data/MatrixBlockData.h"
@@ -106,12 +107,13 @@ int validateResults(double *luMatrix, double *origMatrix, int matrixSize) {
 void runSequentialLU(double *matrix, int matrixSize)
 {
   int *piv = new int[matrixSize];
-  LAPACKE_dgetrf(LAPACK_COL_MAJOR, matrixSize, matrixSize, matrix, matrixSize, piv);
+  int info;
+  magma_dgetrf(matrixSize, matrixSize, matrix, matrixSize, piv, &info);
 }
 
 int main(int argc, char *argv[]) {
-  long matrixSize= 16384;
-  int blockSize = 512;
+  long matrixSize= 32000;
+  int blockSize = 1000;
   bool runSequential = false;
   bool validate = false;
 
@@ -120,7 +122,7 @@ int main(int argc, char *argv[]) {
   int numGausElimThreads = 2;
   int numFactorLowerThreads = 20;
   int numFactorUpperThreads = 20;
-  int numMatrixMulThreads = 2;
+  int numMatrixMulThreads = 1;
 
   std::string runtimeFileStr("runtimes");
 
@@ -213,6 +215,9 @@ int main(int argc, char *argv[]) {
     if (runSequential) {
       endToEnd.start();
       openblas_set_num_threads(numBlasThreads);
+      magma_init();
+      magma_setdevice(0);
+
 
       clk.start();
       runSequentialLU(matrix, matrixSize);
@@ -243,7 +248,7 @@ int main(int argc, char *argv[]) {
       }
 
       int numGpus = 1;
-      int *gpuIds = new int { 2 };
+      int *gpuIds = new int { 0 };
       CUcontext * contexts = initCuda(numGpus, gpuIds);
 
       GausElimTask *gausElimTask = new GausElimTask(numGausElimThreads, matrixSize, matrixSize, blockSize);
@@ -301,7 +306,7 @@ int main(int argc, char *argv[]) {
 
       taskGraph->addCudaMemoryManagerEdge("FactorLowerMem", factorCopyInTaskLower, matrixMulTask, new CudaMatrixAllocator(blockSize, blockSize), gridHeight+1, htgs::MMType::Static, contexts);
       taskGraph->addCudaMemoryManagerEdge("FactorUpperMem", factorCopyInTaskUpper, matrixMulTask, new CudaMatrixAllocator(blockSize, blockSize), gridWidth+1, htgs::MMType::Static, contexts);
-      taskGraph->addCudaMemoryManagerEdge("ResultMatrixMem", gemmCopyInTask, matrixCopyOutTask, new CudaMatrixAllocator(blockSize, blockSize), 500, htgs::MMType::Static, contexts);
+      taskGraph->addCudaMemoryManagerEdge("ResultMatrixMem", gemmCopyInTask, matrixCopyOutTask, new CudaMatrixAllocator(blockSize, blockSize), 50, htgs::MMType::Static, contexts);
 
 
       if (numDiagonals > 0)
