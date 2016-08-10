@@ -9,6 +9,8 @@
 //#define DEBUG_LEVEL_VERBOSE
 //#define PROFILE
 
+typedef long long int lapack_int;
+
 #include <htgs/api/TaskGraph.hpp>
 #include <htgs/api/Runtime.hpp>
 #include <cblas.h>

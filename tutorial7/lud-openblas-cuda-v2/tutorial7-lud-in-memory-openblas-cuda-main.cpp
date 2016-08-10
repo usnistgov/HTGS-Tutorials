@@ -9,6 +9,8 @@
 //#define DEBUG_LEVEL_VERBOSE
 //#define PROFILE
 
+typedef long long int lapack_int;
+
 #include <htgs/api/TaskGraph.hpp>
 #include <htgs/api/Runtime.hpp>
 #include <cblas.h>
@@ -38,6 +40,7 @@
 #include "tasks/MatrixCopyOutTask.h"
 #include "rules/UpdateRuleMatMul.h"
 #include "memory/CudaMatrixAllocator.h"
+
 
 int validateResults(double *luMatrix, double *origMatrix, int matrixSize) {
   int count = 0;
@@ -104,15 +107,15 @@ int validateResults(double *luMatrix, double *origMatrix, int matrixSize) {
   return 0;
 }
 
-void runSequentialLU(double *matrix, int matrixSize)
+void runSequentialLU(double *matrix, long long int matrixSize)
 {
-  int *piv = new int[matrixSize];
-  int info;
-  magma_dgetrf(matrixSize, matrixSize, matrix, matrixSize, piv, &info);
+  magma_int_t *piv = new magma_int_t[matrixSize];
+  magma_int_t info;
+  magma_dgetrf_m(1, matrixSize, matrixSize, matrix, matrixSize, piv, &info);
 }
 
 int main(int argc, char *argv[]) {
-  long matrixSize= 32000;
+  magma_int_t matrixSize= 64000;
   int blockSize = 1000;
   bool runSequential = false;
   bool validate = false;
@@ -216,7 +219,7 @@ int main(int argc, char *argv[]) {
       endToEnd.start();
       openblas_set_num_threads(numBlasThreads);
       magma_init();
-      magma_setdevice(0);
+      magma_setdevice(2);
 
 
       clk.start();

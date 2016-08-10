@@ -9,6 +9,9 @@
 //#define DEBUG_LEVEL_VERBOSE
 #define PROFILE
 
+#define MAGMA_ILP64
+typedef long int lapack_int;
+
 #include <htgs/api/TaskGraph.hpp>
 #include <htgs/api/Runtime.hpp>
 #include <cblas.h>

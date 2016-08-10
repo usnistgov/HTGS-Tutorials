@@ -4,10 +4,10 @@
 # You are solely responsible for determining the appropriateness of using and distributing the software and you assume all risks associated with its use, including but not limited to the risks and costs of program errors, compliance with applicable laws, damage to or loss of data, programs or equipment, and the unavailability or interruption of operation. This software is not intended to be used in any situation where a failure could cause risk of injury or damage to property. The software developed by NIST employees is not subject to copyright protection within the United States.
 
 link_directories(${OpenBLAS_LIBRARIES})
-link_directories(${LAPACK_LIBRARIES})
 link_directories(${MAGMA_LIBRARIES})
 
 add_definitions(-DUSE_CUDA)
+add_definitions(-DMAGMA_ILP64)
 
 
 set(TUTORIAL_UTILS_SRC
@@ -48,7 +48,6 @@ cuda_add_executable(lud-in-memory-openblas-cuda-v2
         ${TUTORIAL_UTILS_SRC} )
 
 target_link_libraries(lud-in-memory-openblas-cuda-v2 openblas)
-target_link_libraries(lud-in-memory-openblas-cuda-v2 lapacke)
 target_link_libraries(lud-in-memory-openblas-cuda-v2 magma)
 
 target_compile_definitions(lud-in-memory-openblas-cuda-v2 PUBLIC -DUSE_CUDA)
@@ -56,6 +55,5 @@ cuda_add_cublas_to_target(lud-in-memory-openblas-cuda-v2)
 target_link_libraries(lud-in-memory-openblas-cuda-v2 ${CUDA_LIBRARIES})
 target_link_libraries(lud-in-memory-openblas-cuda-v2 cuda)
 
-target_include_directories(lud-in-memory-openblas-cuda-v2 PUBLIC ${LAPACK_INCLUDES})
 target_include_directories(lud-in-memory-openblas-cuda-v2 PUBLIC ${OpenBLAS_INCLUDE_DIR})
 target_include_directories(lud-in-memory-openblas-cuda-v2 PUBLIC ${MAGMA_INCLUDES})

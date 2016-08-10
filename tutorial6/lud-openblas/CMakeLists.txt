@@ -4,9 +4,6 @@
 # You are solely responsible for determining the appropriateness of using and distributing the software and you assume all risks associated with its use, including but not limited to the risks and costs of program errors, compliance with applicable laws, damage to or loss of data, programs or equipment, and the unavailability or interruption of operation. This software is not intended to be used in any situation where a failure could cause risk of injury or damage to property. The software developed by NIST employees is not subject to copyright protection within the United States.
 
 link_directories(${OpenBLAS_LIBRARIES})
-link_directories(${LAPACK_LIBRARIES})
-
-
 
 set(TUTORIAL_UTILS_SRC
         ../../tutorial-utils/util-matrix.h
@@ -32,7 +29,6 @@ add_executable(lud-in-memory-openblas
         ${TUTORIAL_UTILS_SRC} )
 
 target_link_libraries(lud-in-memory-openblas openblas)
-target_link_libraries(lud-in-memory-openblas lapacke)
 
 target_include_directories(lud-in-memory-openblas PUBLIC ${LAPACK_INCLUDES})
 target_include_directories(lud-in-memory-openblas PUBLIC ${OpenBLAS_INCLUDE_DIR})
