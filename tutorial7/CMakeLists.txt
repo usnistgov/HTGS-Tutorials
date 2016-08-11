@@ -6,4 +6,5 @@
 if(OpenBLAS_FOUND AND CUDA_FOUND AND MAGMA_FOUND)
     add_subdirectory(lud-openblas-cuda-v1)
     add_subdirectory(lud-openblas-cuda-v2)
+    add_subdirectory(lud-openblas-cuda-v3)
 endif()

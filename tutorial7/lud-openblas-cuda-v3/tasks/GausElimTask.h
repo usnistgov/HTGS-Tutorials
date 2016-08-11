@@ -16,7 +16,7 @@ class GausElimTask : public htgs::ITask<MatrixBlockData<double *>, MatrixBlockDa
   GausElimTask(int numThreads, long fullMatrixHeight, long fullMatrixWidth, int blockSize) :
   ITask(numThreads), fullMatrixHeight(fullMatrixHeight), fullMatrixWidth(fullMatrixWidth), blockSize(blockSize)
   {
-    this->ipiv = new long long int[blockSize];
+    this->ipiv = new int[blockSize*blockSize];
   }
 
   ~GausElimTask()
@@ -28,8 +28,9 @@ class GausElimTask : public htgs::ITask<MatrixBlockData<double *>, MatrixBlockDa
 
     double *matrix = data->getMatrixData();
 
-//    LAPACKE_dgetf2(LAPACK_COL_MAJOR, data->getMatrixHeight(), data->getMatrixWidth(), matrix, fullMatrixHeight, ipiv);
+    LAPACKE_dgetf2(LAPACK_COL_MAJOR, data->getMatrixHeight(), data->getMatrixWidth(), matrix, fullMatrixHeight, ipiv);
 
+/*
     for (int diag = 0; diag < data->getMatrixWidth()-1; diag++)
     {
       const double diagVal = 1.0 / matrix[IDX2C(diag, diag, fullMatrixHeight)];
@@ -54,6 +55,7 @@ class GausElimTask : public htgs::ITask<MatrixBlockData<double *>, MatrixBlockDa
       }
 
     }
+*/
 
     addResult(data);
   }
@@ -68,7 +70,7 @@ class GausElimTask : public htgs::ITask<MatrixBlockData<double *>, MatrixBlockDa
  private:
   long fullMatrixWidth;
   long fullMatrixHeight;
-  long long int *ipiv;
+  int *ipiv;
   int blockSize;
 };
 

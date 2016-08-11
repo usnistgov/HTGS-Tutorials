@@ -9,13 +9,15 @@
 //#define DEBUG_LEVEL_VERBOSE
 //#define PROFILE
 
-//typedef long long int lapack_int;
+typedef long long int lapack_int;
 
 #include <htgs/api/TaskGraph.hpp>
 #include <htgs/api/Runtime.hpp>
 #include <cblas.h>
 #include <iomanip>
 #include <cfloat>
+#include <zconf.h>
+#include <magma.h>
 
 #include "data/MatrixRequestData.h"
 #include "data/MatrixBlockData.h"
@@ -31,14 +33,18 @@
 #include "tasks/FactorLowerTask.h"
 #include "rules/MatrixMulRule.h"
 #include "tasks/MatrixMulBlkTask.h"
+#include "data/MatrixBlockMultiData.h"
+#include "../../tutorial-utils/util-cuda.h"
+#include "tasks/MatrixCopyInFactorTask.h"
+#include "tasks/MatrixCopyInGemmTask.h"
+#include "tasks/MatrixCopyOutTask.h"
+#include "rules/UpdateRuleMatMul.h"
+#include "memory/CudaMatrixAllocator.h"
+#include "data/MatrixPanelData.h"
+
 
 int validateResults(double *luMatrix, double *origMatrix, int matrixSize) {
   int count = 0;
-
-  // Multiply lower triangle with upper triangle
-//  double *result = new double[matrixSize *matrixSize];
-
-//  std::cout<< "orig matrix:" << std::endl;
 
   double *lMatrix = new double[matrixSize * matrixSize];
   double *uMatrix = new double[matrixSize * matrixSize];
@@ -84,7 +90,7 @@ int validateResults(double *luMatrix, double *origMatrix, int matrixSize) {
         count++;
         if (count < 20)
         {
-          std::cout << "Incorrect value: " << result[IDX2C(r, c, matrixSize)] << " != " << origMatrix[IDX2C(r, c, matrixSize)] << " difference: " << difference << std::endl;
+          std::cout << r << ", " << c << " Incorrect value: " << result[IDX2C(r, c, matrixSize)] << " != " << origMatrix[IDX2C(r, c, matrixSize)] << " difference: " << difference << std::endl;
         }
       }
     }
@@ -102,25 +108,25 @@ int validateResults(double *luMatrix, double *origMatrix, int matrixSize) {
   return 0;
 }
 
-void runSequentialLU(double *matrix, int matrixSize)
+void runSequentialLU(double *matrix, long long int matrixSize)
 {
-  long long int *piv = new long long int[matrixSize];
-  LAPACKE_dgetrf(LAPACK_COL_MAJOR, matrixSize, matrixSize, matrix, matrixSize, (int *)piv);
-  delete [] piv;
+  magma_int_t *piv = new magma_int_t[matrixSize];
+  magma_int_t info;
+  magma_dgetrf_m(1, matrixSize, matrixSize, matrix, matrixSize, piv, &info);
 }
 
 int main(int argc, char *argv[]) {
-  long matrixSize= 10000;
-  int blockSize = 128;
+  magma_int_t matrixSize= 64000;
+  int blockSize = 1000;
   bool runSequential = false;
   bool validate = false;
 
   int numBlasThreads = 1;
 
   int numGausElimThreads = 2;
-  int numFactorLowerThreads = 4;
-  int numFactorUpperThreads = 4;
-  int numMatrixMulThreads = 30;
+  int numFactorLowerThreads = 20;
+  int numFactorUpperThreads = 20;
+  int numMatrixMulThreads = 1;
 
   std::string runtimeFileStr("runtimes");
 
@@ -193,8 +199,7 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  std::ofstream runtimeFile(runtimeFileStr.c_str(), std::ios::app);
-
+  std::ofstream runtimeFile(runtimeFileStr, std::ios::app);
   double *matrix = new double[matrixSize * matrixSize];
 
   initMatrixDiagDom(matrix, matrixSize, matrixSize, true);
@@ -214,6 +219,9 @@ int main(int argc, char *argv[]) {
     if (runSequential) {
       endToEnd.start();
       openblas_set_num_threads(numBlasThreads);
+      magma_init();
+      magma_setdevice(2);
+
 
       clk.start();
       runSequentialLU(matrix, matrixSize);
@@ -243,20 +251,30 @@ int main(int argc, char *argv[]) {
         }
       }
 
-      GausElimTask *gausElimTask = new GausElimTask(numGausElimThreads, matrixSize, matrixSize, blockSize);
+      int numGpus = 1;
+      int *gpuIds = new int { 0 };
+      CUcontext * contexts = initCuda(numGpus, gpuIds);
 
+      GausElimTask *gausElimTask = new GausElimTask(numGausElimThreads, matrixSize, matrixSize, blockSize);
       auto gausElimBk = new htgs::Bookkeeper<MatrixBlockData<double *>>();
 
       GausElimRuleUpper *gausElimRuleUpper = new GausElimRuleUpper(matrixBlocks, gridHeight, gridWidth);
       GausElimRuleLower *gausElimRuleLower = new GausElimRuleLower(matrixBlocks, gridHeight, gridWidth);
-
+//
       FactorUpperTask *factorUpperTask = new FactorUpperTask(numFactorUpperThreads, matrixSize, matrixSize);
       FactorLowerTask *factorLowerTask = new FactorLowerTask(numFactorLowerThreads, matrixSize, matrixSize);
 
-      auto matrixMulBk = new htgs::Bookkeeper<MatrixBlockData<double *>>();
+      auto factorCopyInTaskLower = new MatrixCopyInFactorTask(blockSize, contexts, gpuIds, numGpus, matrixSize, gridWidth, "FactorLowerMem");
+      auto factorCopyInTaskUpper = new MatrixCopyInFactorTask(blockSize, contexts, gpuIds, numGpus, matrixSize, gridWidth, "FactorUpperMem");
+
+      auto matrixMulBk = new htgs::Bookkeeper<MatrixBlockData<MatrixMemoryData_t>>();
       MatrixMulRule *matrixMulRule = new MatrixMulRule(matrixBlocks, gridHeight, gridWidth);
 
-      MatrixMulBlkTask *matrixMulTask = new MatrixMulBlkTask(numMatrixMulThreads, matrixSize, matrixSize, matrixSize, matrixSize, blockSize);
+      MatrixCopyInGemmTask *gemmCopyInTask = new MatrixCopyInGemmTask(blockSize, contexts, gpuIds, numGpus, matrixSize);
+
+      MatrixMulBlkTask *matrixMulTask = new MatrixMulBlkTask(contexts, gpuIds, numGpus, numMatrixMulThreads, matrixSize, matrixSize, matrixSize, matrixSize, blockSize);
+
+      MatrixCopyOutTask *matrixCopyOutTask = new MatrixCopyOutTask(blockSize, contexts, gpuIds, numGpus, matrixBlocks, matrixSize);
 
 
       auto matrixMulResultBk = new htgs::Bookkeeper<MatrixBlockData<double *>>();
@@ -268,20 +286,32 @@ int main(int argc, char *argv[]) {
       int numUpdates = (1.0/6.0) * (double)gridWidth * (2.0 * ((double)gridWidth * (double)gridWidth) - 3.0 * (double)gridWidth + 1.0);
 
       UpdateRule *updateRule = new UpdateRule(numUpdates);
-      UpdateRule *updateRule2 = new UpdateRule(numUpdates);
+      UpdateRuleMatMul *updateMatMulRule = new UpdateRuleMatMul(numUpdates);
+//      UpdateRule *updateRule2 = new UpdateRule(numUpdates);
 
       auto taskGraph = new htgs::TaskGraph<MatrixBlockData<double *>, htgs::VoidData>();
       taskGraph->addGraphInputConsumer(gausElimTask);
-
       taskGraph->addEdge(gausElimTask, gausElimBk);
       taskGraph->addRule(gausElimBk, factorUpperTask, gausElimRuleUpper);
       taskGraph->addRule(gausElimBk, factorLowerTask, gausElimRuleLower);
 
-      taskGraph->addEdge(factorUpperTask, matrixMulBk);
-      taskGraph->addEdge(factorLowerTask, matrixMulBk);
+      taskGraph->addEdge(factorLowerTask, factorCopyInTaskLower);
+      taskGraph->addEdge(factorCopyInTaskLower, matrixMulBk);
 
-      taskGraph->addRule(matrixMulBk, matrixMulTask, matrixMulRule);
-      taskGraph->addEdge(matrixMulTask, matrixMulResultBk);
+      taskGraph->addEdge(factorUpperTask, factorCopyInTaskUpper);
+      taskGraph->addEdge(factorCopyInTaskUpper, matrixMulBk);
+
+
+      taskGraph->addRule(matrixMulBk, gemmCopyInTask, matrixMulRule);
+      taskGraph->addEdge(gemmCopyInTask, matrixMulTask);
+      taskGraph->addEdge(matrixMulTask, matrixCopyOutTask);
+
+      taskGraph->addEdge(matrixCopyOutTask, matrixMulResultBk);
+
+      taskGraph->addCudaMemoryManagerEdge("FactorLowerMem", factorCopyInTaskLower, matrixMulTask, new CudaMatrixAllocator(blockSize, blockSize), gridHeight+1, htgs::MMType::Static, contexts);
+      taskGraph->addCudaMemoryManagerEdge("FactorUpperMem", factorCopyInTaskUpper, matrixMulTask, new CudaMatrixAllocator(blockSize, blockSize), gridWidth+1, htgs::MMType::Static, contexts);
+      taskGraph->addCudaMemoryManagerEdge("ResultMatrixMem", gemmCopyInTask, matrixCopyOutTask, new CudaMatrixAllocator(blockSize, blockSize), 50, htgs::MMType::Static, contexts);
+
 
       if (numDiagonals > 0)
         taskGraph->addRule(matrixMulResultBk, gausElimTask, gausElimRule);
@@ -289,18 +319,18 @@ int main(int argc, char *argv[]) {
         delete gausElimRule;
 
       if (numUpdates > 0)
-        taskGraph->addRule(matrixMulResultBk, matrixMulBk, updateRule);
+        taskGraph->addRule(matrixMulResultBk, matrixMulBk, updateMatMulRule);
       else
-        delete updateRule;
+        delete updateMatMulRule;
 
       if (numUpdates > 0)
-        taskGraph->addRule(matrixMulResultBk, gausElimBk, updateRule2);
+        taskGraph->addRule(matrixMulResultBk, gausElimBk, updateRule);
       else
-        delete updateRule2;
-
+        delete updateRule;
+//
       taskGraph->incrementGraphInputProducer();
 
-//      taskGraph->writeDotToFile("lud-graph.dot");
+      taskGraph->writeDotToFile("lud-cuda-graph.dot");
 
       htgs::Runtime *runtime = new htgs::Runtime(taskGraph);
 
@@ -310,6 +340,15 @@ int main(int argc, char *argv[]) {
 
       taskGraph->produceData(matrixBlocks->get(0, 0));
       taskGraph->finishedProducingData();
+
+//      for (int i = 0; i < 10; i++)
+//      {
+//        usleep(1000000);
+//        taskGraph->writeDotToFile("lud-cuda-graph-exec.dot");
+//      }
+
+
+
       runtime->waitForRuntime();
 
       clk.stopAndIncrement();
@@ -354,14 +393,16 @@ int main(int argc, char *argv[]) {
                 << std::endl;
 
 
+
     if (validate)
     {
       int res = validateResults(matrix, matrixTest, matrixSize);
       std::cout << (res == 0 ? "PASSED" : "FAILED") << std::endl;
     }
+
+
   }
 
-  runtimeFile.close();
   delete[] matrix;
 
   if (validate)
