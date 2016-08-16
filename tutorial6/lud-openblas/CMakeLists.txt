@@ -20,7 +20,10 @@ add_executable(lud-in-memory-openblas
         data/MatrixBlockData.h
         data/MatrixBlockMulData.h
         tasks/FactorUpperTask.h
+        tasks/FactorLowerTask.h
+        tasks/MatrixMulBlkTask.h
         data/MatrixFactorData.h
+        rules/GausElimRuleLower.h
         rules/GausElimRuleUpper.h
         tasks/GausElimTask.h
         rules/MatrixMulRule.h
