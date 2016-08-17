@@ -4,14 +4,33 @@
 // You are solely responsible for determining the appropriateness of using and distributing the software and you assume all risks associated with its use, including but not limited to the risks and costs of program errors, compliance with applicable laws, damage to or loss of data, programs or equipment, and the unavailability or interruption of operation. This software is not intended to be used in any situation where a failure could cause risk of injury or damage to property. The software developed by NIST employees is not subject to copyright protection within the United States.
 
 //
-// Created by tjb3 on 6/22/16.
+// Created by tjb3 on 2/23/16.
 //
 
-#ifndef HTGS_TUTORIALS_UTIL_CUDA_H
-#define HTGS_TUTORIALS_UTIL_CUDA_H
+#ifndef HTGS_MATRIXMEMORYRULE_H
+#define HTGS_MATRIXMEMORYRULE_H
+#include <htgs/api/IMemoryReleaseRule.hpp>
 
-#include <cuda.h>
-CUcontext *initCuda(int nGPUs, int *gpuIDs);
-size_t cudaGetFreeBytes(CUcontext context);
+class MatrixMemoryRule : public htgs::IMemoryReleaseRule {
+ public:
 
-#endif //HTGS_TUTORIALS_UTIL_CUDA_H
+  MatrixMemoryRule(int releaseCount) : releaseCount(releaseCount) {
+  }
+
+  void memoryUsed() {
+    releaseCount--;
+  }
+
+  bool canReleaseMemory() {
+    return releaseCount == 0;
+  }
+
+  int getReleaseCount()
+  {
+    return releaseCount;
+  }
+
+ private:
+  int releaseCount;
+};
+#endif //HTGS_MATRIXMEMORYRULE_H

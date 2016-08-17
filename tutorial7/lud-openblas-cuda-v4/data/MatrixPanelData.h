@@ -4,14 +4,75 @@
 // You are solely responsible for determining the appropriateness of using and distributing the software and you assume all risks associated with its use, including but not limited to the risks and costs of program errors, compliance with applicable laws, damage to or loss of data, programs or equipment, and the unavailability or interruption of operation. This software is not intended to be used in any situation where a failure could cause risk of injury or damage to property. The software developed by NIST employees is not subject to copyright protection within the United States.
 
 //
-// Created by tjb3 on 6/22/16.
+// Created by tjb3 on 2/23/16.
 //
 
-#ifndef HTGS_TUTORIALS_UTIL_CUDA_H
-#define HTGS_TUTORIALS_UTIL_CUDA_H
+#ifndef HTGS_MATRIXPANELDATA_H
+#define HTGS_MATRIXPANELDATA_H
 
-#include <cuda.h>
-CUcontext *initCuda(int nGPUs, int *gpuIDs);
-size_t cudaGetFreeBytes(CUcontext context);
+#include <htgs/api/IData.hpp>
 
-#endif //HTGS_TUTORIALS_UTIL_CUDA_H
+#include "MatrixBlockData.h"
+
+enum class PanelState {
+  NONE,
+  ALL_FACTORED,
+  TOP_FACTORED,
+  UPDATED
+};
+
+class MatrixPanelData : public htgs::IData {
+ public:
+
+  MatrixPanelData(long height, long blockSize, int panelCol, int panelOperatingDiagonal, PanelState panelState) :
+      height(height), blockSize(blockSize), panelCol(panelCol), panelOperatingDiagonal(panelOperatingDiagonal), panelState(panelState)
+  {
+    memory = nullptr;
+    memoryData = nullptr;
+  }
+
+  double *getStartMemoryAddr() const {
+    return &memory[blockSize*panelOperatingDiagonal];
+  }
+
+  double *getMemory() const {
+    return memory;
+  }
+  void setMemory(double *memory) {
+    this->memory = memory;
+  }
+  const MatrixMemoryData_t &getMemoryData() const {
+    return memoryData;
+  }
+  void setMemoryData(const MatrixMemoryData_t &memoryData) {
+    this->memoryData = memoryData;
+  }
+
+  long getHeight() const {
+    return height;
+  }
+  int getPanelCol() const {
+    return panelCol;
+  }
+  int getPanelOperatingDiagonal() const {
+    return panelOperatingDiagonal;
+  }
+
+  PanelState getPanelState() const {
+    return panelState;
+  }
+
+  void setPanelState(PanelState panelState) {
+    this->panelState = panelState;
+  }
+
+ private:
+  double *memory;
+  MatrixMemoryData_t memoryData;
+  long height;
+  long blockSize;
+  int panelCol;
+  int panelOperatingDiagonal;
+  PanelState panelState;
+};
+#endif //HTGS_MATRIXPANELDATA_H

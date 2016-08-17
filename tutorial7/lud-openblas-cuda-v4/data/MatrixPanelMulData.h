@@ -4,14 +4,34 @@
 // You are solely responsible for determining the appropriateness of using and distributing the software and you assume all risks associated with its use, including but not limited to the risks and costs of program errors, compliance with applicable laws, damage to or loss of data, programs or equipment, and the unavailability or interruption of operation. This software is not intended to be used in any situation where a failure could cause risk of injury or damage to property. The software developed by NIST employees is not subject to copyright protection within the United States.
 
 //
-// Created by tjb3 on 6/22/16.
+// Created by tjb3 on 2/23/16.
 //
 
-#ifndef HTGS_TUTORIALS_UTIL_CUDA_H
-#define HTGS_TUTORIALS_UTIL_CUDA_H
+#ifndef HTGS_MATRIXPANELMULDATA_H
+#define HTGS_MATRIXPANELMULDATA_H
 
-#include <cuda.h>
-CUcontext *initCuda(int nGPUs, int *gpuIDs);
-size_t cudaGetFreeBytes(CUcontext context);
+#include <htgs/api/IData.hpp>
 
-#endif //HTGS_TUTORIALS_UTIL_CUDA_H
+#include "MatrixBlockData.h"
+
+class MatrixPanelMulData : public htgs::IData {
+ public:
+
+  MatrixPanelMulData(std::shared_ptr<MatrixPanelData> factoredMatrix,
+                     std::shared_ptr<MatrixPanelData> updateMatrix) :
+      factoredMatrix(factoredMatrix), updateMatrix(updateMatrix) {}
+
+  std::shared_ptr<MatrixPanelData> getFactoredMatrix() const {
+    return factoredMatrix;
+  }
+
+  std::shared_ptr<MatrixPanelData> getUpdateMatrix() const {
+    return updateMatrix;
+  }
+
+ private:
+  std::shared_ptr<MatrixPanelData> factoredMatrix;
+  std::shared_ptr<MatrixPanelData> updateMatrix;
+};
+
+#endif //HTGS_MATRIXPANELMULDATA_H

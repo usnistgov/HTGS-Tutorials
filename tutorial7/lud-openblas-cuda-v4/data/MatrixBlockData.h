@@ -4,14 +4,43 @@
 // You are solely responsible for determining the appropriateness of using and distributing the software and you assume all risks associated with its use, including but not limited to the risks and costs of program errors, compliance with applicable laws, damage to or loss of data, programs or equipment, and the unavailability or interruption of operation. This software is not intended to be used in any situation where a failure could cause risk of injury or damage to property. The software developed by NIST employees is not subject to copyright protection within the United States.
 
 //
-// Created by tjb3 on 6/22/16.
+// Created by tjb3 on 2/23/16.
 //
 
-#ifndef HTGS_TUTORIALS_UTIL_CUDA_H
-#define HTGS_TUTORIALS_UTIL_CUDA_H
+#ifndef HTGS_MATRIXBLOCKDATA_H
+#define HTGS_MATRIXBLOCKDATA_H
 
-#include <cuda.h>
-CUcontext *initCuda(int nGPUs, int *gpuIDs);
-size_t cudaGetFreeBytes(CUcontext context);
+#include <htgs/api/MemoryData.hpp>
 
-#endif //HTGS_TUTORIALS_UTIL_CUDA_H
+typedef std::shared_ptr<htgs::MemoryData<double *>> MatrixMemoryData_t;
+
+template<class T>
+class MatrixBlockData : public htgs::IData {
+ public:
+
+  MatrixBlockData(std::shared_ptr<MatrixRequestData> request,
+                  T matrixData,
+                  long matrixWidth,
+                  long matrixHeight) :
+      request(request), matrixData(matrixData), matrixWidth(matrixWidth), matrixHeight(matrixHeight) {}
+
+  std::shared_ptr<MatrixRequestData> getRequest() const {
+    return request;
+  }
+  T getMatrixData() const {
+    return matrixData;
+  }
+  long getMatrixWidth() const {
+    return matrixWidth;
+  }
+  long getMatrixHeight() const {
+    return matrixHeight;
+  }
+
+ private:
+  std::shared_ptr<MatrixRequestData> request;
+  T matrixData;
+  long matrixWidth;
+  long matrixHeight;
+};
+#endif //HTGS_MATRIXBLOCKDATA_H

@@ -7,6 +7,8 @@
 // Created by tjb3 on 6/22/16.
 //
 
+#include <cuda_runtime_api.h>
+#include <iostream>
 #include "util-cuda.h"
 CUcontext *initCuda(int nGPUs, int *gpuIDs) {
   cuInit(0);
@@ -23,4 +25,21 @@ CUcontext *initCuda(int nGPUs, int *gpuIDs) {
   }
 
   return contexts;
+}
+
+size_t cudaGetFreeBytes(CUcontext context)
+{
+  size_t free_byte;
+  size_t total_byte;
+  cuCtxSetCurrent(context);
+  cudaError err = cudaMemGetInfo(&free_byte, &total_byte);
+
+  if (err != cudaSuccess)
+  {
+    std::cout << "Error: cudaMemGetInfo fails" << cudaGetErrorString(err) << std::endl;
+    exit(1);
+  }
+
+
+  return free_byte;
 }

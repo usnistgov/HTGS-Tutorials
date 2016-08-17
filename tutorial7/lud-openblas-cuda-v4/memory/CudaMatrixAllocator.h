@@ -4,14 +4,32 @@
 // You are solely responsible for determining the appropriateness of using and distributing the software and you assume all risks associated with its use, including but not limited to the risks and costs of program errors, compliance with applicable laws, damage to or loss of data, programs or equipment, and the unavailability or interruption of operation. This software is not intended to be used in any situation where a failure could cause risk of injury or damage to property. The software developed by NIST employees is not subject to copyright protection within the United States.
 
 //
-// Created by tjb3 on 6/22/16.
+// Created by tjb3 on 2/23/16.
 //
 
-#ifndef HTGS_TUTORIALS_UTIL_CUDA_H
-#define HTGS_TUTORIALS_UTIL_CUDA_H
+#ifndef HTGS_CUDAMATRIXALLOCATOR_H
+#define HTGS_CUDAMATRIXALLOCATOR_H
+#include <htgs/api/IMemoryAllocator.hpp>
 
-#include <cuda.h>
-CUcontext *initCuda(int nGPUs, int *gpuIDs);
-size_t cudaGetFreeBytes(CUcontext context);
+class CudaMatrixAllocator : public htgs::IMemoryAllocator<double *> {
+ public:
+  CudaMatrixAllocator(int width, int height) : IMemoryAllocator((size_t) width * height) {}
 
-#endif //HTGS_TUTORIALS_UTIL_CUDA_H
+  double *memAlloc(size_t size) {
+    double *mem;
+    cudaMalloc((void **) &mem, sizeof(double) * size);
+    return mem;
+  }
+
+  double *memAlloc() {
+    double *mem;
+    cudaMalloc((void **) &mem, sizeof(double) * this->size());
+    return mem;
+  }
+
+  void memFree(double *&memory) {
+    cudaFree(memory);
+  }
+
+};
+#endif //HTGS_CUDAMATRIXALLOCATOR_H
