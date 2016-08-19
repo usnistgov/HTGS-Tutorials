@@ -17,6 +17,8 @@
 #include <iomanip>
 #include <cfloat>
 #include <magma_v2.h>
+#include <htgs/api/ExecutionPipeline.hpp>
+#include <zconf.h>
 
 #include "data/MatrixRequestData.h"
 #include "data/MatrixBlockData.h"
@@ -36,7 +38,10 @@
 #include "tasks/CopyOutPanelTask.h"
 #include "../../tutorial-utils/util-cuda.h"
 #include "memory/CudaMatrixAllocator.h"
-#include "rules/GausElimRuleUpperWindow.h"
+#include "rules/CopyFactorMatrixRule.h"
+#include "rules/CopyUpdateRuleUpper.h"
+#include "rules/CopyUpdateRuleUpperWindow.h"
+#include "rules/DecompositionRule.h"
 
 int validateResults(double *luMatrix, double *origMatrix, int matrixSize) {
   int count = 0;
@@ -104,11 +109,11 @@ int validateResults(double *luMatrix, double *origMatrix, int matrixSize) {
   return 0;
 }
 
-void runSequentialLU(double *matrix, long long int matrixSize)
+void runSequentialLU(double *matrix, long long int matrixSize, int numGpus)
 {
   magma_int_t *piv = new magma_int_t[matrixSize];
   magma_int_t info;
-  magma_dgetrf(matrixSize, matrixSize, matrix, matrixSize, piv, &info);
+  magma_dgetrf_m(numGpus, matrixSize, matrixSize, matrix, matrixSize, piv, &info);
 }
 
 int main(int argc, char *argv[]) {
@@ -127,8 +132,8 @@ int main(int argc, char *argv[]) {
   bool userDefinedUpdatePanels = false;
   int windowSize = 20;
   bool userDefinedWindowSize = false;
-  int gpuId = 2;
-
+  int numGpus = 1;
+  int *deviceIds = nullptr;
 
   std::string runtimeFileStr("runtimes");
 
@@ -159,11 +164,35 @@ int main(int argc, char *argv[]) {
         userDefinedWindowSize = true;
       }
 
-      if (argvs == "--gpu-id") {
+      if (argvs == "--num-gpus") {
+        numGpus = atoi(argv[arg + 1]);
         arg++;
-        gpuId = atoi(argv[arg]);
       }
 
+      if (argvs == "--device-ids") {
+
+        std::string deviceIdStr(argv[arg+1]);
+        arg++;
+
+        std::vector<int> vect;
+        std::stringstream ss(deviceIdStr);
+
+        int i;
+        while (ss >> i)
+        {
+          vect.push_back(i);
+          if (ss.peek() == ',')
+            ss.ignore();
+        }
+
+
+        deviceIds = new int[vect.size()];
+
+        for (unsigned int i = 0; i < vect.size(); i++)
+        {
+          deviceIds[i] = vect[i];
+        }
+      }
 
       if (argvs == "--factor-mem") {
         arg++;
@@ -220,6 +249,12 @@ int main(int argc, char *argv[]) {
     }
   }
 
+  // Initialize GPUs
+  if (deviceIds == nullptr)
+  {
+    deviceIds = new int[1] {0};
+  }
+
   std::ofstream runtimeFile(runtimeFileStr.c_str(), std::ios::app);
 
   double *matrix = new double[matrixSize * matrixSize];
@@ -241,12 +276,12 @@ int main(int argc, char *argv[]) {
     if (runSequential) {
       endToEnd.start();
       magma_init();
-      magma_setdevice(gpuId);
+//      magma_setdevice(deviceIds[0]);
       numBlasThreads = 20;
       openblas_set_num_threads(numBlasThreads);
 
       clk.start();
-      runSequentialLU(matrix, matrixSize);
+      runSequentialLU(matrix, matrixSize, numGpus);
       clk.stopAndIncrement();
       endToEnd.stopAndIncrement();
     }
@@ -273,9 +308,7 @@ int main(int argc, char *argv[]) {
         }
       }
 
-      int numGpus = 1;
-      int *gpuIds = new int { gpuId };
-      CUcontext * contexts = initCuda(numGpus, gpuIds);
+      CUcontext * contexts = initCuda(numGpus, deviceIds);
 
       if (!userDefinedWindowSize) {
         size_t freeBytes = cudaGetFreeBytes(contexts[0]);
@@ -351,8 +384,7 @@ int main(int argc, char *argv[]) {
 
       auto gausElimBk = new htgs::Bookkeeper<MatrixBlockData<double *>>();
 
-      GausElimRuleUpperWindow *gausElimRuleUpperWindow = new GausElimRuleUpperWindow(matrixBlocks, gridHeight, gridWidth, blockSize, windowSize);
-      GausElimRuleUpper *gausElimRuleUpper = new GausElimRuleUpper(matrixBlocks, gridHeight, gridWidth, blockSize, windowSize);
+      GausElimRuleUpper *gausElimRuleUpper = new GausElimRuleUpper(matrixBlocks, gridHeight, gridWidth, blockSize);
       GausElimRuleLower *gausElimRuleLower = new GausElimRuleLower(matrixBlocks, gridHeight, gridWidth);
 
       FactorLowerTask *factorLowerTask = new FactorLowerTask(numFactorLowerThreads, matrixSize, matrixSize);
@@ -360,18 +392,23 @@ int main(int argc, char *argv[]) {
       auto factorLowerBk = new htgs::Bookkeeper<MatrixBlockData<double *>>();
       auto gatherBlockRule = new GatherBlockRule(gridHeight, gridWidth, blockSize, matrixBlocks);
 
-      CopyInPanelWindowTask *copyInUpperWindow = new CopyInPanelWindowTask(blockSize, contexts, gpuIds, numGpus, matrixSize, gridWidth, "UpdateWindowMem", PanelState::TOP_FACTORED);
-      CopyInPanelTask *copyInUpper = new CopyInPanelTask(blockSize, contexts, gpuIds, numGpus, matrixSize, gridWidth, "UpdateMem", PanelState::TOP_FACTORED);
-      CopyInPanelTask *copyInLower = new CopyInPanelTask(blockSize, contexts, gpuIds, numGpus, matrixSize, gridWidth, "FactorMem", PanelState::ALL_FACTORED);
+      htgs::Bookkeeper<MatrixPanelData> *distributePanelBk = new htgs::Bookkeeper<MatrixPanelData>();
+      CopyFactorMatrixRule *copyFactorMatrixRule = new CopyFactorMatrixRule();
+      CopyUpdateRuleUpper *copyUpperRule = new CopyUpdateRuleUpper(windowSize*numGpus);
+      CopyUpdateRuleUpperWindow *copyUpperWindowRule = new CopyUpdateRuleUpperWindow(windowSize*numGpus);
+
+      CopyInPanelWindowTask *copyInUpperWindow = new CopyInPanelWindowTask(blockSize, contexts, deviceIds, numGpus, matrixSize, gridWidth, "UpdateWindowMem", PanelState::TOP_FACTORED);
+      CopyInPanelTask *copyInUpper = new CopyInPanelTask(blockSize, contexts, deviceIds, numGpus, matrixSize, gridWidth, "UpdateMem", PanelState::TOP_FACTORED);
+      CopyInPanelTask *copyInLower = new CopyInPanelTask(blockSize, contexts, deviceIds, numGpus, matrixSize, gridWidth, "FactorMem", PanelState::ALL_FACTORED);
 
 
       auto matrixMulBk = new htgs::Bookkeeper<MatrixPanelData>();
-      MatrixMulRule *matrixMulRule = new MatrixMulRule(gridHeight, gridWidth);
+      MatrixMulRule *matrixMulRule = new MatrixMulRule(gridHeight, gridWidth, numGpus);
 
-      MatrixMulPanelTask *matrixMulTask = new MatrixMulPanelTask(contexts, gpuIds, numGpus, 1, matrixSize, matrixSize, matrixSize, matrixSize, blockSize);
+      MatrixMulPanelTask *matrixMulTask = new MatrixMulPanelTask(contexts, deviceIds, numGpus, 1, matrixSize, matrixSize, matrixSize, matrixSize, blockSize);
 
 
-      CopyOutPanelTask *copyResultBack = new CopyOutPanelTask(blockSize, contexts, gpuIds, numGpus, matrixSize, gridWidth, "FactorMem");
+      CopyOutPanelTask *copyResultBack = new CopyOutPanelTask(blockSize, contexts, deviceIds, numGpus, matrixSize, gridWidth, "FactorMem");
 
       auto matrixMulResultBk = new htgs::Bookkeeper<MatrixPanelData>();
 
@@ -382,25 +419,43 @@ int main(int argc, char *argv[]) {
       int numUpdates = (1.0/2.0) * (double)gridWidth * (gridWidth-1);
       UpdateFactorRule *updateFactorRule = new UpdateFactorRule(numUpdates, gridHeight, matrixBlocks);
 
+      auto gpuTaskGraph = new htgs::TaskGraph<MatrixPanelData, MatrixPanelData>();
+
+      gpuTaskGraph->addGraphInputConsumer(distributePanelBk);
+      gpuTaskGraph->addRule(distributePanelBk, copyInLower, copyFactorMatrixRule);
+      gpuTaskGraph->addRule(distributePanelBk, copyInUpperWindow, copyUpperWindowRule);
+      gpuTaskGraph->addRule(distributePanelBk, copyInUpper, copyUpperRule);
+
+      gpuTaskGraph->addEdge(copyInLower, matrixMulBk);
+      gpuTaskGraph->addEdge(copyInUpper, matrixMulBk);
+      gpuTaskGraph->addEdge(copyInUpperWindow, matrixMulBk);
+
+      gpuTaskGraph->addRule(matrixMulBk, matrixMulTask, matrixMulRule);
+      gpuTaskGraph->addEdge(matrixMulTask, copyResultBack);
+
+      gpuTaskGraph->addGraphOutputProducer(copyResultBack);
+
+      gpuTaskGraph->addCudaMemoryManagerEdge("FactorMem", copyInLower, matrixMulTask, new CudaMatrixAllocator(blockSize, matrixSize), numPanelsFactor, htgs::MMType::Static, contexts);
+      gpuTaskGraph->addCudaMemoryManagerEdge("UpdateMem", copyInUpper, copyResultBack, new CudaMatrixAllocator(blockSize, matrixSize), numPanelsUpdate, htgs::MMType::Static, contexts);
+      gpuTaskGraph->addCudaMemoryManagerEdge("UpdateWindowMem", copyInUpperWindow, copyResultBack, new CudaMatrixAllocator(blockSize, matrixSize), windowSize == 0 ? 1 : windowSize, htgs::MMType::Static, contexts);
+
+      auto execPipeline = new htgs::ExecutionPipeline<MatrixPanelData, MatrixPanelData>(numGpus, gpuTaskGraph);
+      DecompositionRule *decompRule = new DecompositionRule(gridWidth, numGpus);
+      execPipeline->addInputRule(decompRule);
+
       auto taskGraph = new htgs::TaskGraph<MatrixBlockData<double *>, htgs::VoidData>();
       taskGraph->addGraphInputConsumer(gausElimTask);
 
       taskGraph->addEdge(gausElimTask, gausElimBk);
-      taskGraph->addRule(gausElimBk, copyInUpper, gausElimRuleUpper);
+      taskGraph->addRule(gausElimBk, execPipeline, gausElimRuleUpper);
       taskGraph->addRule(gausElimBk, factorLowerTask, gausElimRuleLower);
-      taskGraph->addRule(gausElimBk, copyInUpperWindow, gausElimRuleUpperWindow);
-
-      taskGraph->addEdge(copyInUpper, matrixMulBk);
-      taskGraph->addEdge(copyInUpperWindow, matrixMulBk);
 
       taskGraph->addEdge(factorLowerTask, factorLowerBk);
 
-      taskGraph->addRule(factorLowerBk, copyInLower, gatherBlockRule);
-      taskGraph->addEdge(copyInLower, matrixMulBk);
+      taskGraph->addRule(factorLowerBk, execPipeline, gatherBlockRule);
 
-      taskGraph->addRule(matrixMulBk, matrixMulTask, matrixMulRule);
-      taskGraph->addEdge(matrixMulTask, copyResultBack);
-      taskGraph->addEdge(copyResultBack, matrixMulResultBk);
+
+      taskGraph->addEdge(execPipeline, matrixMulResultBk);
 
       if (numDiagonals > 0)
         taskGraph->addRule(matrixMulResultBk, gausElimTask, gausElimRule);
@@ -414,10 +469,6 @@ int main(int argc, char *argv[]) {
 
       taskGraph->incrementGraphInputProducer();
 
-      taskGraph->addCudaMemoryManagerEdge("FactorMem", copyInLower, matrixMulTask, new CudaMatrixAllocator(blockSize, matrixSize), numPanelsFactor, htgs::MMType::Static, contexts);
-      taskGraph->addCudaMemoryManagerEdge("UpdateMem", copyInUpper, copyResultBack, new CudaMatrixAllocator(blockSize, matrixSize), numPanelsUpdate, htgs::MMType::Static, contexts);
-      taskGraph->addCudaMemoryManagerEdge("UpdateWindowMem", copyInUpperWindow, copyResultBack, new CudaMatrixAllocator(blockSize, matrixSize), windowSize == 0 ? 1 : windowSize, htgs::MMType::Static, contexts);
-
 //      taskGraph->writeDotToFile("lud-graph.dot");
 
       htgs::Runtime *runtime = new htgs::Runtime(taskGraph);
@@ -429,6 +480,8 @@ int main(int argc, char *argv[]) {
 
       taskGraph->produceData(matrixBlocks->get(0, 0));
       taskGraph->finishedProducingData();
+
+
       runtime->waitForRuntime();
 
       clk.stopAndIncrement();
