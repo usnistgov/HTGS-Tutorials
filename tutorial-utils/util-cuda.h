@@ -12,6 +12,8 @@
 
 #include <cuda.h>
 CUcontext *initCuda(int nGPUs, int *gpuIDs);
+void shutdownCuda(int nGPUs, CUcontext *contexts);
+
 size_t cudaGetFreeBytes(CUcontext context);
 
 #endif //HTGS_TUTORIALS_UTIL_CUDA_H

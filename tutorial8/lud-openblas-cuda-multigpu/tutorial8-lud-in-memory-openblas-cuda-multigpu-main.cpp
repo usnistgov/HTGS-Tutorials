@@ -117,7 +117,7 @@ void runSequentialLU(double *matrix, long long int matrixSize, int numGpus)
 }
 
 int main(int argc, char *argv[]) {
-  long matrixSize= 1000;
+  long matrixSize= 10000;
   int blockSize = 250;
   bool runSequential = false;
   bool validate = false;
@@ -324,8 +324,7 @@ int main(int argc, char *argv[]) {
         if (userDefinedUpdatePanels)
           numPanelsInMemory -= numPanelsUpdate;
 
-        std::cout << "num panels in memory = " << numPanelsInMemory << " Num panels in core: " << numPanelsInCore
-                  << std::endl;
+//        std::cout << "num panels in memory = " << numPanelsInMemory << " Num panels in core: " << numPanelsInCore << std::endl;
 
         if (numPanelsInMemory >= numPanelsInCore + 1) {
           windowSize = (int) numPanelsInCore;
@@ -378,7 +377,7 @@ int main(int argc, char *argv[]) {
 
       }
 
-      std::cout << "Window = " << windowSize << " numUpdate = " << numPanelsUpdate << " numFactor = " << numPanelsFactor << " Num bytes available: " << cudaGetFreeBytes(contexts[0]) << std::endl;
+//      std::cout << "Window = " << windowSize << " numUpdate = " << numPanelsUpdate << " numFactor = " << numPanelsFactor << " Num bytes available: " << cudaGetFreeBytes(contexts[0]) << std::endl;
 
       GausElimTask *gausElimTask = new GausElimTask(numGausElimThreads, matrixSize, matrixSize, blockSize);
 
@@ -470,6 +469,8 @@ int main(int argc, char *argv[]) {
       taskGraph->incrementGraphInputProducer();
 
 //      taskGraph->writeDotToFile("lud-graph.dot");
+//      taskGraph->writeDotToFile("pre-exec-testing-output.dot", DOTGEN_FLAG_SHOW_IN_OUT_TYPES); // | DOTGEN_FLAG_HIDE_MEM_EDGES);
+
 
       htgs::Runtime *runtime = new htgs::Runtime(taskGraph);
 
@@ -484,18 +485,22 @@ int main(int argc, char *argv[]) {
 
       runtime->waitForRuntime();
 
+//      taskGraph->writeDotToFile("compute-output.dot", DOTGEN_FLAG_SHOW_IN_OUT_TYPES | DOTGEN_FLAG_SHOW_PROFILE_COMP_TIME | DOTGEN_FLAG_HIDE_MEM_EDGES); // | DOTGEN_FLAG_HIDE_MEM_EDGES);
+//      taskGraph->writeDotToFile("wait-output.dot", DOTGEN_FLAG_SHOW_PROFILE_WAIT_TIME | DOTGEN_FLAG_HIDE_MEM_EDGES);
+//      taskGraph->writeDotToFile("maxq-output.dot", DOTGEN_FLAG_SHOW_PROFILE_MAX_Q_SZ | DOTGEN_FLAG_HIDE_MEM_EDGES);
+
       clk.stopAndIncrement();
 
       delete runtime;
       delete matrixBlocks;
+      shutdownCuda(numGpus, contexts);
       endToEnd.stopAndIncrement();
+
     }
 
     double operations = (2.0 * (matrixSize * matrixSize * matrixSize)) / 3.0;
     double flops = operations / clk.getAverageTime(TimeVal::SEC);
     double gflops = flops / 1073741824.0;
-
-
 
 
     std::cout << (runSequential ? "sequential" : "htgs")

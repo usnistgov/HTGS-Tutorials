@@ -27,6 +27,17 @@ CUcontext *initCuda(int nGPUs, int *gpuIDs) {
   return contexts;
 }
 
+void shutdownCuda(int nGPUs, CUcontext *contexts)
+{
+  for (int i = 0; i < nGPUs; i++)
+  {
+    cuCtxDestroy_v2(contexts[i]);
+  }
+
+  free(contexts);
+
+}
+
 size_t cudaGetFreeBytes(CUcontext context)
 {
   size_t free_byte;

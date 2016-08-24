@@ -96,6 +96,7 @@ class CopyInPanelWindowTask : public htgs::ICudaTask<MatrixPanelData, MatrixPane
   }
 
   virtual void shutdownCuda() {
+    delete panelCache;
   }
 
   virtual std::string getName() {

@@ -26,6 +26,10 @@ class GatherBlockRule : public htgs::IRule<MatrixBlockData<double *>, MatrixPane
     gatherBlockState = this->allocStateContainer<GatherState>(numBlocksHeight, numBlocksWidth, GatherState::None);
   }
 
+  ~GatherBlockRule() {
+    delete gatherBlockState;
+  }
+
   virtual void applyRule(std::shared_ptr<MatrixBlockData<double *>> data, int pipelineId) {
 
     int row = data->getRequest()->getRow();
