@@ -482,13 +482,13 @@ int main(int argc, char *argv[]) {
 
       htgs::Runtime *runtime = new htgs::Runtime(taskGraph);
 
-      clk.start();
-
-      runtime->executeRuntime();
-
 
       taskGraph->produceData(matrixBlocks->get(0, 0));
       taskGraph->finishedProducingData();
+      runtime->executeRuntime();
+      clk.start();
+
+
 
 
       runtime->waitForRuntime();
