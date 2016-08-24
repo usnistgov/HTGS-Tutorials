@@ -88,7 +88,8 @@ class CopyInPanelTask : public htgs::ICudaTask<MatrixPanelData, MatrixPanelData>
   }
 
   virtual void shutdownCuda() {
-    delete [] factorReleaseCounts;
+    if (panelState == PanelState::ALL_FACTORED)
+      delete [] factorReleaseCounts;
   }
 
   virtual std::string getName() {

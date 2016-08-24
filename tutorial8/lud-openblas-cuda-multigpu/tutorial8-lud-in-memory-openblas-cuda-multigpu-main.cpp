@@ -337,7 +337,7 @@ int main(int argc, char *argv[]) {
 
           int numPanelsAvailable = (int) numPanelsInMemory; //- 1;
 
-          std::cout << "Num panels Available: " << numPanelsAvailable << std::endl;
+//          std::cout << "Num panels Available: " << numPanelsAvailable << std::endl;
 
           if (numPanelsAvailable <= 0) {
             std::cout << "Unable to fit in GPU in memory" << std::endl;
