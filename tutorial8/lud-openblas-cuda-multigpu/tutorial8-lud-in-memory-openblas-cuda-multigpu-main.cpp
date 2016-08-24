@@ -114,6 +114,9 @@ void runSequentialLU(double *matrix, long long int matrixSize, int numGpus)
   magma_int_t *piv = new magma_int_t[matrixSize];
   magma_int_t info;
   magma_dgetrf_m(numGpus, matrixSize, matrixSize, matrix, matrixSize, piv, &info);
+
+  delete piv;
+
 }
 
 int main(int argc, char *argv[]) {
@@ -283,6 +286,9 @@ int main(int argc, char *argv[]) {
       clk.start();
       runSequentialLU(matrix, matrixSize, numGpus);
       clk.stopAndIncrement();
+
+      magma_finalize();
+
       endToEnd.stopAndIncrement();
     }
     else {
