@@ -137,6 +137,7 @@ int main(int argc, char *argv[]) {
   bool userDefinedWindowSize = false;
   int numGpus = 1;
   int *deviceIds = nullptr;
+  bool isInCore = false;
 
   std::string runtimeFileStr("runtimes");
 
@@ -324,7 +325,7 @@ int main(int argc, char *argv[]) {
         size_t numPanelsInMemory = freeBytes / panelSize;
 
         // Check in core
-        size_t numPanelsInCore = (size_t) matrixSize / blockSize;
+        size_t numPanelsInCore = (size_t) matrixSize / (blockSize*numGpus);
         numPanelsInMemory -= numPanelsFactor;
 
         if (userDefinedUpdatePanels)
@@ -334,6 +335,7 @@ int main(int argc, char *argv[]) {
 
         if (numPanelsInMemory >= numPanelsInCore + 1) {
           windowSize = (int) numPanelsInCore;
+          isInCore = true;
           if (!userDefinedUpdatePanels)
             numPanelsUpdate = 1;
         } else {
@@ -522,6 +524,7 @@ int main(int argc, char *argv[]) {
               << ", factor panels: " << numPanelsFactor
               << ", update panels: " << numPanelsUpdate
               << ", num gpus: " << numGpus
+              << ", " << (isInCore ? "in-core" : "out-of-core")
               << std::endl;
 
     runtimeFile << (runSequential ? "sequential" : "htgs")
@@ -538,6 +541,7 @@ int main(int argc, char *argv[]) {
                 << ", " << numPanelsFactor
                 << ", " << numPanelsUpdate
                 << ", " << numGpus
+                << ", " << (isInCore ? "in-core" : "out-of-core")
                 << std::endl;
 
 
