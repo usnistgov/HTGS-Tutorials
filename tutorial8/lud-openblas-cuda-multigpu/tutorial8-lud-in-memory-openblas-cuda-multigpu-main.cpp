@@ -495,7 +495,6 @@ int main(int argc, char *argv[]) {
       delete matrixBlocks;
       shutdownCuda(numGpus, contexts);
       endToEnd.stopAndIncrement();
-
     }
 
     double operations = (2.0 * (matrixSize * matrixSize * matrixSize)) / 3.0;
@@ -516,6 +515,7 @@ int main(int argc, char *argv[]) {
               << ", window: "<< windowSize
               << ", factor panels: " << numPanelsFactor
               << ", update panels: " << numPanelsUpdate
+              << ", num gpus: " << numGpus
               << std::endl;
 
     runtimeFile << (runSequential ? "sequential" : "htgs")
@@ -531,6 +531,7 @@ int main(int argc, char *argv[]) {
                 << ", "<< windowSize
                 << ", " << numPanelsFactor
                 << ", " << numPanelsUpdate
+                << ", " << numGpus
                 << std::endl;
 
 
