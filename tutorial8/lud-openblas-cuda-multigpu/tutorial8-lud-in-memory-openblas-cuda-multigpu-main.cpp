@@ -7,7 +7,7 @@
 //
 //#define DEBUG_FLAG
 //#define DEBUG_LEVEL_VERBOSE
-//#define PROFILE
+#define PROFILE
 
 //typedef long long int lapack_int;
 
@@ -138,6 +138,7 @@ int main(int argc, char *argv[]) {
   int numGpus = 1;
   int *deviceIds = nullptr;
   bool isInCore = false;
+  std::string computeProfileStr("compute-profile");
 
   std::string runtimeFileStr("runtimes");
 
@@ -238,6 +239,11 @@ int main(int argc, char *argv[]) {
       if (argvs == "--runtime-file" && arg + 1 < argc) {
         runtimeFileStr = argv[arg + 1];
         arg++;
+      }
+
+      if (argvs == "--compute-profile" && arg + 1 < argc) {
+        arg++;
+        computeProfileStr = argv[arg];
       }
 
       if (argvs == "--validate-results") {
@@ -493,7 +499,7 @@ int main(int argc, char *argv[]) {
 
       runtime->waitForRuntime();
 
-//      taskGraph->writeDotToFile("compute-output.dot", DOTGEN_FLAG_SHOW_IN_OUT_TYPES | DOTGEN_FLAG_SHOW_PROFILE_COMP_TIME | DOTGEN_FLAG_HIDE_MEM_EDGES); // | DOTGEN_FLAG_HIDE_MEM_EDGES);
+      taskGraph->writeDotToFile(computeProfileStr, DOTGEN_FLAG_SHOW_PROFILE_COMP_TIME | DOTGEN_FLAG_HIDE_MEM_EDGES);
 //      taskGraph->writeDotToFile("wait-output.dot", DOTGEN_FLAG_SHOW_PROFILE_WAIT_TIME | DOTGEN_FLAG_HIDE_MEM_EDGES);
 //      taskGraph->writeDotToFile("maxq-output.dot", DOTGEN_FLAG_SHOW_PROFILE_MAX_Q_SZ | DOTGEN_FLAG_HIDE_MEM_EDGES);
 
