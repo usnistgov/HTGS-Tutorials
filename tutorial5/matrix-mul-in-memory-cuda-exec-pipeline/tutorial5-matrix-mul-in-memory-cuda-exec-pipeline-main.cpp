@@ -91,13 +91,6 @@ void computeSequentialMatMul(double *matrixA,
                 matrixA, fullMatrixAHeight,
                 matrixB, fullMatrixAHeight,
                 &beta, matrixC, fullMatrixAHeight);
-
-
-//  cblas_dgemm(CblasColMajor, CblasNoTrans, CblasNoTrans, fullMatrixAHeight, fullMatrixBWidth, fullMatrixAWidth, 1.0, matrixA, fullMatrixAHeight,
-//              matrixB, fullMatrixAWidth, 0.0, matrixC, fullMatrixAHeight);
-
-
-  cublasXtDestroy(handle);
 }
 
 int main(int argc, char *argv[]) {
