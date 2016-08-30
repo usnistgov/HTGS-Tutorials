@@ -82,16 +82,7 @@ void computeSequentialMatMul(double *matrixA,
                              size_t fullMatrixAHeight,
                              size_t fullMatrixAWidth,
                              size_t fullMatrixBWidth,
-                             int blockDim,
-                             int numGpus,
-                             int *devices) {
-
-  cublasXtHandle_t handle;
-
-  cublasXtCreate(&handle);
-
-  cublasXtDeviceSelect(handle, numGpus, devices);
-  cublasXtSetBlockDim(handle, blockDim);
+                             cublasXtHandle_t handle) {
 
   double alpha = 1.0;
   double beta = 0.0;
@@ -240,12 +231,24 @@ int main(int argc, char *argv[]) {
     SimpleClock endToEnd;
 
     if (runSequential) {
+      endToEnd.start();
       openblas_set_num_threads(numBlasThreads);
+
+      cublasXtHandle_t handle;
+
+      cublasXtCreate(&handle);
+
+      cublasXtDeviceSelect(handle, numGpus, deviceIds);
+      cublasXtSetBlockDim(handle, blockSize);
 
       clk.start();
       computeSequentialMatMul(matrixA, matrixB, matrixC, (size_t) matrixAHeight, (size_t) sharedDim,
-                              (size_t) matrixBWidth, blockSize, numGpus, deviceIds);
+                              (size_t) matrixBWidth, handle);
       clk.stopAndIncrement();
+
+      cublasXtDestroy(handle);
+
+      endToEnd.stopAndIncrement();
     }
     else {
       endToEnd.start();
