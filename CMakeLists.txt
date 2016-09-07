@@ -16,6 +16,7 @@ find_package(HTGS REQUIRED)
 find_package(OpenBLAS QUIET)
 find_package(CUDA QUIET)
 find_package(MAGMA REQUIRED)
+find_package(PLASMA REQUIRED)
 #find_package(MKL REQUIRED)
 
 
