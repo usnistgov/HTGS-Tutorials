@@ -331,7 +331,7 @@ int main(int argc, char *argv[]) {
         size_t numPanelsInMemory = freeBytes / panelSize;
 
         // Check in core
-        size_t numPanelsInCore = (size_t) matrixSize / (blockSize*numGpus);
+        size_t numPanelsInCore = (size_t) ceil((double)matrixSize / (double)(blockSize*numGpus));
         numPanelsInMemory -= numPanelsFactor;
 
         if (userDefinedUpdatePanels)
