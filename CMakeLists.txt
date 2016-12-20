@@ -19,6 +19,8 @@ find_package(MAGMA QUIET)
 find_package(PLASMA QUIET)
 #find_package(MKL REQUIRED)
 
+option(BUILD_STITCHING_TEST "Enables building the stitching test" OFF)
+
 
 include_directories(${HTGS_INCLUDE_DIR})
 link_libraries(${CMAKE_THREAD_LIBS_INIT})
@@ -33,3 +35,8 @@ add_subdirectory(tutorial5)
 add_subdirectory(tutorial6)
 add_subdirectory(tutorial7)
 add_subdirectory(tutorial8)
+
+
+if (BUILD_STITCHING_TEST)
+    add_subdirectory(image-stitching)
+endif(BUILD_STITCHING_TEST)

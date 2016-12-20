@@ -113,8 +113,8 @@ void runSequentialLU(double *matrix, int matrixSize)
 }
 
 int main(int argc, char *argv[]) {
-  long matrixSize= 16384;
-  int blockSize = 512;
+  long matrixSize= 10000;
+  int blockSize = 500;
   bool runSequential = false;
   bool validate = false;
 
@@ -246,7 +246,7 @@ int main(int argc, char *argv[]) {
       }
 
       int numGpus = 1;
-      int *gpuIds = new int { 2 };
+      int *gpuIds = new int { 1 };
       CUcontext * contexts = initCuda(numGpus, gpuIds);
 
       GausElimTask *gausElimTask = new GausElimTask(numGausElimThreads, matrixSize, matrixSize, blockSize);
@@ -320,7 +320,7 @@ int main(int argc, char *argv[]) {
 //
       taskGraph->incrementGraphInputProducer();
 
-      taskGraph->writeDotToFile("lud-cuda-graph.dot");
+//      taskGraph->writeDotToFile("lud-cuda-graph-v1.dot");
 
       htgs::Runtime *runtime = new htgs::Runtime(taskGraph);
 
@@ -334,12 +334,14 @@ int main(int argc, char *argv[]) {
 //      for (int i = 0; i < 10; i++)
 //      {
 //        usleep(1000000);
-//        taskGraph->writeDotToFile("lud-cuda-graph-exec.dot");
+//        taskGraph->writeDotToFile("lud-cuda-graph-exec.dot", DOTGEN_FLAG_SHOW_PROFILE_MAX_Q_SZ | DOTGEN_FLAG_HIDE_MEM_EDGES);
 //      }
 
 
 
       runtime->waitForRuntime();
+
+      taskGraph->writeDotToFile("lud-cuda-graph-exec-v1.dot", DOTGEN_FLAG_SHOW_PROFILE_MAX_Q_SZ | DOTGEN_FLAG_HIDE_MEM_EDGES);
 
       clk.stopAndIncrement();
 

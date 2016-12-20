@@ -7,7 +7,7 @@
 //
 //#define DEBUG_FLAG
 //#define DEBUG_LEVEL_VERBOSE
-//#define PROFILE
+#define PROFILE
 
 typedef long long int lapack_int;
 
@@ -115,8 +115,8 @@ void runSequentialLU(double *matrix, long long int matrixSize)
 }
 
 int main(int argc, char *argv[]) {
-  magma_int_t matrixSize= 64000;
-  int blockSize = 1000;
+  magma_int_t matrixSize= 10000;
+  int blockSize = 500;
   bool runSequential = false;
   bool validate = false;
 
@@ -251,7 +251,7 @@ int main(int argc, char *argv[]) {
       }
 
       int numGpus = 1;
-      int *gpuIds = new int { 0 };
+      int *gpuIds = new int { 1 };
       CUcontext * contexts = initCuda(numGpus, gpuIds);
 
       GausElimTask *gausElimTask = new GausElimTask(numGausElimThreads, matrixSize, matrixSize, blockSize);
@@ -329,7 +329,7 @@ int main(int argc, char *argv[]) {
 //
       taskGraph->incrementGraphInputProducer();
 
-      taskGraph->writeDotToFile("lud-cuda-graph.dot");
+      taskGraph->writeDotToFile("lud-cuda-graph-v2.dot");
 
       htgs::Runtime *runtime = new htgs::Runtime(taskGraph);
 
@@ -350,7 +350,9 @@ int main(int argc, char *argv[]) {
 
       runtime->waitForRuntime();
 
+
       clk.stopAndIncrement();
+      taskGraph->writeDotToFile("lud-cuda-graph-exec-v2.dot", DOTGEN_FLAG_HIDE_MEM_EDGES | DOTGEN_FLAG_SHOW_PROFILE_MAX_Q_SZ);
 
       delete runtime;
       delete matrixBlocks;
