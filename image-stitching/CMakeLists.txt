@@ -1,6 +1,37 @@
 find_package(TIFF REQUIRED)
 find_package(FFTW REQUIRED)
 
+set(PARAMS_SRC
+        tclap/Arg.h
+        tclap/ArgException.h
+        tclap/ArgTraits.h
+        tclap/CmdLine.h
+        tclap/CmdLineInterface.h
+        tclap/CmdLineOutput.h
+        tclap/Constraint.h
+        tclap/DocBookOutput.h
+        tclap/HelpVisitor.h
+        tclap/IgnoreRestVisitor.h
+        tclap/MultiArg.h
+        tclap/MultiSwitchArg.h
+        tclap/OptionalUnlabeledTracker.h
+        tclap/StandardTraits.h
+        tclap/StdOutput.h
+        tclap/SwitchArg.h
+        tclap/UnlabeledMultiArg.h
+        tclap/UnlabeledValueArg.h
+        tclap/ValueArg.h
+        tclap/ValuesConstraint.h
+        tclap/VersionVisitor.h
+        tclap/Visitor.h
+        tclap/XorHandler.h
+        tclap/ZshCompletionOutput.h
+        StitchingParams.cpp
+        StitchingParams.h
+        ParamValidators.h
+        util-filesystem.h
+        )
+
 set(IMAGE_STITCHING_SRC
         cpu/data/FFTData.h
         cpu/data/PCIAMData.h
@@ -21,10 +52,11 @@ set(STITCHING_CPP_LIBRARIES imageStitching ${FFTW_LIBRARIES} ${TIFF_LIBRARIES} $
 
 ## Edit Here to specify location of image stitching library
 include_directories(/home/tjb3/local/include)
+include_directories(.)
 link_directories(/home/tjb3/local/lib)
 
-add_executable(testCPUStitching testCPUStitching.cpp ${IMAGE_STITCHING_SRC})
-add_executable(testCPUStitchingWithMemory testCPUStitchingWithMemory.cpp ${IMAGE_STITCHING_SRC})
+add_executable(testCPUStitching testCPUStitching.cpp ${IMAGE_STITCHING_SRC} ${PARAMS_SRC})
+add_executable(testCPUStitchingWithMemory testCPUStitchingWithMemory.cpp ${IMAGE_STITCHING_SRC} ${PARAMS_SRC})
 add_executable(testStitchingAPI testStitchingAPI.cpp ${IMAGE_STITCHING_SRC})
 
 target_link_libraries(testCPUStitching ${STITCHING_CPP_LIBRARIES})

@@ -17,6 +17,7 @@
 #include "cpu/tasks/PCIAMTask.h"
 #include "cpu/memory/FFTWMemory.h"
 #include "cpu/memory/ReadMemory.h"
+#include "StitchingParams.h"
 
 using namespace std;
 using namespace htgs;
@@ -24,35 +25,50 @@ using namespace htgs;
 namespace is = ImageStitching;
 
 
-int main() {
+int main(int argc, char **argv) {
+
+  StitchingParams params(argc, argv);
+
+  if (params.parseArgs() < 0)
+  {
+    return -1;
+  }
+
+  if (params.isSaveParams()) {
+    params.saveArgs(params.getOutputParamFile());
+  }
 
 
   std::cout << "Testing Runtime with Memory" << std::endl;
 
-  int startRow = 0;
-  int startCol = 0;
-  int extentWidth = 23;
-  int extentHeight = 30;
+  int startRow = params.getStartRow();
+  int startCol = params.getStartCol();
+  int extentWidth = params.getExtentWidth();
+  int extentHeight = params.getExtentWidth();
+  int numThreadsFFT = params.getNumThreadsFFT();
+  int numThreadsPCIAM = params.getNumThreadsPCIAM();
 
   DEBUG("Building Grid");
-  std::string path("/home/tjb3/datasets/image-stitching/1h_Wet_10Perc");
   TileGrid<is::FFTWImageTile> *grid = new TileGrid<is::FFTWImageTile>(startRow,
                                                                       startCol,
                                                                       extentWidth,
                                                                       extentHeight,
-                                                                      23,
-                                                                      30,
-                                                                      GridOrigin::UpperRight,
-                                                                      GridNumbering::Column,
-                                                                      1,
-                                                                      path,
-                                                                      "KB_2012_04_13_1hWet_10Perc_IR_0{pppp}.tif",
+                                                                      params.getGridWidth(),
+                                                                      params.getGridHeight(),
+                                                                      params.getOrigin(),
+                                                                      params.getNumbering(),
+                                                                      params.getStartTile(),
+                                                                      params.getImageDir(),
+                                                                      params.getFilenamePattern(),
                                                                       is::ImageTileType::FFTW);
 
   is::FFTWImageTile *tile = grid->getSubGridTilePtr(0, 0);
   tile->readTile();
-  is::FFTWImageTile::initPlans(tile->getWidth(), tile->getHeight(), FFTW_PATIENT, true, "test.dat");
-  is::FFTWImageTile::savePlan("test.dat");
+  is::FFTWImageTile::initPlans(tile->getWidth(), tile->getHeight(), getFftwMode(params.getFftwMode()), params.isLoadPlan(), params.getPlanFile());
+
+  if (params.isSavePlan())
+    is::FFTWImageTile::savePlan(params.getPlanFile());
+
   TileGridTraverser<is::FFTWImageTile> *traverser = createTraverser(grid, Traversal::DiagonalTraversal);
 
   DEBUG("Setting up tasks");
@@ -60,18 +76,12 @@ int main() {
   ReadTask *readTask =
       new ReadTask(grid->getStartCol(), grid->getStartRow(), grid->getExtentWidth(), grid->getExtentHeight());
   FFTTask *fftTask =
-      new FFTTask(10, tile, grid->getStartCol(), grid->getStartRow(), grid->getExtentWidth(), grid->getExtentHeight());
+      new FFTTask(numThreadsFFT, tile, grid->getStartCol(), grid->getStartRow(), grid->getExtentWidth(), grid->getExtentHeight());
   Bookkeeper<FFTData> *bookkeeper = new Bookkeeper<FFTData>();
-  PCIAMTask *pciamTask = new PCIAMTask(30, tile);
+  PCIAMTask *pciamTask = new PCIAMTask(numThreadsPCIAM, tile);
 
   // Create rules
   StitchingRule *stitchingRule = new StitchingRule(grid);
-
-  // Create tasks
-//    Task<FFTData, FFTData> *readTask = new Task<FFTData, FFTData>(readITask, 1, false, 0, 1);
-//    Task<FFTData, FFTData> *fftTask = new Task<FFTData, FFTData>(fftITask, 10, false, 0, 1);
-//    Task<FFTData, VoidData> *bkTask = new Task<FFTData, VoidData>(bookkeeper, 1, false, 0, 1);
-//    Task<PCIAMData, PCIAMData> *pciamTask= new Task<PCIAMData, PCIAMData>(pciamITask, 30, false, 0, 1);
 
   // Create task graph
   DEBUG("Creating task graph");
@@ -88,8 +98,20 @@ int main() {
   ReadMemory *readMemAlloc = new ReadMemory(tile->getSize());
   FFTWMemory *fftwMemAlloc = new FFTWMemory(tile->fftSize);
 
-  taskGraph->addMemoryManagerEdge("read", readTask, pciamTask, readMemAlloc, 100, MMType::Static);
-  taskGraph->addMemoryManagerEdge("fft", readTask, pciamTask, fftwMemAlloc, 100, MMType::Static);
+  int memoryPoolSize = min(extentWidth, extentHeight) + 1;
+
+  if (params.getMemoryPoolSize() > memoryPoolSize) {
+    std::cout << "Using memory pool size argument" << std::endl;
+    memoryPoolSize = params.getMemoryPoolSize();
+  }
+  else
+  {
+    std::cout << "Ignoring memory pool size argument" << std::endl;
+  }
+
+
+  taskGraph->addMemoryManagerEdge("read", readTask, pciamTask, readMemAlloc, memoryPoolSize, MMType::Static);
+  taskGraph->addMemoryManagerEdge("fft", readTask, pciamTask, fftwMemAlloc, memoryPoolSize, MMType::Static);
 
 //    TaskGraph<FFTData, FFTData> *copy = taskGraph->copy(0, 1);
 //    copy->incrementGraphInputProducer();
@@ -117,7 +139,9 @@ int main() {
   std::cout << "Execution time: " << std::chrono::duration_cast<std::chrono::milliseconds>(finish - start).count()
       << " ms" << std::endl;
 
-  writeTranslationsToFile(grid, "/home/tjb3/cpp-htgs-out-runtime-with-memory.txt");
+  std::stringstream outputFile;
+  outputFile << params.getOutputDir() << "/" << params.getOutputFilePrefix() << "-pre-optimization-translations-fftw-with-memorypool" << params.getExtentWidth() << "-" << params.getExtentHeight() << ".txt";
+  writeTranslationsToFile(grid, outputFile.str());
 
   std::cout << "Finished Runtime with Memory Test" << std::endl;
 

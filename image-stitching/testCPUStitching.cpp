@@ -15,41 +15,58 @@
 #include "cpu/tasks/FFTTask.h"
 #include "cpu/rules/StitchingRule.h"
 #include "cpu/tasks/PCIAMTask.h"
-
+#include "StitchingParams.h"
 
 using namespace std;
 using namespace htgs;
 
 namespace is = ImageStitching;
 
-int main() {
+int main(int argc, char **argv) {
+
+  StitchingParams params(argc, argv);
+
+  if (params.parseArgs() < 0)
+  {
+    return -1;
+  }
+
+  if (params.isSaveParams()) {
+    params.saveArgs(params.getOutputParamFile());
+  }
+
+
 
   std::cout << "Testing Runtime" << std::endl;
 
-  int startRow = 0;
-  int startCol = 0;
-  int extentWidth = 23;
-  int extentHeight = 30;
+  int startRow = params.getStartRow();
+  int startCol = params.getStartCol();
+  int extentWidth = params.getExtentWidth();
+  int extentHeight = params.getExtentWidth();
+  int numThreadsFFT = params.getNumThreadsFFT();
+  int numThreadsPCIAM = params.getNumThreadsPCIAM();
 
   DEBUG("Building Grid");
-  std::string path("/home/tjb3/datasets/image-stitching/1h_Wet_10Perc");
   TileGrid<is::FFTWImageTile> *grid = new TileGrid<is::FFTWImageTile>(startRow,
                                                                       startCol,
                                                                       extentWidth,
                                                                       extentHeight,
-                                                                      23,
-                                                                      30,
-                                                                      GridOrigin::UpperRight,
-                                                                      GridNumbering::Column,
-                                                                      1,
-                                                                      path,
-                                                                      "KB_2012_04_13_1hWet_10Perc_IR_0{pppp}.tif",
+                                                                      params.getGridWidth(),
+                                                                      params.getGridHeight(),
+                                                                      params.getOrigin(),
+                                                                      params.getNumbering(),
+                                                                      params.getStartTile(),
+                                                                      params.getImageDir(),
+                                                                      params.getFilenamePattern(),
                                                                       is::ImageTileType::FFTW);
 
   is::FFTWImageTile *tile = grid->getSubGridTilePtr(0, 0);
   tile->readTile();
-  is::FFTWImageTile::initPlans(tile->getWidth(), tile->getHeight(), FFTW_PATIENT, true, "test.dat");
-  is::FFTWImageTile::savePlan("test.dat");
+  is::FFTWImageTile::initPlans(tile->getWidth(), tile->getHeight(), getFftwMode(params.getFftwMode()), params.isLoadPlan(), params.getPlanFile());
+
+  if (params.isSavePlan())
+    is::FFTWImageTile::savePlan(params.getPlanFile());
+
   TileGridTraverser<is::FFTWImageTile> *traverser = createTraverser(grid, Traversal::DiagonalTraversal);
 
   DEBUG("Setting up tasks");
@@ -57,9 +74,9 @@ int main() {
   ReadTask *readTask =
       new ReadTask(grid->getStartCol(), grid->getStartRow(), grid->getExtentWidth(), grid->getExtentHeight());
   FFTTask *fftTask =
-      new FFTTask(10, tile, grid->getStartCol(), grid->getStartRow(), grid->getExtentWidth(), grid->getExtentHeight());
+      new FFTTask(numThreadsFFT, tile, grid->getStartCol(), grid->getStartRow(), grid->getExtentWidth(), grid->getExtentHeight());
   Bookkeeper<FFTData> *bookkeeper = new Bookkeeper<FFTData>();
-  PCIAMTask *pciamTask = new PCIAMTask(40, tile);
+  PCIAMTask *pciamTask = new PCIAMTask(numThreadsPCIAM, tile);
 
   // Create rules
   StitchingRule *stitchingRule = new StitchingRule(grid);
@@ -82,20 +99,20 @@ int main() {
   taskGraph->addGraphInputConsumer(readTask);
   taskGraph->incrementGraphInputProducer();
 
-  TaskGraph<FFTData, FFTData> *copy = taskGraph->copy(0, 1);
-  copy->incrementGraphInputProducer();
+//  TaskGraph<FFTData, FFTData> *copy = taskGraph->copy(0, 1);
+//  copy->incrementGraphInputProducer();
 
-  Runtime *runTime = new Runtime(copy);
+  Runtime *runTime = new Runtime(taskGraph);
 
   DEBUG("Producing data for graph edge");
   int count = 0;
   while (traverser->hasNext()) {
     FFTData *data = new FFTData(traverser->nextPtr(), count);
-    copy->produceData(data);
+    taskGraph->produceData(data);
     count++;
   }
 
-  copy->finishedProducingData();
+  taskGraph->finishedProducingData();
 
   auto start = std::chrono::high_resolution_clock::now();
 
@@ -105,7 +122,9 @@ int main() {
   std::cout << "Execution time: " << std::chrono::duration_cast<std::chrono::milliseconds>(finish - start).count()
       << " ms" << std::endl;
 
-  writeTranslationsToFile(grid, "/home/tjb3/cpp-htgs-out-runtime.txt");
+  std::stringstream outputFile;
+  outputFile << params.getOutputDir() << "/" << params.getOutputFilePrefix() << "-pre-optimization-translations-fftw-no-memorypool" << params.getExtentWidth() << "-" << params.getExtentHeight() << ".txt";
+  writeTranslationsToFile(grid, outputFile.str());
 
   std::cout << "Finished Runtime Test" << std::endl;
 
