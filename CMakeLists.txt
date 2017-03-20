@@ -13,10 +13,10 @@ set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-unused-parameter -Wn
 
 find_package(Threads REQUIRED)
 find_package(HTGS REQUIRED)
-find_package(OpenBLAS QUIET)
-find_package(CUDA QUIET)
-find_package(MAGMA QUIET)
-find_package(PLASMA QUIET)
+#find_package(OpenBLAS QUIET)
+#find_package(CUDA QUIET)
+#find_package(MAGMA QUIET)
+#find_package(PLASMA QUIET)
 #find_package(MKL REQUIRED)
 
 option(BUILD_STITCHING_TEST "Enables building the stitching test" OFF)
@@ -29,12 +29,12 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wl,--no-as-needed ${CMAKE_TH
 
 add_subdirectory(tutorial1)
 add_subdirectory(tutorial2)
-add_subdirectory(tutorial3)
-add_subdirectory(tutorial4)
-add_subdirectory(tutorial5)
-add_subdirectory(tutorial6)
-add_subdirectory(tutorial7)
-add_subdirectory(tutorial8)
+#add_subdirectory(tutorial3)
+#add_subdirectory(tutorial4)
+#add_subdirectory(tutorial5)
+#add_subdirectory(tutorial6)
+#add_subdirectory(tutorial7)
+#add_subdirectory(tutorial8)
 
 
 if (BUILD_STITCHING_TEST)

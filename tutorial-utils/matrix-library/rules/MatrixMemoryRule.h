@@ -7,27 +7,25 @@
 // Created by tjb3 on 2/23/16.
 //
 
-#ifndef HTGS_MATRIXALLOCATOR_H
-#define HTGS_MATRIXALLOCATOR_H
-#include <htgs/api/IMemoryAllocator.hpp>
+#ifndef HTGS_MATRIXMEMORYRULE_H
+#define HTGS_MATRIXMEMORYRULE_H
+#include <htgs/api/IMemoryReleaseRule.hpp>
 
-class MatrixAllocator : public htgs::IMemoryAllocator<double *> {
+class MatrixMemoryRule : public htgs::IMemoryReleaseRule {
  public:
-  MatrixAllocator(int width, int height) : IMemoryAllocator((size_t) width * height) {}
 
-  double *memAlloc(size_t size) {
-    double *mem = new double[size];
-    return mem;
+  MatrixMemoryRule(size_t releaseCount) : releaseCount(releaseCount) {
   }
 
-  double *memAlloc() {
-    double *mem = new double[this->size()];
-    return mem;
+  void memoryUsed() {
+    releaseCount--;
   }
 
-  void memFree(double *&memory) {
-    delete[] memory;
+  bool canReleaseMemory() {
+    return releaseCount == 0;
   }
 
+ private:
+  size_t releaseCount;
 };
-#endif //HTGS_MATRIXALLOCATOR_H
+#endif //HTGS_MATRIXMEMORYRULE_H

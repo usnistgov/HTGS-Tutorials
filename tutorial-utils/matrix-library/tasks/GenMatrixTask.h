@@ -7,60 +7,74 @@
 // Created by tjb3 on 2/23/16.
 //
 
-#include "../data/MatrixBlockMulData.h"
+#include <htgs/api/ITask.hpp>
+#include <cmath>
+#include "../data/MatrixRequestData.h"
 #include "../data/MatrixBlockData.h"
-#ifndef HTGS_HADAMARDPRODUCTTASK_H
-#define HTGS_HADAMARDPRODUCTTASK_H
+#ifndef HTGS_GENMATRIXTASK_H
+#define HTGS_GENMATRIXTASK_H
 
-class MatrixMulBlkTask : public htgs::ITask<MatrixBlockMulData, MatrixBlockData<double *>> {
+class GenMatrixTask : public htgs::ITask<MatrixRequestData, MatrixBlockData<double *>> {
 
  public:
-  MatrixMulBlkTask(int numThreads) : ITask(numThreads) {}
 
-  virtual ~MatrixMulBlkTask() {
+  GenMatrixTask(size_t numThreads, size_t blockSize, size_t fullMatrixWidth, size_t fullMatrixHeight) :
+      ITask(numThreads), blockSize(blockSize), fullMatrixHeight(fullMatrixHeight), fullMatrixWidth(fullMatrixWidth) {
+    numBlocksRows = (size_t) ceil((double) fullMatrixHeight / (double) blockSize);
+    numBlocksCols = (size_t) ceil((double) fullMatrixWidth / (double) blockSize);
+  }
+
+  virtual ~GenMatrixTask() {
 
   }
-  virtual void initialize(int pipelineId,
-                          int numPipeline) {
 
-  }
-  virtual void shutdown() {
+  virtual void executeTask(std::shared_ptr<MatrixRequestData> data) {
+    size_t row = data->getRow();
+    size_t col = data->getCol();
 
-  }
-  virtual void executeTask(std::shared_ptr<MatrixBlockMulData> data) {
+    size_t matrixWidth;
+    size_t matrixHeight;
 
-    auto matAData = data->getMatrixA();
-    auto matBData = data->getMatrixB();
+    if (col == numBlocksCols - 1 && fullMatrixWidth % blockSize != 0)
+      matrixWidth = fullMatrixWidth % blockSize;
+    else
+      matrixWidth = blockSize;
 
-    double *matrixA = matAData->getMatrixData();
-    double *matrixB = matBData->getMatrixData();
+    if (row == numBlocksRows - 1 && fullMatrixHeight % blockSize != 0)
+      matrixHeight = fullMatrixHeight % blockSize;
+    else
+      matrixHeight = blockSize;
 
-    int width = matAData->getMatrixWidth();
-    int height = matAData->getMatrixHeight();
+    // Allocate matrix Memory
+    double *matrixData = new double[matrixHeight * matrixWidth];
 
-    double *result = new double[width * height];
+    // Initialize with a simple value
+    for (size_t i = 0; i < matrixWidth * matrixHeight; i++)
+      matrixData[i] = 2.0;
 
-    for (int i = 0; i < matAData->getMatrixWidth() * matAData->getMatrixHeight(); i++) {
-      result[i] = matrixA[i] * matrixB[i];
-    }
-
-    auto matRequest = matAData->getRequest();
-
-    std::shared_ptr<MatrixRequestData>
-        matReq(new MatrixRequestData(matRequest->getRow(), matRequest->getCol(), MatrixType::MatrixC));
-
-    addResult(new MatrixBlockData<double *>(matReq, result, width, height));
+    addResult(new MatrixBlockData<double *>(data, matrixData, matrixWidth, matrixHeight));
 
   }
   virtual std::string getName() {
-    return "HadamardProductTask";
+    return "GenMatrixTask";
   }
-  virtual htgs::ITask<MatrixBlockMulData, MatrixBlockData<double *>> *copy() {
-    return new MatrixMulBlkTask(this->getNumThreads());
+  virtual htgs::ITask<MatrixRequestData, MatrixBlockData<double *>> *copy() {
+    return new GenMatrixTask(this->getNumThreads(), blockSize, fullMatrixWidth, fullMatrixHeight);
   }
-  virtual bool isTerminated(std::shared_ptr<htgs::BaseConnector> inputConnector) {
-    return inputConnector->isInputTerminated();
+
+  size_t getNumBlocksRows() const {
+    return numBlocksRows;
   }
+  size_t getNumBlocksCols() const {
+    return numBlocksCols;
+  }
+ private:
+  size_t blockSize;
+  size_t fullMatrixWidth;
+  size_t fullMatrixHeight;
+  size_t numBlocksRows;
+  size_t numBlocksCols;
+
 };
 
-#endif //HTGS_HADAMARDPRODUCTTASK_H
+#endif //HTGS_GENMATRIXTASK_H

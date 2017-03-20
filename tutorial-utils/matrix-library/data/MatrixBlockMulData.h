@@ -10,23 +10,32 @@
 #ifndef HTGS_MATRIXBLOCKMULDATA_H
 #define HTGS_MATRIXBLOCKMULDATA_H
 
+#include <htgs/api/IData.hpp>
+
+template <class Type>
 class MatrixBlockMulData : public htgs::IData {
  public:
 
-  MatrixBlockMulData(const std::shared_ptr<MatrixBlockData<double *>> &matrixA,
-                     const std::shared_ptr<MatrixBlockData<double *>> &matrixB) :
-      matrixA(matrixA), matrixB(matrixB) {}
+  MatrixBlockMulData(const std::shared_ptr<MatrixBlockData<Type>> &matrixA,
+                     const std::shared_ptr<MatrixBlockData<Type>> &matrixB,
+                     const std::shared_ptr<MatrixBlockData<Type>> &matrixC) :
+      matrixA(matrixA), matrixB(matrixB), matrixC(matrixC) {}
 
-  const std::shared_ptr<MatrixBlockData<double *>> &getMatrixA() const {
+  const std::shared_ptr<MatrixBlockData<Type>> &getMatrixA() const {
     return matrixA;
   }
-  const std::shared_ptr<MatrixBlockData<double *>> &getMatrixB() const {
+  const std::shared_ptr<MatrixBlockData<Type>> &getMatrixB() const {
     return matrixB;
   }
 
+  const std::shared_ptr<MatrixBlockData<Type>> &getMatrixC() const {
+    return matrixC;
+  }
+
  private:
-  std::shared_ptr<MatrixBlockData<double *>> matrixA;
-  std::shared_ptr<MatrixBlockData<double *>> matrixB;
+  std::shared_ptr<MatrixBlockData<Type>> matrixA;
+  std::shared_ptr<MatrixBlockData<Type>> matrixB;
+  std::shared_ptr<MatrixBlockData<Type>> matrixC;
 };
 
 #endif //HTGS_MATRIXBLOCKMULDATA_H

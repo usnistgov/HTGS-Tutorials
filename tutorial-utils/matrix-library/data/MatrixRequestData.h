@@ -7,27 +7,30 @@
 // Created by tjb3 on 2/23/16.
 //
 
-#ifndef HTGS_MATRIXALLOCATOR_H
-#define HTGS_MATRIXALLOCATOR_H
-#include <htgs/api/IMemoryAllocator.hpp>
+#ifndef HTGS_MATRIXREQUESTDATA_H
+#define HTGS_MATRIXREQUESTDATA_H
 
-class MatrixAllocator : public htgs::IMemoryAllocator<double *> {
+#include <htgs/api/IData.hpp>
+#include "../../enums/MatrixType.h"
+
+class MatrixRequestData : public htgs::IData {
  public:
-  MatrixAllocator(int width, int height) : IMemoryAllocator((size_t) width * height) {}
+  MatrixRequestData(size_t row, size_t col, MatrixType type) : row(row), col(col), type(type) {}
 
-  double *memAlloc(size_t size) {
-    double *mem = new double[size];
-    return mem;
+  size_t getRow() const {
+    return row;
+  }
+  size_t getCol() const {
+    return col;
+  }
+  MatrixType getType() const {
+    return type;
   }
 
-  double *memAlloc() {
-    double *mem = new double[this->size()];
-    return mem;
-  }
-
-  void memFree(double *&memory) {
-    delete[] memory;
-  }
-
+ private:
+  size_t row;
+  size_t col;
+  MatrixType type;
 };
-#endif //HTGS_MATRIXALLOCATOR_H
+
+#endif //HTGS_MATRIXREQUESTDATA_H

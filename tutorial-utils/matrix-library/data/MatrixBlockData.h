@@ -7,25 +7,39 @@
 // Created by tjb3 on 2/23/16.
 //
 
-#ifndef HTGS_MATRIXMEMORYRULE_H
-#define HTGS_MATRIXMEMORYRULE_H
-#include <htgs/api/IMemoryReleaseRule.hpp>
+#ifndef HTGS_MATRIXBLOCKDATA_H
+#define HTGS_MATRIXBLOCKDATA_H
 
-class MatrixMemoryRule : public htgs::IMemoryReleaseRule {
+#include <htgs/api/MemoryData.hpp>
+#include "MatrixRequestData.h"
+
+template<class Type>
+class MatrixBlockData : public htgs::IData {
  public:
 
-  MatrixMemoryRule(int releaseCount) : releaseCount(releaseCount) {
-  }
+  MatrixBlockData(const std::shared_ptr<MatrixRequestData> &request,
+                  const Type &matrixData,
+                  size_t matrixWidth,
+                  size_t matrixHeight) :
+      request(request), matrixData(matrixData), matrixWidth(matrixWidth), matrixHeight(matrixHeight) {}
 
-  void memoryUsed() {
-    releaseCount--;
+  const std::shared_ptr<MatrixRequestData> &getRequest() const {
+    return request;
   }
-
-  bool canReleaseMemory() {
-    return releaseCount == 0;
+  const Type &getMatrixData() const {
+    return matrixData;
+  }
+  size_t getMatrixWidth() const {
+    return matrixWidth;
+  }
+  size_t getMatrixHeight() const {
+    return matrixHeight;
   }
 
  private:
-  int releaseCount;
+  std::shared_ptr<MatrixRequestData> request;
+  Type matrixData;
+  size_t matrixWidth;
+  size_t matrixHeight;
 };
-#endif //HTGS_MATRIXMEMORYRULE_H
+#endif //HTGS_MATRIXBLOCKDATA_H

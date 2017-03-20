@@ -21,10 +21,6 @@ class AddTask : public htgs::ITask<InputData, OutputData> {
 
   virtual ~AddTask() {}
 
-  virtual void initialize(int pipelineId, int numPipeline) {}
-
-  virtual void shutdown() {}
-
   virtual void executeTask(std::shared_ptr<InputData> data) {
     // Adds x + y
     int sum = data->getX() + data->getY();
@@ -39,10 +35,6 @@ class AddTask : public htgs::ITask<InputData, OutputData> {
 
   virtual AddTask *copy() {
     return new AddTask();
-  }
-
-  virtual bool isTerminated(std::shared_ptr<htgs::BaseConnector> inputConnector) {
-    return inputConnector->isInputTerminated();
   }
 };
 

@@ -5,11 +5,11 @@
 
 add_executable(hadamard-product-no-read
         tutorial2-hadamard--no-read-main.cpp
-        data/MatrixRequestData.h
-        data/MatrixBlockData.h
-        data/MatrixBlockMulData.h
-        tasks/GenMatrixTask.h
-        memory/MatrixMemoryRule.h
-        memory/MatrixAllocator.h
-        rules/MatrixLoadRule.h
-        tasks/HadamardProductTask.h)
+        ../../tutorial-utils/matrix-library/data/MatrixRequestData.h
+        ../../tutorial-utils/matrix-library/data/MatrixBlockData.h
+        ../../tutorial-utils/matrix-library/data/MatrixBlockMulData.h
+        ../../tutorial-utils/matrix-library/tasks/GenMatrixTask.h
+        ../../tutorial-utils/matrix-library/rules/MatrixMemoryRule.h
+        ../../tutorial-utils/matrix-library/allocator/MatrixAllocator.h
+        ../rules/HadamardLoadRule.h
+        ../tasks/HadamardProductTask.h)

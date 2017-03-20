@@ -7,40 +7,54 @@
 // Created by tjb3 on 2/23/16.
 //
 
-#ifndef HTGS_MATRIXBLOCKDATA_H
-#define HTGS_MATRIXBLOCKDATA_H
 
-#include <htgs/api/MemoryData.hpp>
+#ifndef HTGS_HADAMARDPRODUCTTASK_H
+#define HTGS_HADAMARDPRODUCTTASK_H
 
-typedef std::shared_ptr<htgs::MemoryData<double *>> MatrixMemoryData_t;
+#include "../../tutorial-utils/matrix-library/data/MatrixBlockMulData.h"
+#include "../../tutorial-utils/matrix-library/data/MatrixBlockData.h"
+#include <htgs/api/ITask.hpp>
 
-template<class T>
-class MatrixBlockData : public htgs::IData {
+class HadamardProductTask : public htgs::ITask<MatrixBlockMulData<double *>, MatrixBlockData<double *>> {
+
  public:
+  HadamardProductTask(size_t numThreads) : ITask(numThreads) {}
 
-  MatrixBlockData(const std::shared_ptr<MatrixRequestData> &request,
-                  const T &matrixData,
-                  int matrixWidth,
-                  int matrixHeight) :
-      request(request), matrixData(matrixData), matrixWidth(matrixWidth), matrixHeight(matrixHeight) {}
+  virtual ~HadamardProductTask() {  }
 
-  const std::shared_ptr<MatrixRequestData> &getRequest() const {
-    return request;
+  virtual void executeTask(std::shared_ptr<MatrixBlockMulData<double *>> data) override {
+
+    auto matAData = data->getMatrixA();
+    auto matBData = data->getMatrixB();
+
+    double *matrixA = matAData->getMatrixData();
+    double *matrixB = matBData->getMatrixData();
+
+
+    size_t width = matAData->getMatrixWidth();
+    size_t height = matAData->getMatrixHeight();
+
+    double *result = new double[width * height];
+
+    for (size_t i = 0; i < matAData->getMatrixWidth() * matAData->getMatrixHeight(); i++) {
+      result[i] = matrixA[i] * matrixB[i];
+    }
+
+    auto matRequest = matAData->getRequest();
+
+    std::shared_ptr<MatrixRequestData>
+        matReq(new MatrixRequestData(matRequest->getRow(), matRequest->getCol(), MatrixType::MatrixC));
+
+    addResult(new MatrixBlockData<double *>(matReq, result, width, height));
+
   }
-  const T &getMatrixData() const {
-    return matrixData;
+  virtual std::string getName() override {
+    return "HadamardProductTask";
   }
-  int getMatrixWidth() const {
-    return matrixWidth;
-  }
-  int getMatrixHeight() const {
-    return matrixHeight;
+  virtual HadamardProductTask *copy() override {
+    return new HadamardProductTask(this->getNumThreads());
   }
 
- private:
-  std::shared_ptr<MatrixRequestData> request;
-  T matrixData;
-  int matrixWidth;
-  int matrixHeight;
 };
-#endif //HTGS_MATRIXBLOCKDATA_H
+
+#endif //HTGS_HADAMARDPRODUCTTASK_H

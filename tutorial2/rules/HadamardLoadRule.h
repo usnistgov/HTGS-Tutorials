@@ -10,50 +10,40 @@
 #ifndef HTGS_MATRIXLOADRULE_H
 #define HTGS_MATRIXLOADRULE_H
 #include <htgs/api/IRule.hpp>
-#include "../data/MatrixBlockData.h"
-#include "../data/MatrixBlockMulData.h"
+#include "../../tutorial-utils/matrix-library/data/MatrixBlockData.h"
+#include "../../tutorial-utils/matrix-library/data/MatrixBlockMulData.h"
+#include "../../tutorial-utils/matrix-library/data/MatrixRequestData.h"
 
-class MatrixLoadRule : public htgs::IRule<MatrixBlockData<double *>, MatrixBlockMulData> {
+template <class Type>
+class HadamardLoadRule : public htgs::IRule<MatrixBlockData<Type>, MatrixBlockMulData<Type>> {
 
  public:
-  MatrixLoadRule(int blockWidth, int blockHeight) {
-    this->blockWidth = blockWidth;
-    this->blockHeight = blockHeight;
-
-    this->blockDataArrayA = allocateDataGrid();
-    this->blockDataArrayB = allocateDataGrid();
-
-    initDataGrid(blockDataArrayA);
-    initDataGrid(blockDataArrayB);
+  HadamardLoadRule(size_t blockWidth, size_t blockHeight) {
+    this->matrixAState = this->allocStateContainer(blockHeight, blockWidth);
+    this->matrixBState = this->allocStateContainer(blockHeight, blockWidth);
   }
 
-  ~MatrixLoadRule() {
-    deAllocDataGrid(blockDataArrayA);
-    deAllocDataGrid(blockDataArrayB);
+  ~HadamardLoadRule() override {
+    delete matrixAState;
+    delete matrixBState;
   }
 
-  bool isRuleTerminated(int pipelineId) {
-    return false;
-  }
-
-  void shutdownRule(int pipelineId) {}
-
-  void applyRule(std::shared_ptr<MatrixBlockData<double *>> data, int pipelineId) {
+  void applyRule(std::shared_ptr<MatrixBlockData<Type>> data, size_t pipelineId) override {
     std::shared_ptr<MatrixRequestData> request = data->getRequest();
 
     switch (request->getType()) {
       case MatrixType::MatrixA:
-        blockDataArrayA[request->getRow()][request->getCol()] = data;
+        this->matrixAState->set(request->getRow(), request->getCol(), data);
 
-        if (blockDataArrayB[request->getRow()][request->getCol()] != nullptr) {
-          addResult(new MatrixBlockMulData(data, blockDataArrayB[request->getRow()][request->getCol()]));
+        if (this->matrixBState->has(request->getRow(), request->getCol())) {
+          this->addResult(new MatrixBlockMulData<Type>(data, this->matrixBState->get(request->getRow(), request->getCol()), nullptr));
         }
         break;
       case MatrixType::MatrixB:
-        blockDataArrayB[request->getRow()][request->getCol()] = data;
+        this->matrixBState->set(request->getRow(), request->getCol(), data);
 
-        if (blockDataArrayA[request->getRow()][request->getCol()] != nullptr) {
-          addResult(new MatrixBlockMulData(blockDataArrayA[request->getRow()][request->getCol()], data));
+        if (this->matrixAState->has(request->getRow(), request->getCol())) {
+          this->addResult(new MatrixBlockMulData<Type>(this->matrixAState->get(request->getRow(), request->getCol()), data, nullptr));
         }
         break;
       case MatrixType::MatrixC:
@@ -61,37 +51,12 @@ class MatrixLoadRule : public htgs::IRule<MatrixBlockData<double *>, MatrixBlock
     }
   }
 
-  std::string getName() {
-    return "MatrixLoadRule";
+  std::string getName() override {
+    return "HadamardLoadRule";
   }
 
  private:
-  std::shared_ptr<MatrixBlockData<double *>> **allocateDataGrid() {
-    std::shared_ptr<MatrixBlockData<double *>>
-        **dataGrid = new std::shared_ptr<MatrixBlockData<double *>> *[blockHeight];
-    for (int r = 0; r < blockHeight; r++) {
-      dataGrid[r] = new std::shared_ptr<MatrixBlockData<double *>>[blockWidth];
-    }
-    return dataGrid;
-  }
-
-  void deAllocDataGrid(std::shared_ptr<MatrixBlockData<double *>> **dataGrid) {
-    for (int r = 0; r < blockHeight; r++) {
-      delete[] dataGrid[r];
-    }
-    delete[] dataGrid;
-
-  }
-
-  void initDataGrid(std::shared_ptr<MatrixBlockData<double *>> **grid) {
-    for (int r = 0; r < blockHeight; r++)
-      for (int c = 0; c < blockWidth; c++)
-        grid[r][c] = nullptr;
-  }
-
-  std::shared_ptr<MatrixBlockData<double *>> **blockDataArrayA;
-  std::shared_ptr<MatrixBlockData<double *>> **blockDataArrayB;
-  int blockWidth;
-  int blockHeight;
+  htgs::StateContainer<std::shared_ptr<MatrixBlockData<Type>>> *matrixAState;
+  htgs::StateContainer<std::shared_ptr<MatrixBlockData<Type>>> *matrixBState;
 };
 #endif //HTGS_MATRIXLOADRULE_H

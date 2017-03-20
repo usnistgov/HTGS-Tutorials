@@ -6,38 +6,48 @@
 //
 // Created by tjb3 on 2/23/16.
 //
-
-#include <htgs/api/ITask.hpp>
-#include <cmath>
-#include "../memory/MatrixMemoryRule.h"
 #ifndef HTGS_READMATRIXTASK_H
 #define HTGS_READMATRIXTASK_H
 
-class GenMatrixTask : public htgs::ITask<MatrixRequestData, MatrixBlockData<double *>> {
+#include <htgs/api/ITask.hpp>
+#include <cmath>
+#include <fstream>
+#include "../rules/MatrixMemoryRule.h"
+
+class ReadDiskMatrixTask : public htgs::ITask<MatrixRequestData, MatrixBlockData<htgs::m_data_t<double>>> {
 
  public:
 
-  GenMatrixTask(int numThreads, int blockSize, int fullMatrixWidth, int fullMatrixHeight) :
-      ITask(numThreads), blockSize(blockSize), fullMatrixHeight(fullMatrixHeight), fullMatrixWidth(fullMatrixWidth) {
-    numBlocksRows = (int) ceil((double) fullMatrixHeight / (double) blockSize);
-    numBlocksCols = (int) ceil((double) fullMatrixWidth / (double) blockSize);
+  ReadDiskMatrixTask(size_t numThreads, size_t blockSize, size_t fullMatrixWidth, size_t fullMatrixHeight, std::string directory) :
+      ITask(numThreads),
+      blockSize(blockSize),
+      fullMatrixHeight(fullMatrixHeight),
+      fullMatrixWidth(fullMatrixWidth),
+      directory(directory) {
+    numBlocksRows = (size_t) ceil((double) fullMatrixHeight / (double) blockSize);
+    numBlocksCols = (size_t) ceil((double) fullMatrixWidth / (double) blockSize);
   }
 
-  virtual ~GenMatrixTask() {
-
-  }
-  virtual void initialize(int pipelineId,
-                          int numPipeline) {
-
-  }
-  virtual void shutdown() {}
+  virtual ~ReadDiskMatrixTask() {}
 
   virtual void executeTask(std::shared_ptr<MatrixRequestData> data) {
-    int row = data->getRow();
-    int col = data->getCol();
+    std::string matrixName;
 
-    int matrixWidth;
-    int matrixHeight;
+    switch (data->getType()) {
+      case MatrixType::MatrixA: matrixName = "matrixA";
+        break;
+      case MatrixType::MatrixB: matrixName = "matrixB";
+        break;
+      case MatrixType::MatrixC: return;
+    }
+
+    htgs::m_data_t<double> matrixData = this->getMemory<double>(matrixName, new MatrixMemoryRule(1));
+
+    size_t row = data->getRow();
+    size_t col = data->getCol();
+
+    size_t matrixWidth;
+    size_t matrixHeight;
 
     if (col == numBlocksCols - 1 && fullMatrixWidth % blockSize != 0)
       matrixWidth = fullMatrixWidth % blockSize;
@@ -49,38 +59,36 @@ class GenMatrixTask : public htgs::ITask<MatrixRequestData, MatrixBlockData<doub
     else
       matrixHeight = blockSize;
 
-    // Allocate matrix Memory
-    double *matrixData = new double[matrixHeight * matrixWidth];
+    std::string fileName(directory + "/" + matrixName + "/" + std::to_string(row) + "_" + std::to_string(col));
 
-    // Initialize with a simple value
-    for (int i = 0; i < matrixWidth * matrixHeight; i++)
-      matrixData[i] = 2.0;
+    // Read data
+    std::ifstream file(fileName, std::ios::binary);
 
-    addResult(new MatrixBlockData<double *>(data, matrixData, matrixWidth, matrixHeight));
+    file.read((char *) matrixData->get(), sizeof(double) * matrixWidth * matrixHeight);
+
+    addResult(new MatrixBlockData<htgs::m_data_t<double>>(data, matrixData, matrixWidth, matrixHeight));
 
   }
   virtual std::string getName() {
-    return "GenMatrixTask";
+    return "ReadDiskMatrixTask";
   }
-  virtual htgs::ITask<MatrixRequestData, MatrixBlockData<double *>> *copy() {
-    return new GenMatrixTask(this->getNumThreads(), blockSize, fullMatrixWidth, fullMatrixHeight);
-  }
-  virtual bool isTerminated(std::shared_ptr<htgs::BaseConnector> inputConnector) {
-    return inputConnector->isInputTerminated();
+  virtual ReadDiskMatrixTask *copy() {
+    return new ReadDiskMatrixTask(this->getNumThreads(), blockSize, fullMatrixWidth, fullMatrixHeight, directory);
   }
 
-  int getNumBlocksRows() const {
+  size_t getNumBlocksRows() const {
     return numBlocksRows;
   }
-  int getNumBlocksCols() const {
+
+  size_t getNumBlocksCols() const {
     return numBlocksCols;
   }
  private:
-  int blockSize;
-  int fullMatrixWidth;
-  int fullMatrixHeight;
-  int numBlocksRows;
-  int numBlocksCols;
+  size_t blockSize;
+  size_t fullMatrixWidth;
+  size_t fullMatrixHeight;
+  size_t numBlocksRows;
+  size_t numBlocksCols;
   std::string directory;
 
 };

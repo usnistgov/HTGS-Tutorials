@@ -7,25 +7,57 @@
 // Created by tjb3 on 2/23/16.
 //
 
-#ifndef HTGS_MATRIXMEMORYRULE_H
-#define HTGS_MATRIXMEMORYRULE_H
-#include <htgs/api/IMemoryReleaseRule.hpp>
 
-class MatrixMemoryRule : public htgs::IMemoryReleaseRule {
+#ifndef HTGS_HADAMARDPRODUCTTASKWITHMEMEDGE_H
+#define HTGS_HADAMARDPRODUCTTASKWITHMEMEDGE_H
+
+#include "../../tutorial-utils/matrix-library/data/MatrixBlockMulData.h"
+#include "../../tutorial-utils/matrix-library/data/MatrixBlockData.h"
+#include <htgs/api/ITask.hpp>
+
+class HadamardProductTaskWithMemEdge : public htgs::ITask<MatrixBlockMulData<htgs::m_data_t<double>>, MatrixBlockData<htgs::m_data_t<double>>> {
+
  public:
+  HadamardProductTaskWithMemEdge(size_t numThreads) : ITask(numThreads) {}
 
-  MatrixMemoryRule(int releaseCount) : releaseCount(releaseCount) {
+  virtual ~HadamardProductTaskWithMemEdge() { }
+
+  virtual void executeTask(std::shared_ptr<MatrixBlockMulData<htgs::m_data_t<double>>> data) {
+
+    auto matAData = data->getMatrixA();
+    auto matBData = data->getMatrixB();
+
+    htgs::m_data_t<double> matrixA = matAData->getMatrixData();
+    htgs::m_data_t<double> matrixB = matBData->getMatrixData();
+
+
+    size_t width = matAData->getMatrixWidth();
+    size_t height = matAData->getMatrixHeight();
+
+    htgs::m_data_t<double> result = this->getMemory<double>("result", new MatrixMemoryRule(1));
+
+    for (size_t i = 0; i < matAData->getMatrixWidth() * matAData->getMatrixHeight(); i++) {
+      result->get()[i] = matrixA->get(i) * matrixB->get(i);
+    }
+
+    auto matRequest = matAData->getRequest();
+
+    std::shared_ptr<MatrixRequestData>
+        matReq(new MatrixRequestData(matRequest->getRow(), matRequest->getCol(), MatrixType::MatrixC));
+
+    addResult(new MatrixBlockData<htgs::m_data_t<double>>(matReq, result, width, height));
+
+    this->releaseMemory(matrixA);
+    this->releaseMemory(matrixB);
+
+  }
+  virtual std::string getName() {
+    return "HadamardProductTask";
+  }
+  virtual HadamardProductTaskWithMemEdge *copy() {
+    return new HadamardProductTaskWithMemEdge(this->getNumThreads());
   }
 
-  void memoryUsed() {
-    releaseCount--;
-  }
-
-  bool canReleaseMemory() {
-    return releaseCount == 0;
-  }
-
- private:
-  int releaseCount;
 };
-#endif //HTGS_MATRIXMEMORYRULE_H
+
+#endif //HTGS_HADAMARDPRODUCTTASKWITHMEMEDGE_H

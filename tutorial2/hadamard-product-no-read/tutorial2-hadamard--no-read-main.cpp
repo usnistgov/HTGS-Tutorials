@@ -7,22 +7,20 @@
 // Created by tjb3 on 2/23/16.
 //
 
-#include <htgs/api/TaskGraph.hpp>
-#include <htgs/api/Runtime.hpp>
-#include "data/MatrixRequestData.h"
-#include "data/MatrixBlockData.h"
-#include "tasks/GenMatrixTask.h"
-#include "rules/MatrixLoadRule.h"
-#include "tasks/HadamardProductTask.h"
+#include <htgs/api/TaskGraphConf.hpp>
+#include <htgs/api/TaskGraphRuntime.hpp>
+#include "../../tutorial-utils/matrix-library/tasks/GenMatrixTask.h"
 #include "../../tutorial-utils/SimpleClock.h"
+#include "../tasks/HadamardProductTask.h"
+#include "../rules/HadamardLoadRule.h"
 
 int main(int argc, char *argv[]) {
 
-  int width = 4096;
-  int height = 4096;
-  int blockSize = 256;
-  int numReadThreads = 1;
-  int numProdThreads = 1;
+  size_t width = 4096;
+  size_t height = 4096;
+  size_t blockSize = 256;
+  size_t numReadThreads = 4;
+  size_t numProdThreads = 4;
 
   int numRetry = 5;
 
@@ -31,27 +29,27 @@ int main(int argc, char *argv[]) {
 
     if (argvs == "--width") {
       arg++;
-      width = atoi(argv[arg]);
+      width = (size_t)atoi(argv[arg]);
     }
 
     if (argvs == "--height") {
       arg++;
-      height = atoi(argv[arg]);
+      height = (size_t)atoi(argv[arg]);
     }
 
     if (argvs == "--block-size") {
       arg++;
-      blockSize = atoi(argv[arg]);
+      blockSize = (size_t)atoi(argv[arg]);
     }
 
     if (argvs == "--num-readers") {
       arg++;
-      numReadThreads = atoi(argv[arg]);
+      numReadThreads = (size_t)atoi(argv[arg]);
     }
 
     if (argvs == "--num-workers") {
       arg++;
-      numProdThreads = atoi(argv[arg]);
+      numProdThreads = (size_t)atoi(argv[arg]);
     }
 
     if (argvs == "--help") {
@@ -65,31 +63,29 @@ int main(int argc, char *argv[]) {
 
   for (int i = 0; i < numRetry; i++) {
     GenMatrixTask *genMatTask = new GenMatrixTask(numReadThreads, blockSize, width, height);
-    MatrixMulBlkTask *prodTask = new MatrixMulBlkTask(numProdThreads);
+    HadamardProductTask *prodTask = new HadamardProductTask(numProdThreads);
 
-    int numBlocksCols = genMatTask->getNumBlocksCols();
-    int numBlocksRows = genMatTask->getNumBlocksRows();
+    size_t numBlocksCols = genMatTask->getNumBlocksCols();
+    size_t numBlocksRows = genMatTask->getNumBlocksRows();
 
-    MatrixLoadRule *loadRule = new MatrixLoadRule(numBlocksCols, numBlocksRows);
+    std::shared_ptr<HadamardLoadRule<double *>> loadRule = std::make_shared<HadamardLoadRule<double *>>(numBlocksCols, numBlocksRows);
     auto bookkeeper = new htgs::Bookkeeper<MatrixBlockData<double *>>();
 
-    auto taskGraph = new htgs::TaskGraph<MatrixRequestData, MatrixBlockData<double *>>();
+    auto taskGraph = new htgs::TaskGraphConf<MatrixRequestData, MatrixBlockData<double *>>();
 
-    taskGraph->addGraphInputConsumer(genMatTask);
+    taskGraph->setGraphConsumerTask(genMatTask);
     taskGraph->addEdge(genMatTask, bookkeeper);
-    taskGraph->addRule(bookkeeper, prodTask, loadRule);
-    taskGraph->addGraphOutputProducer(prodTask);
+    taskGraph->addRuleEdge(bookkeeper, loadRule, prodTask);
+    taskGraph->addGraphProducerTask(prodTask);
 
-    taskGraph->incrementGraphInputProducer();
-
-    htgs::Runtime *runtime = new htgs::Runtime(taskGraph);
+    htgs::TaskGraphRuntime *runtime = new htgs::TaskGraphRuntime(taskGraph);
 
     clk.start();
 
     runtime->executeRuntime();
 
-    for (int row = 0; row < numBlocksRows; row++) {
-      for (int col = 0; col < numBlocksCols; col++) {
+    for (size_t row = 0; row < numBlocksRows; row++) {
+      for (size_t col = 0; col < numBlocksCols; col++) {
         MatrixRequestData *matrixA = new MatrixRequestData(row, col, MatrixType::MatrixA);
         MatrixRequestData *matrixB = new MatrixRequestData(row, col, MatrixType::MatrixB);
 
@@ -109,9 +105,6 @@ int main(int argc, char *argv[]) {
       }
 
     }
-
-    taskGraph->finishReleasingMemory();
-
     runtime->waitForRuntime();
 
     clk.stopAndIncrement();

@@ -3,8 +3,8 @@
 // NIST-developed software is expressly provided "AS IS." NIST MAKES NO WARRANTY OF ANY KIND, EXPRESS, IMPLIED, IN FACT OR ARISING BY OPERATION OF LAW, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTY OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, NON-INFRINGEMENT AND DATA ACCURACY. NIST NEITHER REPRESENTS NOR WARRANTS THAT THE OPERATION OF THE SOFTWARE WILL BE UNINTERRUPTED OR ERROR-FREE, OR THAT ANY DEFECTS WILL BE CORRECTED. NIST DOES NOT WARRANT OR MAKE ANY REPRESENTATIONS REGARDING THE USE OF THE SOFTWARE OR THE RESULTS THEREOF, INCLUDING BUT NOT LIMITED TO THE CORRECTNESS, ACCURACY, RELIABILITY, OR USEFULNESS OF THE SOFTWARE.
 // You are solely responsible for determining the appropriateness of using and distributing the software and you assume all risks associated with its use, including but not limited to the risks and costs of program errors, compliance with applicable laws, damage to or loss of data, programs or equipment, and the unavailability or interruption of operation. This software is not intended to be used in any situation where a failure could cause risk of injury or damage to property. The software developed by NIST employees is not subject to copyright protection within the United States.
 
-#include <htgs/api/TaskGraph.hpp>
-#include <htgs/api/Runtime.hpp>
+#include <htgs/api/TaskGraphConf.hpp>
+#include <htgs/api/TaskGraphRuntime.hpp>
 #include "tasks/AddTask.h"
 
 int main() {
@@ -13,21 +13,18 @@ int main() {
   AddTask *addTask = new AddTask();
 
   // Creates the TaskGraph
-  auto taskGraph = new htgs::TaskGraph<InputData, OutputData>();
+  auto taskGraph = new htgs::TaskGraphConf<InputData, OutputData>();
 
   // Declares that AddTask will be processing the input of a TaskGraph
-  taskGraph->addGraphInputConsumer(addTask);
+  taskGraph->setGraphConsumerTask(addTask);
 
   // Declares that AddTask will be producing data for the output of a TaskGraph
-  taskGraph->addGraphOutputProducer(addTask);
-
-  // Increments the number of producers (the main thread will be producing data)
-  taskGraph->incrementGraphInputProducer();
+  taskGraph->addGraphProducerTask(addTask);
 
   taskGraph->writeDotToFile("tutorial1.dot");
 
   // Launch the taskGraph
-  auto runtime = new htgs::Runtime(taskGraph);
+  auto runtime = new htgs::TaskGraphRuntime(taskGraph);
 
   runtime->executeRuntime();
 

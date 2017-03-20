@@ -13,7 +13,7 @@
 #include "util-matrix.h"
 #include "util-filesystem.h"
 
-double *allocMatrix(int width, int height) {
+double *allocMatrix(size_t width, size_t height) {
   double *matrix = new double[height * width];
   return matrix;
 }
@@ -81,14 +81,14 @@ void initMatrix(double *matrix, long width, long height, bool columnStore) {
 
 }
 
-size_t writeMatrix(std::string file, int matrixWidth, int matrixHeight, double *&matrix, bool silent) {
+size_t writeMatrix(std::string file, size_t matrixWidth, size_t matrixHeight, double *&matrix, bool silent) {
   if (!silent) {
     std::cout << "Writing " << file;
     std::cout.flush();
   }
 
   std::ofstream ofs(file, std::ios::binary);
-  size_t numElems = (size_t) matrixWidth * (size_t) matrixHeight;
+  size_t numElems = matrixWidth * matrixHeight;
 
   ofs.write((const char *) matrix, numElems * sizeof(double));
   if (!ofs.good())
@@ -103,21 +103,21 @@ size_t writeMatrix(std::string file, int matrixWidth, int matrixHeight, double *
   return numElems;
 }
 
-std::string generateFilename(std::string directory, MatrixType type, int blockRow, int blockCol, std::string suffix) {
+std::string generateFilename(std::string directory, MatrixType type, size_t blockRow, size_t blockCol, std::string suffix) {
   return std::string(
       directory + "/" + matrixTypeToString(type) + std::to_string(blockRow) + "-" + std::to_string(blockCol) + suffix
           + ".dat");
 }
-std::string generateDirectoryName(std::string basePath, int totalWidth, int totalHeight, int blockSize) {
+std::string generateDirectoryName(std::string basePath, size_t totalWidth, size_t totalHeight, size_t blockSize) {
   return std::string(basePath + "/" + std::to_string(totalWidth) + "x" + std::to_string(totalHeight) + "blksize"
                          + std::to_string(blockSize));
 }
 
-std::string generateDirectoryName(std::string basePath, int totalWidth, int totalHeight) {
+std::string generateDirectoryName(std::string basePath, size_t totalWidth, size_t totalHeight) {
   return std::string(basePath + "/" + std::to_string(totalWidth) + "x" + std::to_string(totalHeight));
 }
 
-int generateFullMatrixFile(std::string path, MatrixType type, int totalWidth, int totalHeight) {
+int generateFullMatrixFile(std::string path, MatrixType type, size_t totalWidth, size_t totalHeight) {
   std::string blkDir = generateDirectoryName(path, totalWidth, totalHeight);
 
   if (create_dir(path) != 0)
@@ -143,9 +143,9 @@ int generateFullMatrixFile(std::string path, MatrixType type, int totalWidth, in
 
 int generateMatrixBlockFiles(std::string path,
                              MatrixType type,
-                             int totalWidth,
-                             int totalHeight,
-                             int blockSize,
+                             size_t totalWidth,
+                             size_t totalHeight,
+                             size_t blockSize,
                              bool columnStore) {
   std::string blkDir = std::string(
       path + "/" + std::to_string(totalWidth) + "x" + std::to_string(totalHeight) + "blksize"
@@ -163,8 +163,8 @@ int generateMatrixBlockFiles(std::string path,
   if (create_dir(matrixDir) != 0)
     return -1;
 
-  int numBlocksWidth = totalWidth / blockSize;
-  int numBlocksHeight = totalHeight / blockSize;
+  size_t numBlocksWidth = totalWidth / blockSize;
+  size_t numBlocksHeight = totalHeight / blockSize;
 
   // leftover
   if (totalWidth % blockSize != 0)
@@ -182,11 +182,11 @@ int generateMatrixBlockFiles(std::string path,
   initMatrix(matrix, blockSize, blockSize, columnStore);
   std::cout << " -- DONE" << std::endl;
 
-  for (int blockRow = 0; blockRow < numBlocksHeight; blockRow++) {
-    int matrixHeight =
+  for (size_t blockRow = 0; blockRow < numBlocksHeight; blockRow++) {
+    size_t matrixHeight =
         ((blockRow == numBlocksHeight - 1 && totalHeight % blockSize != 0) ? totalHeight % blockSize : blockSize);
-    for (int blockCol = 0; blockCol < numBlocksWidth; blockCol++) {
-      int matrixWidth =
+    for (size_t blockCol = 0; blockCol < numBlocksWidth; blockCol++) {
+      size_t matrixWidth =
           ((blockCol == numBlocksWidth - 1 && totalWidth % blockSize != 0) ? totalWidth % blockSize : blockSize);
       std::string fileName = std::string(matrixDir + "/" + std::to_string(blockRow) + "_" + std::to_string(blockCol));
       std::cout << "Writing " << fileName << " - blockRow: " << blockRow << " blockCol: " << blockCol << ": "
@@ -209,11 +209,11 @@ int generateMatrixBlockFiles(std::string path,
 
 double *readMatrix(std::string path,
                    MatrixType type,
-                   int totalWidth,
-                   int totalHeight,
-                   int blockSize,
-                   int blockRow,
-                   int blockCol,
+                   size_t totalWidth,
+                   size_t totalHeight,
+                   size_t blockSize,
+                   size_t blockRow,
+                   size_t blockCol,
                    std::string suffix) {
   std::string directory = generateDirectoryName(path,
                                                 totalWidth,
@@ -225,8 +225,8 @@ double *readMatrix(std::string path,
                                           blockCol,
                                           suffix);
 
-  int numBlocksWidth = totalWidth / blockSize;
-  int numBlocksHeight = totalHeight / blockSize;
+  size_t numBlocksWidth = totalWidth / blockSize;
+  size_t numBlocksHeight = totalHeight / blockSize;
 
   // leftover
   if (totalWidth % blockSize != 0)
@@ -235,9 +235,9 @@ double *readMatrix(std::string path,
   if (totalHeight % blockSize != 0)
     numBlocksHeight++;
 
-  int matrixWidth =
+  size_t matrixWidth =
       ((blockCol == numBlocksWidth - 1 && totalWidth % blockSize != 0) ? totalWidth % blockSize : blockSize);
-  int matrixHeight =
+  size_t matrixHeight =
       ((blockRow == numBlocksHeight - 1 && totalHeight % blockSize != 0) ? totalHeight % blockSize : blockSize);
 
   double *matrix = allocMatrix(matrixWidth, matrixHeight);
@@ -253,11 +253,11 @@ double *readMatrix(std::string path,
 
 size_t readMatrix(std::string path,
                   MatrixType type,
-                  int totalWidth,
-                  int totalHeight,
-                  int blockSize,
-                  int blockRow,
-                  int blockCol,
+                  size_t totalWidth,
+                  size_t totalHeight,
+                  size_t blockSize,
+                  size_t blockRow,
+                  size_t blockCol,
                   double *&matrix,
                   std::string suffix) {
   std::string directory = generateDirectoryName(path,
@@ -270,8 +270,8 @@ size_t readMatrix(std::string path,
                                           blockRow,
                                           blockCol,
                                           suffix);
-  int numBlocksWidth = totalWidth / blockSize;
-  int numBlocksHeight = totalHeight / blockSize;
+  size_t numBlocksWidth = totalWidth / blockSize;
+  size_t numBlocksHeight = totalHeight / blockSize;
 
   // leftover
   if (totalWidth % blockSize != 0)
@@ -280,9 +280,9 @@ size_t readMatrix(std::string path,
   if (totalHeight % blockSize != 0)
     numBlocksHeight++;
 
-  int matrixWidth =
+  size_t matrixWidth =
       ((blockCol == numBlocksWidth - 1 && totalWidth % blockSize != 0) ? totalWidth % blockSize : blockSize);
-  int matrixHeight =
+  size_t matrixHeight =
       ((blockRow == numBlocksHeight - 1 && totalHeight % blockSize != 0) ? totalHeight % blockSize : blockSize);
 
   std::ifstream ifs(fileName, std::ios::binary);
@@ -297,7 +297,7 @@ size_t readMatrix(std::string path,
   return numElems;
 }
 
-bool checkMatrixFiles(std::string path, MatrixType type, int totalWidth, int totalHeight) {
+bool checkMatrixFiles(std::string path, MatrixType type, size_t totalWidth, size_t totalHeight) {
   std::string dir = generateDirectoryName(path, totalWidth, totalHeight);
   std::string fileName = dir + "/" + matrixTypeToString(type);
 
@@ -320,7 +320,7 @@ bool checkMatrixFiles(std::string path, MatrixType type, int totalWidth, int tot
 
 }
 
-bool checkMatrixBlockFiles(std::string path, MatrixType type, int totalWidth, int totalHeight, int blockSize) {
+bool checkMatrixBlockFiles(std::string path, MatrixType type, size_t totalWidth, size_t totalHeight, size_t blockSize) {
   std::string blkDir = generateDirectoryName(path, totalWidth, totalHeight, blockSize);
   std::string matrixDir = std::string(blkDir + "/" + matrixTypeToString(type));
 
@@ -342,8 +342,8 @@ bool checkMatrixBlockFiles(std::string path, MatrixType type, int totalWidth, in
     return false;
   }
 
-  int numBlocksWidth = totalWidth / blockSize;
-  int numBlocksHeight = totalHeight / blockSize;
+  size_t numBlocksWidth = totalWidth / blockSize;
+  size_t numBlocksHeight = totalHeight / blockSize;
 
   // leftover
   if (totalWidth % blockSize != 0)
@@ -352,8 +352,8 @@ bool checkMatrixBlockFiles(std::string path, MatrixType type, int totalWidth, in
   if (totalHeight % blockSize != 0)
     numBlocksHeight++;
 
-  for (int blockRow = 0; blockRow < numBlocksHeight; blockRow++) {
-    for (int blockCol = 0; blockCol < numBlocksWidth; blockCol++) {
+  for (size_t blockRow = 0; blockRow < numBlocksHeight; blockRow++) {
+    for (size_t blockCol = 0; blockCol < numBlocksWidth; blockCol++) {
       std::string fileName = std::string(matrixDir + "/" + std::to_string(blockRow) + "_" + std::to_string(blockCol));
 
       // check file
@@ -368,11 +368,11 @@ bool checkMatrixBlockFiles(std::string path, MatrixType type, int totalWidth, in
 }
 
 void checkAndValidateMatrixBlockFiles(std::string directory,
-                                      int widthA,
-                                      int heightA,
-                                      int widthB,
-                                      int heightB,
-                                      int blockSize,
+                                      size_t widthA,
+                                      size_t heightA,
+                                      size_t widthB,
+                                      size_t heightB,
+                                      size_t blockSize,
                                       bool columnStore) {
   if (!has_dir(directory))
     create_dir(directory);
@@ -392,7 +392,7 @@ void checkAndValidateMatrixBlockFiles(std::string directory,
   }
 }
 
-void checkAndValidateMatrixFiles(std::string directory, int widthA, int heightA, int widthB, int heightB) {
+void checkAndValidateMatrixFiles(std::string directory, size_t widthA, size_t heightA, size_t widthB, size_t heightB) {
   if (!has_dir(directory))
     create_dir(directory);
 
