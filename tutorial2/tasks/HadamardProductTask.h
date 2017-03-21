@@ -8,36 +8,36 @@
 //
 
 
-#ifndef HTGS_HADAMARDPRODUCTTASK_H
-#define HTGS_HADAMARDPRODUCTTASK_H
+#ifndef HTGS_HADAMARDPRODUCTTASKWITHMEMEDGE_H
+#define HTGS_HADAMARDPRODUCTTASKWITHMEMEDGE_H
 
 #include "../../tutorial-utils/matrix-library/data/MatrixBlockMulData.h"
 #include "../../tutorial-utils/matrix-library/data/MatrixBlockData.h"
 #include <htgs/api/ITask.hpp>
 
-class HadamardProductTask : public htgs::ITask<MatrixBlockMulData<double *>, MatrixBlockData<double *>> {
+class HadamardProductTaskWithMemEdge : public htgs::ITask<MatrixBlockMulData<htgs::m_data_t<double>>, MatrixBlockData<htgs::m_data_t<double>>> {
 
  public:
-  HadamardProductTask(size_t numThreads) : ITask(numThreads) {}
+  HadamardProductTaskWithMemEdge(size_t numThreads) : ITask(numThreads) {}
 
-  virtual ~HadamardProductTask() {  }
+  virtual ~HadamardProductTaskWithMemEdge() { }
 
-  virtual void executeTask(std::shared_ptr<MatrixBlockMulData<double *>> data) override {
+  virtual void executeTask(std::shared_ptr<MatrixBlockMulData<htgs::m_data_t<double>>> data) {
 
     auto matAData = data->getMatrixA();
     auto matBData = data->getMatrixB();
 
-    double *matrixA = matAData->getMatrixData();
-    double *matrixB = matBData->getMatrixData();
+    htgs::m_data_t<double> matrixA = matAData->getMatrixData();
+    htgs::m_data_t<double> matrixB = matBData->getMatrixData();
 
 
     size_t width = matAData->getMatrixWidth();
     size_t height = matAData->getMatrixHeight();
 
-    double *result = new double[width * height];
+    htgs::m_data_t<double> result = this->getMemory<double>("result", new MatrixMemoryRule(1));
 
     for (size_t i = 0; i < matAData->getMatrixWidth() * matAData->getMatrixHeight(); i++) {
-      result[i] = matrixA[i] * matrixB[i];
+      result->get()[i] = matrixA->get(i) * matrixB->get(i);
     }
 
     auto matRequest = matAData->getRequest();
@@ -45,16 +45,19 @@ class HadamardProductTask : public htgs::ITask<MatrixBlockMulData<double *>, Mat
     std::shared_ptr<MatrixRequestData>
         matReq(new MatrixRequestData(matRequest->getRow(), matRequest->getCol(), MatrixType::MatrixC));
 
-    addResult(new MatrixBlockData<double *>(matReq, result, width, height));
+    addResult(new MatrixBlockData<htgs::m_data_t<double>>(matReq, result, width, height));
+
+    this->releaseMemory(matrixA);
+    this->releaseMemory(matrixB);
 
   }
-  virtual std::string getName() override {
-    return "HadamardProductTask";
+  virtual std::string getName() {
+    return "HadamardProductTaskWithoutMemory";
   }
-  virtual HadamardProductTask *copy() override {
-    return new HadamardProductTask(this->getNumThreads());
+  virtual HadamardProductTaskWithMemEdge *copy() {
+    return new HadamardProductTaskWithMemEdge(this->getNumThreads());
   }
 
 };
 
-#endif //HTGS_HADAMARDPRODUCTTASK_H
+#endif //HTGS_HADAMARDPRODUCTTASKWITHMEMEDGE_H

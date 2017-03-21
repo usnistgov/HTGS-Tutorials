@@ -25,7 +25,7 @@ option(BUILD_STITCHING_TEST "Enables building the stitching test" OFF)
 include_directories(${HTGS_INCLUDE_DIR})
 link_libraries(${CMAKE_THREAD_LIBS_INIT})
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wl,--no-as-needed ${CMAKE_THREAD_LIBS_INIT}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 ${CMAKE_THREAD_LIBS_INIT}")
 
 add_subdirectory(tutorial1)
 add_subdirectory(tutorial2)
