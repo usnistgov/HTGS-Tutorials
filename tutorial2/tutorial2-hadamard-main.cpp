@@ -71,7 +71,7 @@ int main(int argc, char *argv[]) {
   checkAndValidateMatrixBlockFiles(directory, width, height, width, height, blockSize, false);
 
   ReadDiskMatrixTask *readMatTask = new ReadDiskMatrixTask(numReadThreads, blockSize, width, height, directory);
-  HadamardProductTaskWithMemEdge *prodTask = new HadamardProductTaskWithMemEdge(numProdThreads);
+  HadamardProductTask *prodTask = new HadamardProductTask(numProdThreads);
 
   size_t numBlocksCols = readMatTask->getNumBlocksCols();
   size_t numBlocksRows = readMatTask->getNumBlocksRows();

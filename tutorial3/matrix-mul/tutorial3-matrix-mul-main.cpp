@@ -16,13 +16,13 @@
 #include "data/MatrixBlockData.h"
 #include "tasks/ReadMatrixTask.h"
 #include "memory/MatrixAllocator.h"
-#include "rules/MatrixLoadRule.h"
-#include "tasks/MatrixMulBlkTask.h"
-#include "tasks/MatrixAccumTask.h"
-#include "tasks/OutputTask.h"
-#include "rules/MatrixAccumulateRule.h"
-#include "rules/MatrixDistributeRule.h"
-#include "rules/MatrixOutputRule.h"
+#include "../rules/MatrixLoadRule.h"
+#include "../tasks/MatrixMulBlkTask.h"
+#include "../tasks/MatrixAccumTask.h"
+#include "../tasks/OutputTask.h"
+#include "../rules/MatrixAccumulateRule.h"
+#include "../rules/MatrixDistributeRule.h"
+#include "../rules/MatrixOutputRule.h"
 #include "../../tutorial-utils/SimpleClock.h"
 #include "../../tutorial-utils/util-matrix.h"
 
@@ -284,7 +284,7 @@ int main(int argc, char *argv[]) {
         *readAMatTask = new ReadMatrixTask(numReadThreads, blockSize, sharedDim, matrixAHeight, inputDirectoryA, "A");
     ReadMatrixTask
         *readBMatTask = new ReadMatrixTask(numReadThreads, blockSize, matrixBWidth, sharedDim, inputDirectoryB, "B");
-    MatrixMulBlkTask *mmulTask = new MatrixMulBlkTask(numProdThreads);
+    MatrixMulBlkTaskOpenBLAS *mmulTask = new MatrixMulBlkTaskOpenBLAS(numProdThreads);
     MatrixAccumTask *accumTask = new MatrixAccumTask(numProdThreads / 2);
 
     OutputTask *outputTask = new OutputTask(outputDirectory);

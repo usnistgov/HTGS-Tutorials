@@ -29,7 +29,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 ${CMAKE_THREAD_LIBS_INIT}")
 
 add_subdirectory(tutorial1)
 add_subdirectory(tutorial2)
-#add_subdirectory(tutorial3)
+add_subdirectory(tutorial3)
 #add_subdirectory(tutorial4)
 #add_subdirectory(tutorial5)
 #add_subdirectory(tutorial6)

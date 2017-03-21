@@ -17,7 +17,7 @@
 
 #include "data/MatrixRequestData.h"
 #include "data/MatrixBlockData.h"
-#include "tasks/ReadMatrixTask.h"
+#include "tasks/ReadMatrixTaskMMap.h"
 #include "rules/MatrixLoadRule.h"
 #include "tasks/MatrixMulBlkTask.h"
 #include "tasks/MatrixAccumTask.h"
@@ -253,16 +253,16 @@ int main(int argc, char *argv[]) {
   }
   else {
 
-    ReadMatrixTask *readAMatTask =
-        new ReadMatrixTask(numReadThreads,
+    ReadMatrixTaskMMap *readAMatTask =
+        new ReadMatrixTaskMMap(numReadThreads,
                            MatrixType::MatrixA,
                            blockSize,
                            sharedDim,
                            matrixAHeight,
                            inputDirectoryA,
                            "A");
-    ReadMatrixTask *readBMatTask =
-        new ReadMatrixTask(numReadThreads,
+    ReadMatrixTaskMMap *readBMatTask =
+        new ReadMatrixTaskMMap(numReadThreads,
                            MatrixType::MatrixB,
                            blockSize,
                            matrixBWidth,

@@ -8,19 +8,19 @@
 //
 
 
-#ifndef HTGS_HADAMARDPRODUCTTASKWITHMEMEDGE_H
-#define HTGS_HADAMARDPRODUCTTASKWITHMEMEDGE_H
+#ifndef HTGS_HADAMARDPRODUCTTASK_H
+#define HTGS_HADAMARDPRODUCTTASK_H
 
 #include "../../tutorial-utils/matrix-library/data/MatrixBlockMulData.h"
 #include "../../tutorial-utils/matrix-library/data/MatrixBlockData.h"
 #include <htgs/api/ITask.hpp>
 
-class HadamardProductTaskWithMemEdge : public htgs::ITask<MatrixBlockMulData<htgs::m_data_t<double>>, MatrixBlockData<htgs::m_data_t<double>>> {
+class HadamardProductTask : public htgs::ITask<MatrixBlockMulData<htgs::m_data_t<double>>, MatrixBlockData<htgs::m_data_t<double>>> {
 
  public:
-  HadamardProductTaskWithMemEdge(size_t numThreads) : ITask(numThreads) {}
+  HadamardProductTask(size_t numThreads) : ITask(numThreads) {}
 
-  virtual ~HadamardProductTaskWithMemEdge() { }
+  virtual ~HadamardProductTask() { }
 
   virtual void executeTask(std::shared_ptr<MatrixBlockMulData<htgs::m_data_t<double>>> data) {
 
@@ -52,12 +52,12 @@ class HadamardProductTaskWithMemEdge : public htgs::ITask<MatrixBlockMulData<htg
 
   }
   virtual std::string getName() {
-    return "HadamardProductTaskWithoutMemory";
+    return "HadamardProductTask";
   }
-  virtual HadamardProductTaskWithMemEdge *copy() {
-    return new HadamardProductTaskWithMemEdge(this->getNumThreads());
+  virtual HadamardProductTask *copy() {
+    return new HadamardProductTask(this->getNumThreads());
   }
 
 };
 
-#endif //HTGS_HADAMARDPRODUCTTASKWITHMEMEDGE_H
+#endif //HTGS_HADAMARDPRODUCTTASK_H

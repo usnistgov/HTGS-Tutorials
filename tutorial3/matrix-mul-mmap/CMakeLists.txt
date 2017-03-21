@@ -17,9 +17,7 @@ add_executable(matrixMul-mmap
         data/MatrixRequestData.h
         data/MatrixBlockData.h
         data/MatrixBlockMulData.h
-        tasks/ReadMatrixTask.h
-        tasks/OutputTask.h
-        tasks/MatrixAccumTask.h
+        tasks/ReadMatrixTaskMMap.h
         memory/MatrixMemoryRule.h
         memory/MatrixAllocator.h
         rules/MatrixLoadRule.h

@@ -25,9 +25,7 @@ add_executable(matrixMul-in-memory-openblas
         rules/MatrixDistributeRule.h
         rules/MatrixAccumulateRule.h
         rules/MatrixOutputRule.h
-        tasks/MatrixMulBlkTask.h
-        tasks/MatrixAccumTask.h
-        tasks/OutputTask.h
+        ../tasks/MatrixMulBlkTaskOpenBLAS.h
         ${TUTORIAL_UTILS_SRC})
 
 target_link_libraries(matrixMul-in-memory-openblas openblas)

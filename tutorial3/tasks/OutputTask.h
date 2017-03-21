@@ -4,33 +4,49 @@
 // You are solely responsible for determining the appropriateness of using and distributing the software and you assume all risks associated with its use, including but not limited to the risks and costs of program errors, compliance with applicable laws, damage to or loss of data, programs or equipment, and the unavailability or interruption of operation. This software is not intended to be used in any situation where a failure could cause risk of injury or damage to property. The software developed by NIST employees is not subject to copyright protection within the United States.
 
 //
-// Created by tjb3 on 2/23/16.
+// Created by tjb3 on 3/8/16.
 //
 
-#ifndef HTGS_MATRIXBLOCKMULDATA_H
-#define HTGS_MATRIXBLOCKMULDATA_H
+#ifndef HTGS_OUTPUTTASK_H
+#define HTGS_OUTPUTTASK_H
 
-#include <htgs/api/IData.hpp>
-
-template<class T>
-class MatrixBlockMulData : public htgs::IData {
+#include "../../tutorial-utils/util-filesystem.h"
+class OutputTask : public htgs::ITask<MatrixBlockData<double *>, MatrixRequestData> {
  public:
 
-  MatrixBlockMulData(const std::shared_ptr<MatrixBlockData<T>> &matrixA,
-                     const std::shared_ptr<MatrixBlockData<T>> &matrixB) :
-      matrixA(matrixA), matrixB(matrixB) {}
-
-  const std::shared_ptr<MatrixBlockData<T>> &getMatrixA() const {
-    return matrixA;
+  OutputTask(std::string directory) {
+    this->directory = directory + "/matrixC_HTGS";
+    create_dir(this->directory);
   }
+  virtual ~OutputTask() {
 
-  const std::shared_ptr<MatrixBlockData<T>> &getMatrixB() const {
-    return matrixB;
+  }
+  virtual void initialize(int pipelineId, int numPipeline) {
+  }
+  virtual void shutdown() {
+  }
+  virtual void executeTask(std::shared_ptr<MatrixBlockData<double *>> data) {
+    std::string fileName(directory + "/" + std::to_string(data->getRequest()->getRow()) + "_"
+                             + std::to_string(data->getRequest()->getCol()));
+
+    std::ofstream out(fileName, std::ios::binary);
+    out.write((char *) data->getMatrixData(), sizeof(double) * data->getMatrixWidth() * data->getMatrixHeight());
+
+    addResult(data->getRequest());
+  }
+  virtual std::string getName() {
+    return "OutputTask";
+  }
+  virtual htgs::ITask<MatrixBlockData<double *>, MatrixRequestData> *copy() {
+    return new OutputTask(directory);
+  }
+  virtual bool isTerminated(std::shared_ptr<htgs::BaseConnector> inputConnector) {
+    return inputConnector->isInputTerminated();
   }
 
  private:
-  std::shared_ptr<MatrixBlockData<T>> matrixA;
-  std::shared_ptr<MatrixBlockData<T>> matrixB;
-};
 
-#endif //HTGS_MATRIXBLOCKMULDATA_H
+  std::string directory;
+
+};
+#endif //HTGS_OUTPUTTASK_H

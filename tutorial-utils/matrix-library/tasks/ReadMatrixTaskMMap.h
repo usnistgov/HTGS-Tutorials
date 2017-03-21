@@ -13,7 +13,7 @@
 #include <cmath>
 #include "../memory/MatrixMemoryRule.h"
 
-class ReadMatrixTask : public htgs::ITask<MatrixRequestData, MatrixBlockData<double *>> {
+class ReadMatrixTaskMMap : public htgs::ITask<MatrixRequestData, MatrixBlockData<double *>> {
 
  public:
 
@@ -86,10 +86,10 @@ class ReadMatrixTask : public htgs::ITask<MatrixRequestData, MatrixBlockData<dou
 
   }
   virtual std::string getName() {
-    return "ReadMatrixTask(" + matrixName + ")";
+    return "ReadMatrixTaskMMap(" + matrixName + ")";
   }
-  virtual ReadMatrixTask *copy() {
-    return new ReadMatrixTask(this->getNumThreads(),
+  virtual ReadMatrixTaskMMap *copy() {
+    return new ReadMatrixTaskMMap(this->getNumThreads(),
                               this->type,
                               blockSize,
                               fullMatrixWidth,
