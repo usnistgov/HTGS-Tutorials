@@ -7,53 +7,54 @@
 // Created by tjb3 on 2/23/16.
 //
 
-#ifndef HTGS_MATRIXOUTPUTRULE_H
-#define HTGS_MATRIXOUTPUTRULE_H
 
-#include <vector>
-#include <htgs/api/IRule.hpp>
-#include "../data/MatrixRequestData.h"
-#include "../data/MatrixBlockMulData.h"
-#include "../data/MatrixBlockData.h"
+#ifndef HTGS_HADAMARDPRODUCTTASKWITHOUTMEMORY_H
+#define HTGS_HADAMARDPRODUCTTASKWITHOUTMEMORY_H
 
-class MatrixOutputRule : public htgs::IRule<MatrixBlockData<double *>, MatrixBlockData<double *> > {
+#include "../../../tutorial-utils/matrix-library/data/MatrixBlockMulData.h"
+#include "../../../tutorial-utils/matrix-library/data/MatrixBlockData.h"
+#include <htgs/api/ITask.hpp>
+
+class HadamardProductTaskWithoutMemory : public htgs::ITask<MatrixBlockMulData<double *>, MatrixBlockData<double *>> {
+
  public:
-  MatrixOutputRule(int blockWidth, int blockHeight, int blockWidthMatrixA) {
-    matrixCountContainer = this->allocStateContainer<int>(blockHeight, blockWidth, 0);
-    numBlocks = 2 * blockWidthMatrixA - 1;
-  }
+  HadamardProductTaskWithoutMemory(size_t numThreads) : ITask(numThreads) {}
 
-  ~MatrixOutputRule() {
-    free(matrixCountContainer);
-  }
+  virtual ~HadamardProductTaskWithoutMemory() {  }
 
-  bool isRuleTerminated(int pipelineId) {
-    return false;
-  }
+  virtual void executeTask(std::shared_ptr<MatrixBlockMulData<double *>> data) override {
 
-  void shutdownRule(int pipelineId) {}
+    auto matAData = data->getMatrixA();
+    auto matBData = data->getMatrixB();
 
-  void applyRule(std::shared_ptr<MatrixBlockData<double *>> data, int pipelineId) {
-    auto request = data->getRequest();
+    double *matrixA = matAData->getMatrixData();
+    double *matrixB = matBData->getMatrixData();
 
-    int row = request->getRow();
-    int col = request->getCol();
 
-    int count = matrixCountContainer->get(row, col);
-    count++;
-    matrixCountContainer->set(row, col, count);
-    if (count == numBlocks) {
-      addResult(data);
+    size_t width = matAData->getMatrixWidth();
+    size_t height = matAData->getMatrixHeight();
+
+    double *result = new double[width * height];
+
+    for (size_t i = 0; i < matAData->getMatrixWidth() * matAData->getMatrixHeight(); i++) {
+      result[i] = matrixA[i] * matrixB[i];
     }
+
+    auto matRequest = matAData->getRequest();
+
+    std::shared_ptr<MatrixRequestData>
+        matReq(new MatrixRequestData(matRequest->getRow(), matRequest->getCol(), MatrixType::MatrixC));
+
+    addResult(new MatrixBlockData<double *>(matReq, result, width, height, width));
+
+  }
+  virtual std::string getName() override {
+    return "HadamardProductTaskWithoutMemory";
+  }
+  virtual HadamardProductTaskWithoutMemory *copy() override {
+    return new HadamardProductTaskWithoutMemory(this->getNumThreads());
   }
 
-  std::string getName() {
-    return "MatrixOutputRule";
-  }
-
- private:
-  htgs::StateContainer<int> *matrixCountContainer;
-  int numBlocks;
 };
 
-#endif //HTGS_MATRIXACCUMULATERULE_H
+#endif //HTGS_HADAMARDPRODUCTTASKWITHOUTMEMORY_H

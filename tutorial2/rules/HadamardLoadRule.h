@@ -7,8 +7,8 @@
 // Created by tjb3 on 2/23/16.
 //
 
-#ifndef HTGS_MATRIXLOADRULE_H
-#define HTGS_MATRIXLOADRULE_H
+#ifndef HTGS_HADAMARDLOADRULE_H
+#define HTGS_HADAMARDLOADRULE_H
 #include <htgs/api/IRule.hpp>
 #include "../../tutorial-utils/matrix-library/data/MatrixBlockData.h"
 #include "../../tutorial-utils/matrix-library/data/MatrixBlockMulData.h"
@@ -46,8 +46,8 @@ class HadamardLoadRule : public htgs::IRule<MatrixBlockData<Type>, MatrixBlockMu
           this->addResult(new MatrixBlockMulData<Type>(this->matrixAState->get(request->getRow(), request->getCol()), data, nullptr));
         }
         break;
-      case MatrixType::MatrixC:
-        break;
+      case MatrixType::MatrixC:break;
+      case MatrixType::MatrixAny:break;
     }
   }
 
@@ -59,4 +59,4 @@ class HadamardLoadRule : public htgs::IRule<MatrixBlockData<Type>, MatrixBlockMu
   htgs::StateContainer<std::shared_ptr<MatrixBlockData<Type>>> *matrixAState;
   htgs::StateContainer<std::shared_ptr<MatrixBlockData<Type>>> *matrixBState;
 };
-#endif //HTGS_MATRIXLOADRULE_H
+#endif //HTGS_HADAMARDLOADRULE_H

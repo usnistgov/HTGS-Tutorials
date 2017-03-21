@@ -20,8 +20,9 @@ class MatrixBlockData : public htgs::IData {
   MatrixBlockData(const std::shared_ptr<MatrixRequestData> &request,
                   const Type &matrixData,
                   size_t matrixWidth,
-                  size_t matrixHeight) :
-      request(request), matrixData(matrixData), matrixWidth(matrixWidth), matrixHeight(matrixHeight) {}
+                  size_t matrixHeight,
+                  size_t leadingDimension) :
+      request(request), matrixData(matrixData), matrixWidth(matrixWidth), matrixHeight(matrixHeight), leadingDimension(leadingDimension) {}
 
   const std::shared_ptr<MatrixRequestData> &getRequest() const {
     return request;
@@ -36,10 +37,15 @@ class MatrixBlockData : public htgs::IData {
     return matrixHeight;
   }
 
+  size_t getLeadingDimension() const {
+    return leadingDimension;
+  }
+
  private:
   std::shared_ptr<MatrixRequestData> request;
   Type matrixData;
   size_t matrixWidth;
   size_t matrixHeight;
+  size_t leadingDimension;
 };
 #endif //HTGS_MATRIXBLOCKDATA_H

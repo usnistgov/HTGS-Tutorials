@@ -4,57 +4,45 @@
 // You are solely responsible for determining the appropriateness of using and distributing the software and you assume all risks associated with its use, including but not limited to the risks and costs of program errors, compliance with applicable laws, damage to or loss of data, programs or equipment, and the unavailability or interruption of operation. This software is not intended to be used in any situation where a failure could cause risk of injury or damage to property. The software developed by NIST employees is not subject to copyright protection within the United States.
 
 //
-// Created by tjb3 on 2/23/16.
+// Created by tjb3 on 3/8/16.
 //
 
+#ifndef HTGS_MATMULOUTPUTTASK_H
+#define HTGS_MATMULOUTPUTTASK_H
 
-#ifndef HTGS_HADAMARDPRODUCTTASKWITHOUTMEMORY_H
-#define HTGS_HADAMARDPRODUCTTASKWITHOUTMEMORY_H
+#include <fstream>
+#include "../../tutorial-utils/util-filesystem.h"
 
-#include "../../../tutorial-utils/matrix-library/data/MatrixBlockMulData.h"
-#include "../../../tutorial-utils/matrix-library/data/MatrixBlockData.h"
-#include <htgs/api/ITask.hpp>
+#include "../../tutorial-utils/matrix-library/data/MatrixBlockData.h"
 
-class HadamardProductTaskWithoutMemory : public htgs::ITask<MatrixBlockMulData<double *>, MatrixBlockData<double *>> {
 
+class MatMulOutputTask : public htgs::ITask<MatrixBlockData<double *>, MatrixRequestData> {
  public:
-  HadamardProductTaskWithoutMemory(size_t numThreads) : ITask(numThreads) {}
 
-  virtual ~HadamardProductTaskWithoutMemory() {  }
-
-  virtual void executeTask(std::shared_ptr<MatrixBlockMulData<double *>> data) override {
-
-    auto matAData = data->getMatrixA();
-    auto matBData = data->getMatrixB();
-
-    double *matrixA = matAData->getMatrixData();
-    double *matrixB = matBData->getMatrixData();
-
-
-    size_t width = matAData->getMatrixWidth();
-    size_t height = matAData->getMatrixHeight();
-
-    double *result = new double[width * height];
-
-    for (size_t i = 0; i < matAData->getMatrixWidth() * matAData->getMatrixHeight(); i++) {
-      result[i] = matrixA[i] * matrixB[i];
-    }
-
-    auto matRequest = matAData->getRequest();
-
-    std::shared_ptr<MatrixRequestData>
-        matReq(new MatrixRequestData(matRequest->getRow(), matRequest->getCol(), MatrixType::MatrixC));
-
-    addResult(new MatrixBlockData<double *>(matReq, result, width, height));
-
+  MatMulOutputTask(std::string directory) {
+    this->directory = directory + "/matrixC_HTGS";
+    create_dir(this->directory);
   }
-  virtual std::string getName() override {
-    return "HadamardProductTaskWithoutMemory";
+
+  virtual void executeTask(std::shared_ptr<MatrixBlockData<double *>> data) {
+    std::string fileName(directory + "/" + std::to_string(data->getRequest()->getRow()) + "_"
+                             + std::to_string(data->getRequest()->getCol()));
+
+    std::ofstream out(fileName, std::ios::binary);
+    out.write((char *) data->getMatrixData(), sizeof(double) * data->getMatrixWidth() * data->getMatrixHeight());
+
+    addResult(data->getRequest());
   }
-  virtual HadamardProductTaskWithoutMemory *copy() override {
-    return new HadamardProductTaskWithoutMemory(this->getNumThreads());
+  virtual std::string getName() {
+    return "MatMulOutputTask";
   }
+  virtual htgs::ITask<MatrixBlockData<double *>, MatrixRequestData> *copy() {
+    return new MatMulOutputTask(directory);
+  }
+
+ private:
+
+  std::string directory;
 
 };
-
-#endif //HTGS_HADAMARDPRODUCTTASKWITHOUTMEMORY_H
+#endif //HTGS_MATMULOUTPUTTASK_H

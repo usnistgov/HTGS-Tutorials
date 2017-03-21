@@ -5,11 +5,46 @@
 include_directories(${OpenBLAS_INCLUDE_DIR})
 link_directories(${OpenBLAS_LIBRARIES})
 
-add_subdirectory(matrix-mul)
-add_subdirectory(matrix-mul-mmap)
 
-if (OpenBLAS_FOUND)
-    add_subdirectory(matrix-mul-openblas)
-    add_subdirectory(matrix-mul-mmap-openblas)
-    add_subdirectory(matrix-mul-in-memory-openblas)
-endif (OpenBLAS_FOUND)
+
+set(TUTORIAL_UTILS_SRC
+        ../../tutorial-utils/util-matrix.h
+        ../../tutorial-utils/util-matrix.cpp
+        ../../tutorial-utils/util-filesystem.cpp
+        ../../tutorial-utils/util-filesystem.h
+        ../../tutorial-utils/SimpleClock.h
+        ../../tutorial-utils/enums/MatrixType.h
+        ../../tutorial-utils/enums/MatrixType.cpp
+        ../tutorial-utils/matrix-library/data/MatrixBlockData.h
+        ../tutorial-utils/matrix-library/data/MatrixRequestData.h
+        ../tutorial-utils/matrix-library/data/MatrixBlockMulData.h
+        ../tutorial-utils/matrix-library/tasks/ReadDiskMatrixTask.h
+        ../tutorial-utils/matrix-library/allocator/MatrixAllocator.h
+        ../tutorial-utils/matrix-library/rules/MatrixMemoryRule.h
+        ../tutorial-utils/matrix-library/operations/matmul.cpp
+        ../tutorial-utils/matrix-library/operations/matmul.h
+        ../tutorial-utils/matrix-library/args/MatMulArgs.h
+        ../tutorial-utils/matrix-library/args/MatMulArgs.cpp
+
+        )
+
+
+add_executable(tutorial3
+        tutorial3-matrix-mul-main.cpp
+        tasks/MatMulAccumTask.h
+        rules/MatMulLoadRule.h
+        rules/MatMulDistributeRule.h
+        rules/MatMulAccumulateRule.h
+        rules/MatMulOutputRule.h
+        tasks/MatMulBlkTask.h
+        tasks/MatMulOutputTask.h
+        ${TUTORIAL_UTILS_SRC})
+
+#add_subdirectory(matrix-mul)
+#add_subdirectory(matrix-mul-mmap)
+
+#if (OpenBLAS_FOUND)
+#    add_subdirectory(matrix-mul-openblas)
+#    add_subdirectory(matrix-mul-mmap-openblas)
+#    add_subdirectory(matrix-mul-in-memory-openblas)
+#endif (OpenBLAS_FOUND)

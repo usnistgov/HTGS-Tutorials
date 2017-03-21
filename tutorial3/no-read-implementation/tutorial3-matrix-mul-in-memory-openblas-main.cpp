@@ -16,7 +16,7 @@
 #include "data/MatrixBlockData.h"
 #include "tasks/ReadMatrixTask.h"
 #include "rules/MatrixLoadRule.h"
-#include "../tasks/MatrixMulBlkTaskOpenBLAS.h"
+#include "../tasks/MatMulBlkTaskOpenBLAS.h"
 #include "tasks/MatrixAccumTask.h"
 #include "tasks/OutputTask.h"
 #include "rules/MatrixAccumulateRule.h"

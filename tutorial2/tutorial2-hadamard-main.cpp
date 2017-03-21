@@ -70,7 +70,7 @@ int main(int argc, char *argv[]) {
   // Check directory for matrix files based on the given file size
   checkAndValidateMatrixBlockFiles(directory, width, height, width, height, blockSize, false);
 
-  ReadDiskMatrixTask *readMatTask = new ReadDiskMatrixTask(numReadThreads, blockSize, width, height, directory);
+  ReadDiskMatrixTask *readMatTask = new ReadDiskMatrixTask(numReadThreads, blockSize, width, height, directory, MatrixType::MatrixAny, false);
   HadamardProductTask *prodTask = new HadamardProductTask(numProdThreads);
 
   size_t numBlocksCols = readMatTask->getNumBlocksCols();

@@ -7,41 +7,46 @@
 // Created by tjb3 on 2/23/16.
 //
 
-#ifndef HTGS_MATRIXDISTRIBUTERULE_H
-#define HTGS_MATRIXDISTRIBUTERULE_H
+#ifndef HTGS_MATMULOUTPUTRULE_H
+#define HTGS_MATMULOUTPUTRULE_H
 
+#include <vector>
 #include <htgs/api/IRule.hpp>
-#include "../data/MatrixRequestData.h"
+#include "../../tutorial-utils/matrix-library/data/MatrixBlockData.h"
 
-class MatrixDistributeRule : public htgs::IRule<MatrixRequestData, MatrixRequestData> {
-
+template <class Type>
+class MatMulOutputRule : public htgs::IRule<MatrixBlockData<double *>, MatrixBlockData<double *> > {
  public:
-  MatrixDistributeRule(MatrixType type) {
-    this->type = type;
+  MatMulOutputRule(size_t blockWidth, size_t blockHeight, size_t blockWidthMatrixA) {
+    matrixCountContainer = this->allocStateContainer<size_t>(blockHeight, blockWidth, 0);
+    numBlocks = 2 * blockWidthMatrixA - 1;
   }
 
-  ~MatrixDistributeRule() {
+  ~MatMulOutputRule() {
+    delete matrixCountContainer;
   }
 
-  bool isRuleTerminated(int pipelineId) {
-    return false;
-  }
+  void applyRule(std::shared_ptr<MatrixBlockData<Type>> data, size_t pipelineId) override {
+    auto request = data->getRequest();
 
-  void shutdownRule(int pipelineId) {
-  }
+    size_t row = request->getRow();
+    size_t col = request->getCol();
 
-  void applyRule(std::shared_ptr<MatrixRequestData> data, int pipelineId) {
-    if (data->getType() == this->type) {
+    size_t count = matrixCountContainer->get(row, col);
+    count++;
+    matrixCountContainer->set(row, col, count);
+    if (count == numBlocks) {
       addResult(data);
     }
   }
 
   std::string getName() {
-    return "MatrixDistributeRule";
+    return "MatMulOutputRule";
   }
 
  private:
-  MatrixType type;
+  htgs::StateContainer<size_t> *matrixCountContainer;
+  size_t numBlocks;
 };
 
-#endif //HTGS_MATRIXDISTRIBUTERULE_H
+#endif //HTGS_MATMULOUTPUTRULE_H

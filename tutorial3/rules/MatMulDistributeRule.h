@@ -7,65 +7,35 @@
 // Created by tjb3 on 2/23/16.
 //
 
+#ifndef HTGS_MATMULDISTRIBUTERULE_H
+#define HTGS_MATMULDISTRIBUTERULE_H
 
-#ifndef HTGS_MATRIXACCUMTASK_H
-#define HTGS_MATRIXACCUMTASK_H
+#include <htgs/api/IRule.hpp>
+#include "../../tutorial-utils/matrix-library/data/MatrixRequestData.h"
 
-#include "../data/MatrixBlockMulData.h"
-#include "../data/MatrixBlockData.h"
-#include <htgs/api/ITask.hpp>
 
-class MatrixAccumTask : public htgs::ITask<MatrixBlockMulData<double *>, MatrixBlockData<double *>> {
+class MatMulDistributeRule : public htgs::IRule<MatrixRequestData, MatrixRequestData> {
 
  public:
-  MatrixAccumTask(int numThreads) : ITask(numThreads) {}
-
-  virtual ~MatrixAccumTask() {
-
+  MatMulDistributeRule(MatrixType type) {
+    this->type = type;
   }
-  virtual void initialize(int pipelineId,
-                          int numPipeline) {
 
+  ~MatMulDistributeRule() {
   }
-  virtual void shutdown() {
 
-  }
-  virtual void executeTask(std::shared_ptr<MatrixBlockMulData<double *>> data) {
-
-    auto matAData = data->getMatrixA();
-    auto matBData = data->getMatrixB();
-
-    double *matrixA = matAData->getMatrixData();
-    double *matrixB = matBData->getMatrixData();
-
-    int width = matAData->getMatrixWidth();
-    int height = matAData->getMatrixHeight();
-
-    double *result = new double[width * height];
-
-    for (int i = 0; i < height; i++) {
-      for (int j = 0; j < width; j++) {
-        result[i * width + j] = matrixA[i * width + j] + matrixB[i * width + j];
-      }
+  void applyRule(std::shared_ptr<MatrixRequestData> data, size_t pipelineId) {
+    if (data->getType() == this->type) {
+      addResult(data);
     }
-
-    auto matRequest = matAData->getRequest();
-
-    std::shared_ptr<MatrixRequestData>
-        matReq(new MatrixRequestData(matRequest->getRow(), matRequest->getCol(), MatrixType::MatrixC));
-
-    addResult(new MatrixBlockData<double *>(matReq, result, width, height));
-
   }
-  virtual std::string getName() {
-    return "MatrixAccumTask";
+
+  std::string getName() {
+    return "MatMulDistributeRule";
   }
-  virtual MatrixAccumTask *copy() {
-    return new MatrixAccumTask(this->getNumThreads());
-  }
-  virtual bool isTerminated(std::shared_ptr<htgs::BaseConnector> inputConnector) {
-    return inputConnector->isInputTerminated();
-  }
+
+ private:
+  MatrixType type;
 };
 
-#endif //HTGS_MATRIXACCUMTASK_H
+#endif //HTGS_MATMULDISTRIBUTERULE_H

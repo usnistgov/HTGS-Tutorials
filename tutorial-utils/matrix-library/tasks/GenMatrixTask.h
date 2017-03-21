@@ -52,7 +52,7 @@ class GenMatrixTask : public htgs::ITask<MatrixRequestData, MatrixBlockData<doub
     for (size_t i = 0; i < matrixWidth * matrixHeight; i++)
       matrixData[i] = 2.0;
 
-    addResult(new MatrixBlockData<double *>(data, matrixData, matrixWidth, matrixHeight));
+    addResult(new MatrixBlockData<double *>(data, matrixData, matrixWidth, matrixHeight, matrixWidth));
 
   }
   virtual std::string getName() {

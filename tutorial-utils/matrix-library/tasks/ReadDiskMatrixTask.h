@@ -18,14 +18,35 @@ class ReadDiskMatrixTask : public htgs::ITask<MatrixRequestData, MatrixBlockData
 
  public:
 
-  ReadDiskMatrixTask(size_t numThreads, size_t blockSize, size_t fullMatrixWidth, size_t fullMatrixHeight, std::string directory) :
+  ReadDiskMatrixTask(size_t numThreads, size_t blockSize, size_t fullMatrixWidth, size_t fullMatrixHeight, std::string directory, MatrixType matrixType, bool computeReleaseCount) :
       ITask(numThreads),
       blockSize(blockSize),
       fullMatrixHeight(fullMatrixHeight),
       fullMatrixWidth(fullMatrixWidth),
-      directory(directory) {
+      directory(directory),
+      matrixType(matrixType),
+      computeReleaseCount(computeReleaseCount)
+  {
     numBlocksRows = (size_t) ceil((double) fullMatrixHeight / (double) blockSize);
     numBlocksCols = (size_t) ceil((double) fullMatrixWidth / (double) blockSize);
+    if (computeReleaseCount)
+    {
+      switch(matrixType)
+      {
+
+        case MatrixType::MatrixA:
+          releaseCount = numBlocksCols;
+          break;
+        case MatrixType::MatrixB:
+          releaseCount = numBlocksRows;
+          break;
+        case MatrixType::MatrixC:break;
+        case MatrixType::MatrixAny:break;
+      }
+    } else{
+      releaseCount = 1;
+    }
+
   }
 
   virtual ~ReadDiskMatrixTask() {}
@@ -39,9 +60,10 @@ class ReadDiskMatrixTask : public htgs::ITask<MatrixRequestData, MatrixBlockData
       case MatrixType::MatrixB: matrixName = "matrixB";
         break;
       case MatrixType::MatrixC: return;
+      case MatrixType::MatrixAny: return;
     }
 
-    htgs::m_data_t<double> matrixData = this->getMemory<double>(matrixName, new MatrixMemoryRule(1));
+    htgs::m_data_t<double> matrixData = this->getMemory<double>(matrixName, new MatrixMemoryRule(releaseCount));
 
     size_t row = data->getRow();
     size_t col = data->getCol();
@@ -66,14 +88,14 @@ class ReadDiskMatrixTask : public htgs::ITask<MatrixRequestData, MatrixBlockData
 
     file.read((char *) matrixData->get(), sizeof(double) * matrixWidth * matrixHeight);
 
-    addResult(new MatrixBlockData<htgs::m_data_t<double>>(data, matrixData, matrixWidth, matrixHeight));
+    addResult(new MatrixBlockData<htgs::m_data_t<double>>(data, matrixData, matrixWidth, matrixHeight, matrixWidth));
 
   }
   virtual std::string getName() {
-    return "ReadDiskMatrixTask";
+    return "ReadDiskMatrixTask(" + matrixTypeToString(matrixType) + ")";
   }
   virtual ReadDiskMatrixTask *copy() {
-    return new ReadDiskMatrixTask(this->getNumThreads(), blockSize, fullMatrixWidth, fullMatrixHeight, directory);
+    return new ReadDiskMatrixTask(this->getNumThreads(), blockSize, fullMatrixWidth, fullMatrixHeight, directory, matrixType, computeReleaseCount);
   }
 
   size_t getNumBlocksRows() const {
@@ -90,6 +112,9 @@ class ReadDiskMatrixTask : public htgs::ITask<MatrixRequestData, MatrixBlockData
   size_t numBlocksRows;
   size_t numBlocksCols;
   std::string directory;
+  MatrixType matrixType;
+  bool computeReleaseCount;
+  size_t releaseCount;
 
 };
 

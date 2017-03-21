@@ -12,7 +12,8 @@
 enum class MatrixType {
   MatrixA,
   MatrixB,
-  MatrixC
+  MatrixC,
+  MatrixAny
 };
 
 std::string matrixTypeToString(MatrixType type);

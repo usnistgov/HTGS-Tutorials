@@ -9,7 +9,8 @@ project(htgs-tutorials)
 SET(CMAKE_VERBOSE_MAKEFILE on)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake-modules")
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-unused-parameter -Wno-reorder")
+
+set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 
 find_package(Threads REQUIRED)
 find_package(HTGS REQUIRED)
@@ -25,7 +26,12 @@ option(BUILD_STITCHING_TEST "Enables building the stitching test" OFF)
 include_directories(${HTGS_INCLUDE_DIR})
 link_libraries(${CMAKE_THREAD_LIBS_INIT})
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 ${CMAKE_THREAD_LIBS_INIT}")
+set (CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wextra -Wno-unused-parameter -Wno-reorder")
+if(CMAKE_USE_PTHREADS_INIT)
+    set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -pthread")
+endif(CMAKE_USE_PTHREADS_INIT)
+
+
 
 add_subdirectory(tutorial1)
 add_subdirectory(tutorial2)

@@ -30,4 +30,4 @@ add_executable(tutorial2
         tasks/HadamardProductTask.h)
 
 
-add_subdirectory(no-memory-implementation)
+add_subdirectory(no-read-implementation)

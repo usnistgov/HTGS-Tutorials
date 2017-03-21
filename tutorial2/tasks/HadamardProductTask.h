@@ -45,7 +45,7 @@ class HadamardProductTask : public htgs::ITask<MatrixBlockMulData<htgs::m_data_t
     std::shared_ptr<MatrixRequestData>
         matReq(new MatrixRequestData(matRequest->getRow(), matRequest->getCol(), MatrixType::MatrixC));
 
-    addResult(new MatrixBlockData<htgs::m_data_t<double>>(matReq, result, width, height));
+    addResult(new MatrixBlockData<htgs::m_data_t<double>>(matReq, result, width, height, width));
 
     this->releaseMemory(matrixA);
     this->releaseMemory(matrixB);

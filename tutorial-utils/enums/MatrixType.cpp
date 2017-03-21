@@ -15,6 +15,7 @@ std::string matrixTypeToString(MatrixType type) {
     case MatrixType::MatrixA: return "MatrixA";
     case MatrixType::MatrixB: return "MatrixB";
     case MatrixType::MatrixC: return "MatrixC";
+    case MatrixType::MatrixAny: return "MatrixAny";
   }
   return "";
 }

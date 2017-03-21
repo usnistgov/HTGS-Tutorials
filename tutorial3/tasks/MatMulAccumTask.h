@@ -7,58 +7,54 @@
 // Created by tjb3 on 2/23/16.
 //
 
-#ifndef HTGS_MATRIXACCUMULATERULE_H
-#define HTGS_MATRIXACCUMULATERULE_H
 
-#include <vector>
-#include <htgs/api/IRule.hpp>
-#include "../data/MatrixRequestData.h"
-#include "../data/MatrixBlockMulData.h"
-#include "../data/MatrixBlockData.h"
+#ifndef HTGS_MATMULACCUMTASK_H
+#define HTGS_MATMULACCUMTASK_H
 
-class MatrixAccumulateRule : public htgs::IRule<MatrixBlockData<double *>, MatrixBlockMulData<double *> > {
+#include "../../tutorial-utils/matrix-library/data/MatrixBlockData.h"
+
+#include <htgs/api/ITask.hpp>
+
+class MatMulAccumTask : public htgs::ITask<MatrixBlockMulData<double *>, MatrixBlockData<double *>> {
+
  public:
-  MatrixAccumulateRule(int blockWidth, int blockHeight, int blockWidthMatrixA) {
-    matrixContainer = this->allocStateContainer(blockHeight, blockWidth);
-    totalCount = blockWidth * blockHeight * blockWidthMatrixA + blockWidth * blockHeight * (blockWidthMatrixA - 1);
-    count = 0;
-  }
+  MatMulAccumTask(size_t numThreads) : ITask(numThreads) {}
 
-  ~MatrixAccumulateRule() {
-    free(matrixContainer);
-  }
+  virtual void executeTask(std::shared_ptr<MatrixBlockMulData<double *>> data) {
 
-  bool isRuleTerminated(int pipelineId) {
-    return count == totalCount;
-  }
+    auto matAData = data->getMatrixA();
+    auto matBData = data->getMatrixB();
 
-  void shutdownRule(int pipelineId) {}
+    double *matrixA = matAData->getMatrixData();
+    double *matrixB = matBData->getMatrixData();
 
-  void applyRule(std::shared_ptr<MatrixBlockData<double *>> data, int pipelineId) {
-    auto request = data->getRequest();
+    size_t width = matAData->getMatrixWidth();
+    size_t height = matAData->getMatrixHeight();
 
-    int row = request->getRow();
-    int col = request->getCol();
+    double *result = new double[width * height];
 
-    if (matrixContainer->has(row, col)) {
-      auto blkData = matrixContainer->get(row, col);
-      matrixContainer->remove(row, col);
-      addResult(new MatrixBlockMulData<double *>(blkData, data));
+    // TODO: handle col major order
+    for (size_t i = 0; i < height; i++) {
+      for (size_t j = 0; j < width; j++) {
+        result[i * width + j] = matrixA[i * width + j] + matrixB[i * width + j];
+      }
     }
-    else {
-      matrixContainer->set(row, col, data);
-    }
-    count++;
+
+    auto matRequest = matAData->getRequest();
+
+    std::shared_ptr<MatrixRequestData>
+        matReq(new MatrixRequestData(matRequest->getRow(), matRequest->getCol(), MatrixType::MatrixC));
+
+    addResult(new MatrixBlockData<double *>(matReq, result, width, height, width));
+
+  }
+  virtual std::string getName() {
+    return "MatMulAccumTask";
+  }
+  virtual MatMulAccumTask *copy() {
+    return new MatMulAccumTask(this->getNumThreads());
   }
 
-  std::string getName() {
-    return "MatrixAccumulateRule";
-  }
-
- private:
-  htgs::StateContainer<std::shared_ptr<MatrixBlockData<double *>>> *matrixContainer;
-  int count;
-  int totalCount;
 };
 
-#endif //HTGS_MATRIXACCUMULATERULE_H
+#endif //HTGS_MATMULACCUMTASK_H
