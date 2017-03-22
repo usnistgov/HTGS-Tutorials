@@ -8,91 +8,70 @@
 //
 
 
-#ifndef HTGS_MATRIXMULBLKTASK_H
-#define HTGS_MATRIXMULBLKTASK_H
+#ifndef HTGS_MATMULBLKTASKWITHMEMRELEASE_H
+#define HTGS_MATMULBLKTASKWITHMEMRELEASE_H
 
-#include "../data/MatrixBlockMulData.h"
-#include "../data/MatrixBlockData.h"
+#include "../../../tutorial-utils/matrix-library/operations/matmul.h"
 #include <htgs/api/ITask.hpp>
 
-class MatrixMulBlkTask : public htgs::ITask<MatrixBlockMulData<double *>, MatrixBlockData<double *>> {
+class MatMulBlkTaskWithMemRelease : public htgs::ITask<MatrixBlockMulData<htgs::m_data_t<double>>, MatrixBlockData<double *>> {
 
  public:
-  MatrixMulBlkTask(int numThreads,
-                   int fullMatrixWidthA,
-                   int fullMatrixHeightA,
-                   int fullMatrixWidthB,
-                   int fullMatrixHeightB,
-                   int blockSize) :
-      ITask(numThreads), fullMatrixWidthA(fullMatrixWidthA), fullMatrixHeightA(fullMatrixHeightA),
-      fullMatrixWidthB(fullMatrixWidthB), fullMatrixHeightB(fullMatrixHeightB), blockSize(blockSize) {}
+  MatMulBlkTaskWithMemRelease(size_t numThreads, bool colMajor) :
+      ITask(numThreads), colMajor(colMajor) {}
 
-  virtual ~MatrixMulBlkTask() {
 
-  }
-  virtual void initialize(int pipelineId,
-                          int numPipeline) {
-
-  }
-  virtual void shutdown() {
-  }
-
-  virtual void executeTask(std::shared_ptr<MatrixBlockMulData<double *>> data) {
+  virtual void executeTask(std::shared_ptr<MatrixBlockMulData<htgs::m_data_t<double>>> data) {
 
     auto matAData = data->getMatrixA();
     auto matBData = data->getMatrixB();
 
-    double *matrixA = matAData->getMatrixData();
-    double *matrixB = matBData->getMatrixData();
+    htgs::m_data_t<double> matrixA = matAData->getMatrixData();
+    htgs::m_data_t<double> matrixB = matBData->getMatrixData();
 
-    long width = matBData->getMatrixWidth();
-    long height = matAData->getMatrixHeight();
+    size_t width = matBData->getMatrixWidth();
+    size_t height = matAData->getMatrixHeight();
+
+    size_t lda = matAData->getLeadingDimension();
+    size_t ldb = matBData->getLeadingDimension();
+
+    size_t ldc;
+
+    if (colMajor)
+      ldc = height;
+    else
+      ldc = width;
 
     double *result = new double[width * height];
 
-    cblas_dgemm(CblasRowMajor,
-                CblasNoTrans,
-                CblasNoTrans,
-                (int)height,
-                (int)width,
-                (int)matAData->getMatrixWidth(),
-                1.0,
-                matrixA,
-                fullMatrixWidthA,
-                matrixB,
-                fullMatrixWidthB,
-                0.0,
-                result,
-                width);
+    computeMatMul(height, width, matAData->getMatrixWidth(), 1.0, matrixA->get(), lda,
+                  matrixB->get(), ldb, 0.0, result, ldc, colMajor);
 
     std::shared_ptr<MatrixRequestData> matReq(new MatrixRequestData(matAData->getRequest()->getRow(),
                                                                     matBData->getRequest()->getCol(),
                                                                     MatrixType::MatrixC));
 
-    addResult(new MatrixBlockData<double *>(matReq, result, width, height));
+    std::cout << "Computing A(" << matAData->getRequest()->getRow() << ", " << matAData->getRequest()->getCol() <<
+              ") x B(" << matBData->getRequest()->getRow() << ", " << matBData->getRequest()->getCol() <<
+              ") = C(" << matReq->getRow() << ", " << matReq->getCol() << ")" << std::endl;
 
+    this->addResult(new MatrixBlockData<double *>(matReq, result, width, height, ldc));
+
+    this->releaseMemory(matrixA);
+    this->releaseMemory(matrixB);
   }
   virtual std::string getName() {
-    return "MatrixMulBlkTask";
+    return "MatMulBlkTaskWithMemRelease";
   }
-  virtual MatrixMulBlkTask *copy() {
-    return new MatrixMulBlkTask(this->getNumThreads(),
-                                fullMatrixWidthA,
-                                fullMatrixHeightA,
-                                fullMatrixWidthB,
-                                fullMatrixHeightB,
-                                blockSize);
+
+  virtual MatMulBlkTaskWithMemRelease *copy() {
+    return new MatMulBlkTaskWithMemRelease(this->getNumThreads(), colMajor);
   }
-  virtual bool isTerminated(std::shared_ptr<htgs::BaseConnector> inputConnector) {
-    return inputConnector->isInputTerminated();
-  }
+
 
  private:
-  int fullMatrixWidthA;
-  int fullMatrixHeightA;
-  int fullMatrixWidthB;
-  int fullMatrixHeightB;
-  int blockSize;
+  bool colMajor;
+
 };
 
-#endif //HTGS_MATRIXMULBLKTASK_H
+#endif //HTGS_MATMULBLKTASKWITHMEMRELEASE_H

@@ -10,24 +10,26 @@ set(TUTORIAL_UTILS_SRC
         ../../tutorial-utils/util-filesystem.h
         ../../tutorial-utils/SimpleClock.h
         ../../tutorial-utils/enums/MatrixType.h
-        ../../tutorial-utils/enums/MatrixType.cpp)
+        ../../tutorial-utils/enums/MatrixType.cpp
+        ../../tutorial-utils/matrix-library/data/MatrixRequestData.h
+        ../../tutorial-utils/matrix-library/data/MatrixBlockData.h
+        ../../tutorial-utils/matrix-library/data/MatrixBlockMulData.h
+        ../../tutorial-utils/matrix-library/allocator/MatrixAllocator.h
+        ../../tutorial-utils/matrix-library/rules/MatrixMemoryRule.h
+        ../../tutorial-utils/matrix-library/operations/matmul.cpp
+        ../../tutorial-utils/matrix-library/operations/matmul.h
+        ../../tutorial-utils/matrix-library/args/MatMulArgs.cpp
+        ../../tutorial-utils/matrix-library/args/MatMulArgs.h
+        )
 
-add_executable(matrixMul-mmap-openblas
-        tutorial3-matrix-mul-mmap-openblas-main.cpp
-        data/MatrixRequestData.h
-        data/MatrixBlockData.h
-        data/MatrixBlockMulData.h
-        tasks/ReadMatrixTask.h
-        tasks/OutputTask.h
-        memory/MatrixMemoryRule.h
-        memory/MatrixAllocator.h
-        rules/MatrixLoadRule.h
-        rules/MatrixDistributeRule.h
-        rules/MatrixAccumulateRule.h
-        rules/MatrixOutputRule.h
-        tasks/MatrixMulBlkTask.h
-        tasks/MatrixAccumTask.h
-        tasks/OutputTask.h
+add_executable(tutorial3-with-mmap
+        tutorial3-matrix-mul-mmap-main.cpp
+        ../rules/MatMulLoadRule.h
+        ../rules/MatMulDistributeRule.h
+        ../rules/MatMulAccumulateRule.h
+        ../rules/MatMulOutputRule.h
+        ../tasks/MatMulBlkTask.h
+        ../tasks/MatMulAccumTask.h
+        tasks/MatMulOutputTaskWithMMap.h
+        tasks/ReadMatrixTaskMMap.h
         ${TUTORIAL_UTILS_SRC})
-
-target_link_libraries(matrixMul-mmap-openblas openblas)

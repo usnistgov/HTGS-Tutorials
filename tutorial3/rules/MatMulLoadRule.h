@@ -24,8 +24,10 @@ class MatMulLoadRule : public htgs::IRule<MatrixBlockData<Type>, MatrixBlockMulD
  public:
   MatMulLoadRule (size_t blockWidthA, size_t blockHeightA, size_t blockWidthB, size_t blockHeightB) :
       blockHeightA(blockHeightA), blockWidthA(blockWidthA), blockHeightB(blockHeightB), blockWidthB(blockWidthB) {
-    for (size_t i = 0; i < blockWidthA; i++)
-      this->matrixCState.push_back(this->allocStateContainer<MatrixState>(blockHeightA, blockWidthB, MatrixState::NONE));
+    for (size_t i = 0; i < blockWidthA; i++) {
+      auto cState = this->allocStateContainer(blockHeightB, blockWidthA, MatrixState::NONE);
+      this->matrixCState.push_back(cState);
+    }
 
     this->matrixAState = this->allocStateContainer(blockHeightA, blockWidthA);
     this->matrixBState = this->allocStateContainer(blockHeightB, blockWidthB);
@@ -64,7 +66,7 @@ class MatMulLoadRule : public htgs::IRule<MatrixBlockData<Type>, MatrixBlockMulD
               std::cout << "Sending A(" << rowA << ", " << colA << "); B(" << rowB << ", " << colB << ")"
                         << "Updating C[" << rowB << "](" << rowA << ", " << colB << ")" << std::endl;
               // Schedule work
-              addResult(new MatrixBlockMulData<Type>(data, matrixBState->get(rowB, colB), nullptr));
+              this->addResult(new MatrixBlockMulData<Type>(data, matrixBState->get(rowB, colB), nullptr));
               MatrixState state = MatrixState::IN_FLIGHT;
               container->set(rowA, colB, state);
             }
@@ -88,7 +90,7 @@ class MatMulLoadRule : public htgs::IRule<MatrixBlockData<Type>, MatrixBlockMulD
               std::cout << "Sending A(" << rowA << ", " << colA << "); B(" << rowB << ", " << colB << ")"
                         << "Updating C[" << colA << "](" << rowA << ", " << colB << ")" << std::endl;
               // Schedule work
-              addResult(new MatrixBlockMulData<Type>(matrixAState->get(rowA, colA), data, nullptr));
+              this->addResult(new MatrixBlockMulData<Type>(matrixAState->get(rowA, colA), data, nullptr));
               MatrixState state = MatrixState::IN_FLIGHT;
               container->set(rowA, colB, state);
             }

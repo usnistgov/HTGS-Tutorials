@@ -42,7 +42,7 @@ class MatMulAccumulateRule : public htgs::IRule<MatrixBlockData<Type>, MatrixBlo
     if (matrixContainer->has(row, col)) {
       auto blkData = matrixContainer->get(row, col);
       matrixContainer->remove(row, col);
-      addResult(new MatrixBlockMulData<Type>(blkData, data, nullptr));
+      this->addResult(new MatrixBlockMulData<Type>(blkData, data, nullptr));
     }
     else {
       matrixContainer->set(row, col, data);

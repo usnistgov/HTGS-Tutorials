@@ -76,7 +76,7 @@ int main(int argc, char *argv[]) {
   size_t numBlocksCols = readMatTask->getNumBlocksCols();
   size_t numBlocksRows = readMatTask->getNumBlocksRows();
 
-  std::shared_ptr<HadamardLoadRule<htgs::m_data_t<double>>> loadRule = std::make_shared<HadamardLoadRule<htgs::m_data_t<double>>>(numBlocksCols, numBlocksRows);
+  HadamardLoadRule<htgs::m_data_t<double>> *loadRule = new HadamardLoadRule<htgs::m_data_t<double>>(numBlocksCols, numBlocksRows);
   auto bookkeeper = new htgs::Bookkeeper<MatrixBlockData<htgs::m_data_t<double>>>();
 
   auto taskGraph = new htgs::TaskGraphConf<MatrixRequestData, MatrixBlockData<htgs::m_data_t<double>>>();
@@ -86,12 +86,12 @@ int main(int argc, char *argv[]) {
   taskGraph->addRuleEdge(bookkeeper, loadRule, prodTask);
   taskGraph->addGraphProducerTask(prodTask);
 
-  std::shared_ptr<MatrixAllocator<double>> matAlloc = std::make_shared<MatrixAllocator<double>>(blockSize, blockSize);
+  MatrixAllocator<double> *matAlloc = new MatrixAllocator<double>(blockSize, blockSize);
 
-  taskGraph->addMemoryManagerEdge<double>("result", prodTask, matAlloc, 50, htgs::MMType::Static);
+  taskGraph->addMemoryManagerEdge("result", prodTask, matAlloc, 50, htgs::MMType::Static);
 
-  taskGraph->addMemoryManagerEdge<double>("matrixA", readMatTask, matAlloc, 100, htgs::MMType::Static);
-  taskGraph->addMemoryManagerEdge<double>("matrixB", readMatTask, matAlloc, 100, htgs::MMType::Static);
+  taskGraph->addMemoryManagerEdge("MatrixA", readMatTask, matAlloc, 100, htgs::MMType::Static);
+  taskGraph->addMemoryManagerEdge("MatrixB", readMatTask, matAlloc, 100, htgs::MMType::Static);
 
 
   htgs::TaskGraphRuntime *runtime = new htgs::TaskGraphRuntime(taskGraph);

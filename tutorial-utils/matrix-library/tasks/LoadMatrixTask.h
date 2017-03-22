@@ -6,68 +6,40 @@
 //
 // Created by tjb3 on 2/23/16.
 //
-#ifndef HTGS_READMATRIXTASK_H
-#define HTGS_READMATRIXTASK_H
+#ifndef HTGS_LOADMATRIXTASK_H
+#define HTGS_LOADMATRIXTASK_H
 
 #include <htgs/api/ITask.hpp>
 #include <cmath>
-#include "../memory/MatrixMemoryRule.h"
+#include "../data/MatrixBlockData.h"
+#include "../data/MatrixRequestData.h"
+#include "../../util-matrix.h"
 
-class ReadMatrixTaskMMap : public htgs::ITask<MatrixRequestData, MatrixBlockData<double *>> {
+class LoadMatrixTask : public htgs::ITask<MatrixRequestData, MatrixBlockData<double *>> {
 
  public:
 
-  ReadMatrixTask(int numThreads,
-                 MatrixType type,
-                 int blockSize,
-                 int fullMatrixWidth,
-                 int fullMatrixHeight,
-                 std::string directory,
-                 std::string matrixName) :
+  LoadMatrixTask(double *matrix, size_t numThreads, MatrixType matrixType, size_t blockSize, size_t fullMatrixWidth, size_t fullMatrixHeight, bool colMajor) :
       ITask(numThreads),
+      matrix(matrix),
       blockSize(blockSize),
       fullMatrixHeight(fullMatrixHeight),
       fullMatrixWidth(fullMatrixWidth),
-      directory(directory),
-      matrixName(matrixName) {
-    this->type = type;
-    numBlocksRows = (int) ceil((double) fullMatrixHeight / (double) blockSize);
-    numBlocksCols = (int) ceil((double) fullMatrixWidth / (double) blockSize);
+      matrixType(matrixType),
+      colMajor(colMajor)
+  {
+    numBlocksRows = (size_t) ceil((double) fullMatrixHeight / (double) blockSize);
+    numBlocksCols = (size_t) ceil((double) fullMatrixWidth / (double) blockSize);
   }
 
-  virtual ~ReadMatrixTask() {
-    munmap(this->mmapMatrix, sizeof(double) * fullMatrixHeight * fullMatrixWidth);
-  }
-  virtual void initialize(int pipelineId,
-                          int numPipeline) {
-    std::string matrixName = matrixTypeToString(type);
-
-    std::string fileName(directory + "/" + matrixName);
-    int fd = -1;
-    if ((fd = open(fileName.c_str(), O_RDONLY)) == -1) {
-      std::cerr << "Failed to open file: " << fileName << std::endl;
-      err(1, "open failed");
-    }
-
-    this->mmapMatrix =
-        (double *) mmap(NULL, fullMatrixWidth * fullMatrixHeight * sizeof(double), PROT_READ, MAP_SHARED, fd, 0);
-
-    if (this->mmapMatrix == MAP_FAILED) {
-      close(fd);
-      err(2, "Error mmapping file");
-    }
-  }
-  virtual void shutdown() {
-  }
+  virtual ~LoadMatrixTask() {}
 
   virtual void executeTask(std::shared_ptr<MatrixRequestData> data) {
-    std::string matrixName;
+    size_t row = data->getRow();
+    size_t col = data->getCol();
 
-    int row = data->getRow();
-    int col = data->getCol();
-
-    int matrixWidth;
-    int matrixHeight;
+    size_t matrixWidth;
+    size_t matrixHeight;
 
     if (col == numBlocksCols - 1 && fullMatrixWidth % blockSize != 0)
       matrixWidth = fullMatrixWidth % blockSize;
@@ -79,45 +51,43 @@ class ReadMatrixTaskMMap : public htgs::ITask<MatrixRequestData, MatrixBlockData
     else
       matrixHeight = blockSize;
 
-    // compute starting location of pointer
-    double *memPtr = mmapMatrix + (blockSize * col + blockSize * row * fullMatrixWidth);
+    double *memPtr;
 
-    addResult(new MatrixBlockData<double *>(data, memPtr, matrixWidth, matrixHeight));
+    // compute starting location of pointer
+    if (colMajor)
+      memPtr = &matrix[IDX2C(blockSize*row, blockSize*col, fullMatrixHeight)];
+    else
+      memPtr = &matrix[blockSize * col + blockSize * row * fullMatrixWidth];
+
+    if (colMajor)
+      addResult(new MatrixBlockData<double *>(data, memPtr, matrixWidth, matrixHeight, fullMatrixHeight));
+    else
+      addResult(new MatrixBlockData<double *>(data, memPtr, matrixWidth, matrixHeight, fullMatrixWidth));
 
   }
   virtual std::string getName() {
-    return "ReadMatrixTaskMMap(" + matrixName + ")";
+    return "LoadMatrixTask(" + matrixTypeToString(matrixType) + ")";
   }
-  virtual ReadMatrixTaskMMap *copy() {
-    return new ReadMatrixTaskMMap(this->getNumThreads(),
-                              this->type,
-                              blockSize,
-                              fullMatrixWidth,
-                              fullMatrixHeight,
-                              directory,
-                              matrixName);
-  }
-  virtual bool isTerminated(std::shared_ptr<htgs::BaseConnector> inputConnector) {
-    return inputConnector->isInputTerminated();
+  virtual LoadMatrixTask *copy() {
+    return new LoadMatrixTask(matrix, this->getNumThreads(), matrixType, blockSize, fullMatrixWidth, fullMatrixHeight, colMajor);
   }
 
-  int getNumBlocksRows() const {
+  size_t getNumBlocksRows() const {
     return numBlocksRows;
   }
-  int getNumBlocksCols() const {
+
+  size_t getNumBlocksCols() const {
     return numBlocksCols;
   }
  private:
-  MatrixType type;
-  double *mmapMatrix;
-  int blockSize;
-  int fullMatrixWidth;
-  int fullMatrixHeight;
-  int numBlocksRows;
-  int numBlocksCols;
-  std::string directory;
-  std::string matrixName;
-
+  double *matrix;
+  size_t blockSize;
+  size_t fullMatrixWidth;
+  size_t fullMatrixHeight;
+  size_t numBlocksRows;
+  size_t numBlocksCols;
+  MatrixType matrixType;
+  bool colMajor;
 };
 
 #endif //HTGS_GENERATEMATRIXTASK_H

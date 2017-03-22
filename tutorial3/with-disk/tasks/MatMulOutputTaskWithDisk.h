@@ -4,68 +4,44 @@
 // You are solely responsible for determining the appropriateness of using and distributing the software and you assume all risks associated with its use, including but not limited to the risks and costs of program errors, compliance with applicable laws, damage to or loss of data, programs or equipment, and the unavailability or interruption of operation. This software is not intended to be used in any situation where a failure could cause risk of injury or damage to property. The software developed by NIST employees is not subject to copyright protection within the United States.
 
 //
-// Created by tjb3 on 2/23/16.
+// Created by tjb3 on 3/8/16.
 //
 
+#ifndef HTGS_MATMULOUTPUTTASKWITHDISK_H
+#define HTGS_MATMULOUTPUTTASKWITHDISK_H
 
-#ifndef HTGS_MATMULACCUMTASK_H
-#define HTGS_MATMULACCUMTASK_H
+#include <fstream>
+#include "../../../tutorial-utils/util-filesystem.h"
+#include "../../../tutorial-utils/matrix-library/data/MatrixBlockData.h"
 
-#include "../../tutorial-utils/matrix-library/data/MatrixBlockData.h"
-#include "../../tutorial-utils/util-matrix.h"
 
-#include <htgs/api/ITask.hpp>
-
-class MatMulAccumTask : public htgs::ITask<MatrixBlockMulData<double *>, MatrixBlockData<double *>> {
-
+class MatMulOutputTaskWithDisk : public htgs::ITask<MatrixBlockData<double *>, MatrixRequestData> {
  public:
-  MatMulAccumTask(size_t numThreads, bool colMajor) : ITask(numThreads), colMajor(colMajor) {}
 
-  virtual void executeTask(std::shared_ptr<MatrixBlockMulData<double *>> data) {
+  MatMulOutputTaskWithDisk(std::string directory) {
+    this->directory = directory + "/matrixC_HTGS";
+    create_dir(this->directory);
+  }
 
-    auto matAData = data->getMatrixA();
-    auto matBData = data->getMatrixB();
+  virtual void executeTask(std::shared_ptr<MatrixBlockData<double *>> data) {
+    std::string fileName(directory + "/" + std::to_string(data->getRequest()->getRow()) + "_"
+                             + std::to_string(data->getRequest()->getCol()));
 
-    double *matrixA = matAData->getMatrixData();
-    double *matrixB = matBData->getMatrixData();
+    std::ofstream out(fileName, std::ios::binary);
+    out.write((char *) data->getMatrixData(), sizeof(double) * data->getMatrixWidth() * data->getMatrixHeight());
 
-    size_t width = matAData->getMatrixWidth();
-    size_t height = matAData->getMatrixHeight();
-
-    if (colMajor)
-    {
-        for (size_t j = 0; j < width; j++) {
-          for (size_t i = 0; i < height; i++) {
-          matrixA[IDX2C(i, j, height)] = matrixA[IDX2C(i, j, matAData->getLeadingDimension())]
-              + matrixB[IDX2C(i, j, matBData->getLeadingDimension())];
-        }
-      }
-    }
-    else
-    {
-      for (size_t i = 0; i < height; i++) {
-        for (size_t j = 0; j < width; j++) {
-          matrixA[i * width + j] = matrixA[i * width + j] + matrixB[i * width + j];
-        }
-      }
-    }
-
-    delete []matrixB;
-    matrixB = nullptr;
-
-    addResult(matAData);
-
+    addResult(data->getRequest());
   }
   virtual std::string getName() {
-    return "MatMulAccumTask";
+    return "MatMulOutputTaskWithDisk";
   }
-  virtual MatMulAccumTask *copy() {
-    return new MatMulAccumTask(this->getNumThreads(), colMajor);
+  virtual htgs::ITask<MatrixBlockData<double *>, MatrixRequestData> *copy() {
+    return new MatMulOutputTaskWithDisk(directory);
   }
 
  private:
-  bool colMajor;
+
+  std::string directory;
 
 };
-
-#endif //HTGS_MATMULACCUMTASK_H
+#endif //HTGS_MATMULOUTPUTTASKWITHDISK_H

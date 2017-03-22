@@ -8,28 +8,27 @@
 //
 //#define DEBUG_FLAG
 //#define DEBUG_LEVEL_VERBOSE
-#include <htgs/api/TaskGraph.hpp>
-#include <htgs/api/Runtime.hpp>
+#include <htgs/api/TaskGraphConf.hpp>
+#include <htgs/api/TaskGraphRuntime.hpp>
 #include <sys/mman.h>
 #include <fcntl.h>
 #include <err.h>
 #include <unistd.h>
 
-#include "data/MatrixRequestData.h"
-#include "data/MatrixBlockData.h"
-#include "tasks/ReadMatrixTaskMMap.h"
-#include "rules/MatrixLoadRule.h"
-#include "tasks/MatrixMulBlkTask.h"
-#include "tasks/MatrixAccumTask.h"
-#include "tasks/OutputTask.h"
-#include "rules/MatrixAccumulateRule.h"
-#include "rules/MatrixDistributeRule.h"
-#include "rules/MatrixOutputRule.h"
 #include "../../tutorial-utils/SimpleClock.h"
 #include "../../tutorial-utils/util-matrix.h"
 #include "../../tutorial-utils/util-filesystem.h"
+#include "../../tutorial-utils/matrix-library/operations/matmul.h"
+#include "../../tutorial-utils/matrix-library/args/MatMulArgs.h"
+#include "tasks/ReadMatrixTaskMMap.h"
+#include "../tasks/MatMulBlkTask.h"
+#include "../tasks/MatMulAccumTask.h"
+#include "tasks/MatMulOutputTaskWithMMap.h"
+#include "../rules/MatMulDistributeRule.h"
+#include "../rules/MatMulLoadRule.h"
+#include "../rules/MatMulAccumulateRule.h"
 
-int validateResults(std::string baseDirectory, int fullMatrixAHeight, int fullMatrixBWidth) {
+int validateResults(std::string baseDirectory, size_t fullMatrixAHeight, size_t fullMatrixBWidth) {
   std::string fileName(baseDirectory + "/matrixC");
   std::string fileNamePar(baseDirectory + "/matrixC_HTGS");
 
@@ -41,27 +40,26 @@ int validateResults(std::string baseDirectory, int fullMatrixAHeight, int fullMa
 
   c.read((char *) cMem, sizeof(double) * fullMatrixAHeight * fullMatrixBWidth);
   cPar.read((char *) cMemPar, sizeof(double) * fullMatrixAHeight * fullMatrixBWidth);
-  int count = 0;
 
-  for (int i = 0; i < fullMatrixAHeight * fullMatrixBWidth; i++) {
-    if (cMem[i] != cMemPar[i]) {
-      std::cout << std::fixed << i << ": cMem = " << cMem[i] << " cMemPar = " << cMemPar[i] << std::endl;
-      if (count == 20) {
-        return -1;
-      }
-      count++;
-    }
+  if (!validateMatMulResults(20, cMem, cMemPar, fullMatrixAHeight*fullMatrixBWidth))
+  {
+    delete []cMem;
+    delete []cMemPar;
+    return -1;
   }
 
+
+  delete []cMem;
+  delete []cMemPar;
   return 0;
 }
 
 void computeSequentialMatMulNoMMap(std::string directoryA,
                                    std::string directoryB,
                                    std::string outputDirectory,
-                                   int fullMatrixAHeight,
-                                   int fullMatrixAWidth,
-                                   int fullMatrixBWidth) {
+                                   size_t fullMatrixAHeight,
+                                   size_t fullMatrixAWidth,
+                                   size_t fullMatrixBWidth) {
   std::string matrixCFilename(outputDirectory + "/matrixC");
   std::string matrixAFilename(directoryA + "/MatrixA");
   std::string matrixBFilename(directoryB + "/MatrixB");
@@ -77,15 +75,7 @@ void computeSequentialMatMulNoMMap(std::string directoryA,
   matrixAFile.read((char *) matrixA, sizeof(double) * fullMatrixAHeight * fullMatrixAWidth);
   matrixBFile.read((char *) matrixB, sizeof(double) * fullMatrixAWidth * fullMatrixBWidth);
 
-  for (int i = 0; i < fullMatrixAHeight; i++) {
-    for (int j = 0; j < fullMatrixBWidth; j++) {
-      double sum = 0.0;
-      for (int k = 0; k < fullMatrixAWidth; k++) {
-        sum += matrixA[i * fullMatrixAWidth + k] * matrixB[k * fullMatrixBWidth + j];
-      }
-      matrixC[i * fullMatrixBWidth + j] = sum;
-    }
-  }
+  computeMatMul(fullMatrixAHeight, fullMatrixBWidth, fullMatrixAWidth, 1.0, matrixA, fullMatrixAWidth, matrixB, fullMatrixBWidth, 0.0, matrixC, fullMatrixBWidth, false);
 
   matrixCFile.write((char *) matrixC, sizeof(double) * fullMatrixAHeight * fullMatrixBWidth);
 
@@ -94,9 +84,9 @@ void computeSequentialMatMulNoMMap(std::string directoryA,
 void computeSequentialMatMul(std::string directoryA,
                              std::string directoryB,
                              std::string outputDirectory,
-                             int fullMatrixAHeight,
-                             int fullMatrixAWidth,
-                             int fullMatrixBWidth) {
+                             size_t fullMatrixAHeight,
+                             size_t fullMatrixAWidth,
+                             size_t fullMatrixBWidth) {
   std::string matrixCFilename(outputDirectory + "/matrixC");
   std::string matrixAFilename(directoryA + "/MatrixA");
   std::string matrixBFilename(directoryB + "/MatrixB");
@@ -136,15 +126,7 @@ void computeSequentialMatMul(std::string directoryA,
   double *matrixC =
       (double *) mmap(NULL, fullMatrixAHeight * fullMatrixBWidth * sizeof(double), PROT_WRITE, MAP_SHARED, fdc, 0);
 
-  for (int i = 0; i < fullMatrixAHeight; i++) {
-    for (int j = 0; j < fullMatrixBWidth; j++) {
-      double sum = 0.0;
-      for (int k = 0; k < fullMatrixAWidth; k++) {
-        sum += matrixA[i * fullMatrixAWidth + k] * matrixB[k * fullMatrixBWidth + j];
-      }
-      matrixC[i * fullMatrixBWidth + j] = sum;
-    }
-  }
+  computeMatMul(fullMatrixAHeight, fullMatrixBWidth, fullMatrixAWidth, 1.0, matrixA, fullMatrixAWidth, matrixB, fullMatrixBWidth, 0.0, matrixC, fullMatrixBWidth, false);
 
   if (msync(matrixC, fullMatrixAHeight * fullMatrixBWidth * sizeof(double), MS_SYNC) == -1) {
     err(5, "Could not sync the file to disk");
@@ -157,75 +139,20 @@ void computeSequentialMatMul(std::string directoryA,
 }
 
 int main(int argc, char *argv[]) {
-  int matrixAHeight = 1024;
-  int matrixBWidth = 1024;
-  int sharedDim = 1024;
-  int blockSize = 256;
-  int numReadThreads = 1;
-  int numProdThreads = 20;
-  std::string directory("data");
-  std::string outputDirectory(directory);
-  bool validate = false;
-  bool runSequential = false;
+  MatMulArgs matMulArgs;
+  matMulArgs.processArgs(argc, argv);
 
-  for (int arg = 1; arg < argc; arg++) {
-    std::string argvs(argv[arg]);
+  size_t matrixAHeight = matMulArgs.getMatrixAHeight();
+  size_t matrixBWidth = matMulArgs.getMatrixBWidth();
+  size_t sharedDim = matMulArgs.getSharedDim();
 
-    if (argvs == "--width-b") {
-      arg++;
-      matrixBWidth = atoi(argv[arg]);
-    }
-
-    if (argvs == "--height-a") {
-      arg++;
-      matrixAHeight = atoi(argv[arg]);
-    }
-
-    if (argvs == "--shared-dim") {
-      arg++;
-      sharedDim = atoi(argv[arg]);
-    }
-
-    if (argvs == "--block-size") {
-      arg++;
-      blockSize = atoi(argv[arg]);
-    }
-
-    if (argvs == "--num-readers") {
-      arg++;
-      numReadThreads = atoi(argv[arg]);
-    }
-
-    if (argvs == "--num-workers") {
-      arg++;
-      numProdThreads = atoi(argv[arg]);
-    }
-
-    if (argvs == "--dir") {
-      arg++;
-      directory = argv[arg];
-    }
-
-    if (argvs == "--output-dir") {
-      arg++;
-      outputDirectory = argv[arg];
-    }
-
-    if (argvs == "--validate-results") {
-      validate = true;
-    }
-
-    if (argvs == "--run-sequential") {
-      runSequential = true;
-    }
-
-    if (argvs == "--help") {
-      std::cout << argv[0]
-                << " args: [--width-b <#>] [--height-a <#>] [--shared-dim <#>] [--block-size <#>] [--num-readers <#>] [--num-workers <#>] [--dir <dir>] [--output-dir <dir>] [--validate-results] [--run-sequential] [--help]"
-                << std::endl;
-      exit(0);
-    }
-  }
+  size_t blockSize = matMulArgs.getBlockSize();
+  size_t numReadThreads = matMulArgs.getNumReadThreads();
+  size_t numProdThreads = matMulArgs.getNumMatMulThreads();
+  std::string directory = matMulArgs.getDirectory();
+  std::string outputDirectory = matMulArgs.getOutputDir();
+  bool runSequential = matMulArgs.isRunSequential();
+  bool validate = matMulArgs.isValidateResults();
 
   if (!has_dir(outputDirectory))
     create_dir(outputDirectory);
@@ -260,7 +187,8 @@ int main(int argc, char *argv[]) {
                            sharedDim,
                            matrixAHeight,
                            inputDirectoryA,
-                           "A");
+                           false);
+
     ReadMatrixTaskMMap *readBMatTask =
         new ReadMatrixTaskMMap(numReadThreads,
                            MatrixType::MatrixB,
@@ -268,61 +196,59 @@ int main(int argc, char *argv[]) {
                            matrixBWidth,
                            sharedDim,
                            inputDirectoryB,
-                           "B");
-    MatrixMulBlkTask
-        *mmulTask = new MatrixMulBlkTask(numProdThreads, sharedDim, matrixAHeight, matrixBWidth, sharedDim, blockSize);
-    MatrixAccumTask *accumTask = new MatrixAccumTask(numProdThreads / 2);
+                           false);
+    MatMulBlkTask *mmulTask = new MatMulBlkTask(numProdThreads, false);
+    MatMulAccumTask *accumTask = new MatMulAccumTask(numProdThreads / 2, false);
 
-    OutputTask *outputTask = new OutputTask(outputDirectory, matrixBWidth, matrixAHeight, blockSize);
+    MatMulOutputTaskWithMMap *outputTask = new MatMulOutputTaskWithMMap(outputDirectory, matrixBWidth, matrixAHeight, blockSize, false);
 
-    int blkHeightMatB = readBMatTask->getNumBlocksRows();
-    int blkWidthMatB = readBMatTask->getNumBlocksCols();
+    size_t blkHeightMatB = readBMatTask->getNumBlocksRows();
+    size_t blkWidthMatB = readBMatTask->getNumBlocksCols();
 
-    int blkHeightMatA = readAMatTask->getNumBlocksRows();
-    int blkWidthMatA = readAMatTask->getNumBlocksCols();
+    size_t blkHeightMatA = readAMatTask->getNumBlocksRows();
+    size_t blkWidthMatA = readAMatTask->getNumBlocksCols();
 
-    MatrixDistributeRule *distributeRuleMatA = new MatrixDistributeRule(MatrixType::MatrixA);
-    MatrixDistributeRule *distributeRuleMatB = new MatrixDistributeRule(MatrixType::MatrixB);
+    MatMulDistributeRule *distributeRuleMatA = new MatMulDistributeRule(MatrixType::MatrixA);
+    MatMulDistributeRule *distributeRuleMatB = new MatMulDistributeRule(MatrixType::MatrixB);
 
-    MatrixLoadRule *loadRule = new MatrixLoadRule(blkWidthMatA, blkHeightMatA, blkWidthMatB, blkHeightMatB);
-    MatrixAccumulateRule *accumulateRule = new MatrixAccumulateRule(blkWidthMatB, blkHeightMatA, blkWidthMatA);
+    MatMulLoadRule<double *> *loadRule = new MatMulLoadRule<double *>(blkWidthMatA, blkHeightMatA, blkWidthMatB, blkHeightMatB);
+    MatMulAccumulateRule<double *> *accumulateRule = new MatMulAccumulateRule<double *>(blkWidthMatB, blkHeightMatA, blkWidthMatA);
 
-    MatrixOutputRule *outputRule = new MatrixOutputRule(blkWidthMatB, blkHeightMatA, blkWidthMatA);
+    MatMulOutputRule *outputRule = new MatMulOutputRule(blkWidthMatB, blkHeightMatA, blkWidthMatA);
 
     auto distributeBk = new htgs::Bookkeeper<MatrixRequestData>();
     auto matMulBk = new htgs::Bookkeeper<MatrixBlockData<double *>>();
     auto matAccumBk = new htgs::Bookkeeper<MatrixBlockData<double *>>();
 
-    auto taskGraph = new htgs::TaskGraph<MatrixRequestData, MatrixRequestData>();
+    auto taskGraph = new htgs::TaskGraphConf<MatrixRequestData, MatrixRequestData>();
 
-    taskGraph->addGraphInputConsumer(distributeBk);
-    taskGraph->addRule(distributeBk, readAMatTask, distributeRuleMatA);
-    taskGraph->addRule(distributeBk, readBMatTask, distributeRuleMatB);
+    taskGraph->setGraphConsumerTask(distributeBk);
+    taskGraph->addRuleEdge(distributeBk, distributeRuleMatA, readAMatTask);
+    taskGraph->addRuleEdge(distributeBk, distributeRuleMatB, readBMatTask);
 
     taskGraph->addEdge(readAMatTask, matMulBk);
     taskGraph->addEdge(readBMatTask, matMulBk);
 
-    taskGraph->addRule(matMulBk, mmulTask, loadRule);
+    taskGraph->addRuleEdge(matMulBk, loadRule, mmulTask);
 
     taskGraph->addEdge(mmulTask, matAccumBk);
-    taskGraph->addRule(matAccumBk, accumTask, accumulateRule);
+    taskGraph->addRuleEdge(matAccumBk, accumulateRule, accumTask);
     taskGraph->addEdge(accumTask, matAccumBk);
 
-    taskGraph->addRule(matAccumBk, outputTask, outputRule);
-    taskGraph->addGraphOutputProducer(outputTask);
+    taskGraph->addRuleEdge(matAccumBk, outputRule, outputTask);
+    taskGraph->addGraphProducerTask(outputTask);
 
     taskGraph->writeDotToFile("matMul.dot");
 
-    taskGraph->incrementGraphInputProducer();
 
-    htgs::Runtime *runtime = new htgs::Runtime(taskGraph);
+    htgs::TaskGraphRuntime *runtime = new htgs::TaskGraphRuntime(taskGraph);
 
     clk.start();
 
     runtime->executeRuntime();
 
-    for (int row = 0; row < blkHeightMatA; row++) {
-      for (int col = 0; col < blkWidthMatA; col++) {
+    for (size_t row = 0; row < blkHeightMatA; row++) {
+      for (size_t col = 0; col < blkWidthMatA; col++) {
 
         MatrixRequestData *matrixA = new MatrixRequestData(row, col, MatrixType::MatrixA);
         taskGraph->produceData(matrixA);
@@ -330,9 +256,8 @@ int main(int argc, char *argv[]) {
       }
     }
 
-    for (int row = 0; row < blkHeightMatB; row++) {
-      for (int col = 0; col < blkWidthMatB; col++) {
-
+    for (size_t col = 0; col < blkWidthMatB; col++) {
+      for (size_t row = 0; row < blkHeightMatB; row++) {
         MatrixRequestData *matrixB = new MatrixRequestData(row, col, MatrixType::MatrixB);
         taskGraph->produceData(matrixB);
 

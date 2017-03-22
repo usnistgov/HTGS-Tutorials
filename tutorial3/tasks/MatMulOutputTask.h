@@ -7,42 +7,66 @@
 // Created by tjb3 on 3/8/16.
 //
 
-#ifndef HTGS_MATMULOUTPUTTASK_H
-#define HTGS_MATMULOUTPUTTASK_H
+#ifndef HTGS_MATMULOUTPUTTASKNOWRITE_H
+#define HTGS_MATMULOUTPUTTASKNOWRITE_H
 
 #include <fstream>
+#include <htgs/api/ITask.hpp>
 #include "../../tutorial-utils/util-filesystem.h"
 
 #include "../../tutorial-utils/matrix-library/data/MatrixBlockData.h"
-
+#include "../../tutorial-utils/util-matrix.h"
 
 class MatMulOutputTask : public htgs::ITask<MatrixBlockData<double *>, MatrixRequestData> {
  public:
 
-  MatMulOutputTask(std::string directory) {
-    this->directory = directory + "/matrixC_HTGS";
-    create_dir(this->directory);
-  }
+  MatMulOutputTask(double *matrix, size_t leadingDim, size_t blockSize, bool colMajor) :
+      matrix(matrix), leadingDim(leadingDim), blockSize(blockSize), colMajor(colMajor) { }
 
   virtual void executeTask(std::shared_ptr<MatrixBlockData<double *>> data) {
-    std::string fileName(directory + "/" + std::to_string(data->getRequest()->getRow()) + "_"
-                             + std::to_string(data->getRequest()->getCol()));
+    size_t col = data->getRequest()->getCol();
+    size_t row = data->getRequest()->getRow();
 
-    std::ofstream out(fileName, std::ios::binary);
-    out.write((char *) data->getMatrixData(), sizeof(double) * data->getMatrixWidth() * data->getMatrixHeight());
+    double *startLocation;
+
+    if (colMajor)
+      startLocation = &this->matrix[blockSize * col + blockSize * row * leadingDim];
+    else
+      startLocation = &this->matrix[IDX2C(blockSize*row, blockSize*col, leadingDim)];
+
+    size_t dataWidth = data->getMatrixWidth();
+    size_t dataHeight = data->getMatrixHeight();
+    double *matrixData = data->getMatrixData();
+    if (colMajor)
+        for (size_t c = 0; c < dataWidth; c++) {
+          for (size_t r = 0; r < dataHeight; r++) {
+            startLocation[IDX2C(r, c, leadingDim)] = matrixData[IDX2C(r, c, data->getLeadingDimension())];
+        }
+      }
+    else
+      for (size_t r = 0; r < dataHeight; r++) {
+        for (size_t c = 0; c < dataWidth; c++) {
+            startLocation[r * leadingDim + c] = matrixData[r * data->getLeadingDimension() + c];
+        }
+      }
+
+    delete[] matrixData;
+    matrixData = nullptr;
 
     addResult(data->getRequest());
   }
   virtual std::string getName() {
-    return "MatMulOutputTask";
+    return "MatMulOutputTaskWithDisk";
   }
-  virtual htgs::ITask<MatrixBlockData<double *>, MatrixRequestData> *copy() {
-    return new MatMulOutputTask(directory);
+  virtual MatMulOutputTask *copy() {
+    return new MatMulOutputTask(matrix, leadingDim, blockSize, colMajor);
   }
 
  private:
-
-  std::string directory;
+  double *matrix;
+  size_t leadingDim;
+  size_t blockSize;
+  bool colMajor;
 
 };
-#endif //HTGS_MATMULOUTPUTTASK_H
+#endif //HTGS_MATMULOUTPUTTASKNOWRITE_H

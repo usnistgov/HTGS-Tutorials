@@ -14,7 +14,6 @@
 #include <htgs/api/IRule.hpp>
 #include "../../tutorial-utils/matrix-library/data/MatrixBlockData.h"
 
-template <class Type>
 class MatMulOutputRule : public htgs::IRule<MatrixBlockData<double *>, MatrixBlockData<double *> > {
  public:
   MatMulOutputRule(size_t blockWidth, size_t blockHeight, size_t blockWidthMatrixA) {
@@ -26,7 +25,7 @@ class MatMulOutputRule : public htgs::IRule<MatrixBlockData<double *>, MatrixBlo
     delete matrixCountContainer;
   }
 
-  void applyRule(std::shared_ptr<MatrixBlockData<Type>> data, size_t pipelineId) override {
+  void applyRule(std::shared_ptr<MatrixBlockData<double *>> data, size_t pipelineId) override {
     auto request = data->getRequest();
 
     size_t row = request->getRow();

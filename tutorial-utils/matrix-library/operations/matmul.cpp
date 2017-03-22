@@ -6,7 +6,9 @@
 
 #include <cstddef>
 #include "../../util-matrix.h"
-
+#ifdef USE_OPENBLAS
+#include <cblas.h>
+#endif
 
 void computeMatMul(size_t M, size_t N, size_t K, double alpha, double *A, size_t LDA, double *B, size_t LDB, double beta, double *C, size_t LDC, bool ColMajor)
 {
@@ -61,4 +63,10 @@ bool validateMatMulResults(size_t numItemsPrint, double *a1, double *a2, size_t 
   }
 
   return true;
+}
+void initMatMul(size_t numThreads) {
+#ifdef USE_OPENBLAS
+  openblas_set_num_threads(numThreads);
+#endif
+
 }

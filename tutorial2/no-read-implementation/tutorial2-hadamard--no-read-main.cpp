@@ -68,7 +68,7 @@ int main(int argc, char *argv[]) {
     size_t numBlocksCols = genMatTask->getNumBlocksCols();
     size_t numBlocksRows = genMatTask->getNumBlocksRows();
 
-    std::shared_ptr<HadamardLoadRule<double *>> loadRule = std::make_shared<HadamardLoadRule<double *>>(numBlocksCols, numBlocksRows);
+    HadamardLoadRule<double *> *loadRule = new HadamardLoadRule<double *>(numBlocksCols, numBlocksRows);
     auto bookkeeper = new htgs::Bookkeeper<MatrixBlockData<double *>>();
 
     auto taskGraph = new htgs::TaskGraphConf<MatrixRequestData, MatrixBlockData<double *>>();
