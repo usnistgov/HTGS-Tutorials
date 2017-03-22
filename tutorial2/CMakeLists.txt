@@ -18,16 +18,13 @@ set(TUTORIAL_UTILS_SRC
         ../tutorial-utils/matrix-library/data/MatrixRequestData.h
         ../tutorial-utils/matrix-library/data/MatrixBlockData.h
         ../tutorial-utils/matrix-library/data/MatrixBlockMulData.h
-        ../tutorial-utils/matrix-library/tasks/ReadDiskMatrixTask.h
-        ../tutorial-utils/matrix-library/rules/MatrixMemoryRule.h
-        ../tutorial-utils/matrix-library/allocator/MatrixAllocator.h
+        ../tutorial-utils/matrix-library/tasks/LoadMatrixTask.h
         )
 
 add_executable(tutorial2
         tutorial2-hadamard-main.cpp
-        ${TUTORIAL_UTILS_SRC}
         rules/HadamardLoadRule.h
-        tasks/HadamardProductTask.h)
+        tasks/HadamardProductTask.h
+        ${TUTORIAL_UTILS_SRC})
 
-
-add_subdirectory(no-read-implementation)
+add_subdirectory(with-disk)

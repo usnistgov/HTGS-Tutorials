@@ -15,29 +15,29 @@
 #include "../../tutorial-utils/matrix-library/data/MatrixBlockData.h"
 #include <htgs/api/ITask.hpp>
 
-class HadamardProductTask : public htgs::ITask<MatrixBlockMulData<htgs::m_data_t<double>>, MatrixBlockData<htgs::m_data_t<double>>> {
+class HadamardProductTask : public htgs::ITask<MatrixBlockMulData<double *>, MatrixBlockData<double *>> {
 
  public:
   HadamardProductTask(size_t numThreads) : ITask(numThreads) {}
 
-  virtual ~HadamardProductTask() { }
+  virtual ~HadamardProductTask() {  }
 
-  virtual void executeTask(std::shared_ptr<MatrixBlockMulData<htgs::m_data_t<double>>> data) {
+  virtual void executeTask(std::shared_ptr<MatrixBlockMulData<double *>> data) override {
 
     auto matAData = data->getMatrixA();
     auto matBData = data->getMatrixB();
 
-    htgs::m_data_t<double> matrixA = matAData->getMatrixData();
-    htgs::m_data_t<double> matrixB = matBData->getMatrixData();
+    double *matrixA = matAData->getMatrixData();
+    double *matrixB = matBData->getMatrixData();
 
 
     size_t width = matAData->getMatrixWidth();
     size_t height = matAData->getMatrixHeight();
 
-    htgs::m_data_t<double> result = this->getMemory<double>("result", new MatrixMemoryRule(1));
+    double *result = new double[width * height];
 
     for (size_t i = 0; i < matAData->getMatrixWidth() * matAData->getMatrixHeight(); i++) {
-      result->get()[i] = matrixA->get(i) * matrixB->get(i);
+      result[i] = matrixA[i] * matrixB[i];
     }
 
     auto matRequest = matAData->getRequest();
@@ -45,16 +45,13 @@ class HadamardProductTask : public htgs::ITask<MatrixBlockMulData<htgs::m_data_t
     std::shared_ptr<MatrixRequestData>
         matReq(new MatrixRequestData(matRequest->getRow(), matRequest->getCol(), MatrixType::MatrixC));
 
-    addResult(new MatrixBlockData<htgs::m_data_t<double>>(matReq, result, width, height, width));
-
-    this->releaseMemory(matrixA);
-    this->releaseMemory(matrixB);
+    addResult(new MatrixBlockData<double *>(matReq, result, width, height, width));
 
   }
-  virtual std::string getName() {
+  virtual std::string getName() override {
     return "HadamardProductTask";
   }
-  virtual HadamardProductTask *copy() {
+  virtual HadamardProductTask *copy() override {
     return new HadamardProductTask(this->getNumThreads());
   }
 

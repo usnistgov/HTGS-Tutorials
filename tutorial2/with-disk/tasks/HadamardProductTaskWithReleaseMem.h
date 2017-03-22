@@ -8,36 +8,36 @@
 //
 
 
-#ifndef HTGS_HADAMARDPRODUCTTASKWITHOUTMEMORY_H
-#define HTGS_HADAMARDPRODUCTTASKWITHOUTMEMORY_H
+#ifndef HTGS_HADAMARDPRODUCTTASKWITHRELEASEMEM_H
+#define HTGS_HADAMARDPRODUCTTASKWITHRELEASEMEM_H
 
 #include "../../../tutorial-utils/matrix-library/data/MatrixBlockMulData.h"
 #include "../../../tutorial-utils/matrix-library/data/MatrixBlockData.h"
 #include <htgs/api/ITask.hpp>
 
-class HadamardProductTaskWithoutMemory : public htgs::ITask<MatrixBlockMulData<double *>, MatrixBlockData<double *>> {
+class HadamardProductTaskWithReleaseMem : public htgs::ITask<MatrixBlockMulData<htgs::m_data_t<double>>, MatrixBlockData<htgs::m_data_t<double>>> {
 
  public:
-  HadamardProductTaskWithoutMemory(size_t numThreads) : ITask(numThreads) {}
+  HadamardProductTaskWithReleaseMem(size_t numThreads) : ITask(numThreads) {}
 
-  virtual ~HadamardProductTaskWithoutMemory() {  }
+  virtual ~HadamardProductTaskWithReleaseMem() { }
 
-  virtual void executeTask(std::shared_ptr<MatrixBlockMulData<double *>> data) override {
+  virtual void executeTask(std::shared_ptr<MatrixBlockMulData<htgs::m_data_t<double>>> data) {
 
     auto matAData = data->getMatrixA();
     auto matBData = data->getMatrixB();
 
-    double *matrixA = matAData->getMatrixData();
-    double *matrixB = matBData->getMatrixData();
+    htgs::m_data_t<double> matrixA = matAData->getMatrixData();
+    htgs::m_data_t<double> matrixB = matBData->getMatrixData();
 
 
     size_t width = matAData->getMatrixWidth();
     size_t height = matAData->getMatrixHeight();
 
-    double *result = new double[width * height];
+    htgs::m_data_t<double> result = this->getMemory<double>("result", new MatrixMemoryRule(1));
 
     for (size_t i = 0; i < matAData->getMatrixWidth() * matAData->getMatrixHeight(); i++) {
-      result[i] = matrixA[i] * matrixB[i];
+      result->get()[i] = matrixA->get(i) * matrixB->get(i);
     }
 
     auto matRequest = matAData->getRequest();
@@ -45,16 +45,19 @@ class HadamardProductTaskWithoutMemory : public htgs::ITask<MatrixBlockMulData<d
     std::shared_ptr<MatrixRequestData>
         matReq(new MatrixRequestData(matRequest->getRow(), matRequest->getCol(), MatrixType::MatrixC));
 
-    addResult(new MatrixBlockData<double *>(matReq, result, width, height, width));
+    addResult(new MatrixBlockData<htgs::m_data_t<double>>(matReq, result, width, height, width));
+
+    this->releaseMemory(matrixA);
+    this->releaseMemory(matrixB);
 
   }
-  virtual std::string getName() override {
-    return "HadamardProductTaskWithoutMemory";
+  virtual std::string getName() {
+    return "HadamardProductTaskWithReleaseMem";
   }
-  virtual HadamardProductTaskWithoutMemory *copy() override {
-    return new HadamardProductTaskWithoutMemory(this->getNumThreads());
+  virtual HadamardProductTaskWithReleaseMem *copy() {
+    return new HadamardProductTaskWithReleaseMem(this->getNumThreads());
   }
 
 };
 
-#endif //HTGS_HADAMARDPRODUCTTASKWITHOUTMEMORY_H
+#endif //HTGS_HADAMARDPRODUCTTASKWITHRELEASEMEM_H
