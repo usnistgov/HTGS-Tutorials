@@ -136,6 +136,9 @@ int generateFullMatrixFile(std::string path, MatrixType type, size_t totalWidth,
   ofs.flush();
   ofs.close();
 
+  delete []matrix;
+  matrix = nullptr;
+
   std::cout << " -- DONE" << std::endl;
 
   return 0;

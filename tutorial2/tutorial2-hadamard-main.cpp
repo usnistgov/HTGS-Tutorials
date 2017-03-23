@@ -102,6 +102,7 @@ int main(int argc, char *argv[]) {
       if (data != nullptr) {
         double *mem = data->getMatrixData();
         delete[] mem;
+        mem = nullptr;
       }
 
     }

@@ -30,6 +30,8 @@ class MatMulOutputTaskWithDisk : public htgs::ITask<MatrixBlockData<double *>, M
     std::ofstream out(fileName, std::ios::binary);
     out.write((char *) data->getMatrixData(), sizeof(double) * data->getMatrixWidth() * data->getMatrixHeight());
 
+    delete[] data->getMatrixData();
+
     addResult(data->getRequest());
   }
   virtual std::string getName() {

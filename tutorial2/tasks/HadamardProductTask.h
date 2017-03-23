@@ -40,6 +40,12 @@ class HadamardProductTask : public htgs::ITask<MatrixBlockMulData<double *>, Mat
       result[i] = matrixA[i] * matrixB[i];
     }
 
+    delete []matrixA;
+    matrixA = nullptr;
+
+    delete []matrixB;
+    matrixB = nullptr;
+
     auto matRequest = matAData->getRequest();
 
     std::shared_ptr<MatrixRequestData>
