@@ -45,8 +45,8 @@ class MatMulLoadRule : public htgs::IRule<MatrixBlockData<Type>, MatrixBlockMulD
   void applyRule(std::shared_ptr<MatrixBlockData<Type>> data, size_t pipelineId) {
     std::shared_ptr<MatrixRequestData> request = data->getRequest();
 
-    std::cout << "Received: " << request->getRow() << ", " << request->getCol() << " "
-              << matrixTypeToString(request->getType()) << std::endl;
+//    std::cout << "Received: " << request->getRow() << ", " << request->getCol() << " "
+//              << matrixTypeToString(request->getType()) << std::endl;
 
     size_t rowA, rowB, colA, colB;
     switch (request->getType()) {
@@ -63,8 +63,8 @@ class MatMulLoadRule : public htgs::IRule<MatrixBlockData<Type>, MatrixBlockMulD
             auto container = matrixCState[rowB];
 
             if (!container->has(rowA, colB)) {
-              std::cout << "Sending A(" << rowA << ", " << colA << "); B(" << rowB << ", " << colB << ")"
-                        << "Updating C[" << rowB << "](" << rowA << ", " << colB << ")" << std::endl;
+//              std::cout << "Sending A(" << rowA << ", " << colA << "); B(" << rowB << ", " << colB << ")"
+//                        << "Updating C[" << rowB << "](" << rowA << ", " << colB << ")" << std::endl;
               // Schedule work
               this->addResult(new MatrixBlockMulData<Type>(data, matrixBState->get(rowB, colB), nullptr));
               MatrixState state = MatrixState::IN_FLIGHT;
@@ -87,8 +87,8 @@ class MatMulLoadRule : public htgs::IRule<MatrixBlockData<Type>, MatrixBlockMulD
             auto container = matrixCState[colA];
 
             if (!container->has(rowA, colB)) {
-              std::cout << "Sending A(" << rowA << ", " << colA << "); B(" << rowB << ", " << colB << ")"
-                        << "Updating C[" << colA << "](" << rowA << ", " << colB << ")" << std::endl;
+//              std::cout << "Sending A(" << rowA << ", " << colA << "); B(" << rowB << ", " << colB << ")"
+//                        << "Updating C[" << colA << "](" << rowA << ", " << colB << ")" << std::endl;
               // Schedule work
               this->addResult(new MatrixBlockMulData<Type>(matrixAState->get(rowA, colA), data, nullptr));
               MatrixState state = MatrixState::IN_FLIGHT;

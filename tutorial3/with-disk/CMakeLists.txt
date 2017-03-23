@@ -38,3 +38,7 @@ add_executable(tutorial3-with-disk
         tasks/MatMulBlkTaskWithMemRelease.h
         tasks/MatMulOutputTaskWithDisk.h
         ${TUTORIAL_UTILS_SRC})
+
+if (OpenBLAS_FOUND)
+    target_link_libraries(tutorial3-with-disk openblas)
+endif (OpenBLAS_FOUND)

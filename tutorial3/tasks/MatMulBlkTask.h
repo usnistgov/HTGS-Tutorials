@@ -54,9 +54,9 @@ class MatMulBlkTask : public htgs::ITask<MatrixBlockMulData<double *>, MatrixBlo
                                                                     matBData->getRequest()->getCol(),
                                                                     MatrixType::MatrixC));
 
-    std::cout << "Computing A(" << matAData->getRequest()->getRow() << ", " << matAData->getRequest()->getCol() <<
-              ") x B(" << matBData->getRequest()->getRow() << ", " << matBData->getRequest()->getCol() <<
-              ") = C(" << matReq->getRow() << ", " << matReq->getCol() << ")" << std::endl;
+//    std::cout << "Computing A(" << matAData->getRequest()->getRow() << ", " << matAData->getRequest()->getCol() <<
+//              ") x B(" << matBData->getRequest()->getRow() << ", " << matBData->getRequest()->getCol() <<
+//              ") = C(" << matReq->getRow() << ", " << matReq->getCol() << ")" << std::endl;
 
     this->addResult(new MatrixBlockData<double *>(matReq, result, width, height, ldc));
 

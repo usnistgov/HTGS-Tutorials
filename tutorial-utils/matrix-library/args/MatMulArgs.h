@@ -18,7 +18,7 @@ class MatMulArgs {
 
     blockSize = 512;
     numReadThreads = 1;
-    numMatMulThreads = 20;
+    numMatMulThreads = 10;
     directory = "data";
     outputDir = directory;
     runSequential = false;

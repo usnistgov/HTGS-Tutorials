@@ -15,7 +15,7 @@ void computeMatMul(size_t M, size_t N, size_t K, double alpha, double *A, size_t
 #ifdef USE_CUDA
 // TODO: Add CUDA
 #elif USE_OPENBLAS
-  cblas_dgem(ColMajor ? CblasColMajor : CblasRowMajor, CblasNoTrans, CblasNoTrans, M, N, K, alpha, A, LDA, B, LDB, beta, C, LDC);
+  cblas_dgemm(ColMajor ? CblasColMajor : CblasRowMajor, CblasNoTrans, CblasNoTrans, M, N, K, alpha, A, LDA, B, LDB, beta, C, LDC);
 #else
   if (ColMajor) {
     for (size_t aRow = 0; aRow < M; aRow++) {

@@ -24,6 +24,11 @@ class MatMulDistributeRule : public htgs::IRule<MatrixRequestData, MatrixRequest
   ~MatMulDistributeRule() {
   }
 
+  void shutdownRule(size_t pipelineId) override {
+    std::cout << "SHUTTING DOWN RULE" << std::endl;
+
+  }
+
   void applyRule(std::shared_ptr<MatrixRequestData> data, size_t pipelineId) {
     if (data->getType() == this->type) {
       addResult(data);

@@ -25,7 +25,7 @@ class MatMulOutputTaskWithMMap : public htgs::ITask<MatrixBlockData<double *>, M
 
   MatMulOutputTaskWithMMap(std::string directory, size_t matrixWidth, size_t matrixHeight, size_t blockSize, bool colMajor) :
       matrixWidth(matrixWidth), matrixHeight(matrixHeight), blockSize(blockSize), colMajor(colMajor) {
-    this->directory = directory + "/matrixC_HTGS";
+    this->directory = directory;
     create_dir(this->directory);
   }
 

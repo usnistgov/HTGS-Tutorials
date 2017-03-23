@@ -33,3 +33,7 @@ add_executable(tutorial3-with-mmap
         tasks/MatMulOutputTaskWithMMap.h
         tasks/ReadMatrixTaskMMap.h
         ${TUTORIAL_UTILS_SRC})
+
+if (OpenBLAS_FOUND)
+    target_link_libraries(tutorial3-with-mmap openblas)
+endif (OpenBLAS_FOUND)

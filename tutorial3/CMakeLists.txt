@@ -41,5 +41,9 @@ add_executable(tutorial3
         ${TUTORIAL_UTILS_SRC}
         )
 
+if (OpenBLAS_FOUND)
+    target_link_libraries(tutorial3 openblas)
+endif (OpenBLAS_FOUND)
+
 add_subdirectory(with-mmap)
 add_subdirectory(with-disk)

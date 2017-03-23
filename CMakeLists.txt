@@ -14,7 +14,7 @@ set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 
 find_package(Threads REQUIRED)
 find_package(HTGS REQUIRED)
-#find_package(OpenBLAS QUIET)
+find_package(OpenBLAS QUIET)
 #find_package(CUDA QUIET)
 #find_package(MAGMA QUIET)
 #find_package(PLASMA QUIET)

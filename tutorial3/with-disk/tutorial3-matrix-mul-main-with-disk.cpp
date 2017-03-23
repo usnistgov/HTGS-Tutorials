@@ -192,6 +192,7 @@ int main(int argc, char *argv[]) {
   size_t blockSize = matMulArgs.getBlockSize();
   size_t numReadThreads = matMulArgs.getNumReadThreads();
   size_t numProdThreads = matMulArgs.getNumMatMulThreads();
+  size_t numAccumThreads = (size_t)ceil((double)numProdThreads / 2.0);
   std::string directory = matMulArgs.getDirectory();
   std::string outputDirectory = matMulArgs.getOutputDir();
   bool runSequential = matMulArgs.isRunSequential();
@@ -224,7 +225,7 @@ int main(int argc, char *argv[]) {
     ReadDiskMatrixTask *readBMatTask = new ReadDiskMatrixTask(numReadThreads, blockSize, matrixBWidth, sharedDim, inputDirectoryB, MatrixType::MatrixB, true);
 
     MatMulBlkTaskWithMemRelease *mmulTask = new MatMulBlkTaskWithMemRelease(numProdThreads, false);
-    MatMulAccumTask *accumTask = new MatMulAccumTask(numProdThreads / 2, false);
+    MatMulAccumTask *accumTask = new MatMulAccumTask(numAccumThreads, false);
 
     MatMulOutputTaskWithDisk *outputTask = new MatMulOutputTaskWithDisk(outputDirectory);
 
@@ -281,8 +282,6 @@ int main(int argc, char *argv[]) {
                                     1000,
                                     htgs::MMType::Static);
 
-    taskGraph->writeDotToFile("matMul.dot");
-
 
     htgs::TaskGraphRuntime *runtime = new htgs::TaskGraphRuntime(taskGraph);
 
@@ -310,10 +309,13 @@ int main(int argc, char *argv[]) {
 
     taskGraph->finishedProducingData();
 
+
     while (!taskGraph->isOutputTerminated()) {
       auto data = taskGraph->consumeData();
       if (data != nullptr) {
 //      std::cout << "Result received: " << data->getRow() << ", " << data->getCol() <<std::endl;
+        taskGraph->writeDotToFile("matmul.dot");
+
       }
     }
 
