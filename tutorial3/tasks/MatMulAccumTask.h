@@ -51,7 +51,6 @@ class MatMulAccumTask : public htgs::ITask<MatrixBlockMulData<double *>, MatrixB
     }
 
     delete []matrixB;
-    matrixB = nullptr;
 
     addResult(matAData);
 

@@ -30,9 +30,9 @@ class MatMulOutputTask : public htgs::ITask<MatrixBlockData<double *>, MatrixReq
     double *startLocation;
 
     if (colMajor)
-      startLocation = &this->matrix[blockSize * col + blockSize * row * leadingDim];
-    else
       startLocation = &this->matrix[IDX2C(blockSize*row, blockSize*col, leadingDim)];
+    else
+      startLocation = &this->matrix[blockSize * col + blockSize * row * leadingDim];
 
     size_t dataWidth = data->getMatrixWidth();
     size_t dataHeight = data->getMatrixHeight();
