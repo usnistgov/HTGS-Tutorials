@@ -42,7 +42,7 @@ int main(int argc, char **argv) {
   int startRow = params.getStartRow();
   int startCol = params.getStartCol();
   int extentWidth = params.getExtentWidth();
-  int extentHeight = params.getExtentWidth();
+  int extentHeight = params.getExtentHeight();
   int numThreadsFFT = params.getNumThreadsFFT();
   int numThreadsPCIAM = params.getNumThreadsPCIAM();
 
