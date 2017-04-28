@@ -5,7 +5,7 @@
 
 if (OpenBLAS_FOUND)
     include_directories(${OpenBLAS_INCLUDE_DIR})
-    link_directories(${OpenBLAS_LIBRARIES})
+    link_directories(${OpenBLAS_LIB})
     add_definitions(-DUSE_OPENBLAS)
 endif (OpenBLAS_FOUND)
 

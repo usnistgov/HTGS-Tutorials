@@ -201,8 +201,8 @@ int main(int argc, char *argv[]) {
     std::cout << (runSequential ? "sequential" : "htgs") << ", " << numProdThreads
               << ", accum-threads: " << numAccumThreads << ", width-b: " << matrixBWidth << ", height-a: " << matrixAHeight
               << ", shared-dim: " << sharedDim
-              << ", " << ", blockSize: " << (runSequential ? 0 : blockSize) << ", time:"
-              << clk.getAverageTime(TimeVal::MILLI)
+              << ", blockSize: " << (runSequential ? 0 : blockSize) 
+              << ", time:" << clk.getAverageTime(TimeVal::MILLI)
               << ", end-to-end:" << endToEnd.getAverageTime(TimeVal::MILLI)
 
         << std::endl;

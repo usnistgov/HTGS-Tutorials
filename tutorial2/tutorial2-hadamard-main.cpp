@@ -16,13 +16,13 @@
 
 int main(int argc, char *argv[]) {
 
-  size_t width = 4096;
-  size_t height = 4096;
+  size_t width = 1024;
+  size_t height = 1024;
   size_t blockSize = 256;
   size_t numReadThreads = 4;
   size_t numProdThreads = 4;
 
-  int numRetry = 5;
+  int numRetry = 1;
 
   for (int arg = 1; arg < argc; arg++) {
     std::string argvs(argv[arg]);
@@ -100,6 +100,7 @@ int main(int argc, char *argv[]) {
       auto data = taskGraph->consumeData();
 
       if (data != nullptr) {
+        std::cout << "Result received: " << data->getRequest()->getRow() << ", " << data->getRequest()->getCol() << std::endl;
         double *mem = data->getMatrixData();
         delete[] mem;
         mem = nullptr;

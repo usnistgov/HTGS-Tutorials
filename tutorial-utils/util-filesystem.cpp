@@ -14,12 +14,12 @@
 #include "util-filesystem.h"
 
 int create_dir(std::string path) {
-#ifdef __linux__
-  int val = mkdir(path.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-#else
+#ifdef _WIN32
   std::wstring wpath = std::wstring(path.begin(), path.end());
   std::wcout << " Creating folder " << wpath << std::endl;
   int val = _wmkdir(wpath.c_str());
+#else
+  int val = mkdir(path.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 #endif
 
   if (val == 0) {
