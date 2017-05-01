@@ -22,8 +22,8 @@ void FFTTask::executeTask(std::shared_ptr<FFTData> data) {
 
   DEBUG("FFTTask: " << this->pipelineId << " Computing FFT for " << tile->getFilename());
   if (data->getFFTMemory() != nullptr) {
-//        tile->computeFFT(this->memory->getFFTInP(), data->getFFTMemory()->get());
-    tile->computeFFT();
+        tile->computeFFT(this->memory->getFFTInP(), data->getFFTMemory()->get());
+//    tile->computeFFT();
   }
   else {
     tile->computeFFT();
