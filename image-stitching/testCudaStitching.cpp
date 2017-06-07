@@ -10,8 +10,8 @@
 #include <util-stitching.h>
 
 #include <htgs/api/Bookkeeper.hpp>
-#include <htgs/api/TaskGraph.hpp>
-#include <htgs/api/Runtime.hpp>
+#include <htgs/api/TaskGraphConf.hpp>
+#include <htgs/api/TaskGraphRuntime.hpp>
 
 #include "cuda/tasks/ReadTask.h"
 #include "cuda/tasks/FFTTask.h"
@@ -89,21 +89,19 @@ int main() {
 
   // Create task graph
   DEBUG("Creating task graph");
-  TaskGraph<FFTData, FFTData> *taskGraph = new TaskGraph<FFTData, FFTData>();
+  TaskGraphConf<FFTData, FFTData> *taskGraph = new TaskGraphConf<FFTData, FFTData>();
 
   // Setup connections
   DEBUG("Adding edges");
   taskGraph->addEdge(readTask, fftTask);
   taskGraph->addEdge(fftTask, bookkeeper);
-  taskGraph->addRule(bookkeeper, pciamTask, stitchingRule);
+  taskGraph->addRuleEdge(bookkeeper, stitchingRule, pciamTask);
   taskGraph->addEdge(pciamTask, ccfTask);
-  taskGraph->addGraphInputConsumer(readTask);
-  taskGraph->incrementGraphInputProducer();
+  taskGraph->setGraphConsumerTask(readTask);
 
-  taskGraph->addMemoryManagerEdge("read", readTask, ccfTask, new ReadMemory(tile->getSize()), 100, MMType::Static);
+  taskGraph->addMemoryManagerEdge("read", readTask, new ReadMemory(tile->getSize()), 100, MMType::Static);
   taskGraph->addCudaMemoryManagerEdge("fft",
                                       readTask,
-                                      pciamTask,
                                       new CudaMemory(tile->fftSize),
                                       100,
                                       MMType::Static,
@@ -111,7 +109,7 @@ int main() {
 
   taskGraph->writeDotToFile("/home/tjb3/cuda.dot");
 
-  Runtime *runTime = new Runtime(taskGraph);
+  TaskGraphRuntime *runTime = new TaskGraphRuntime(taskGraph);
 
   DEBUG("Producing data for graph edge");
   int count = 0;

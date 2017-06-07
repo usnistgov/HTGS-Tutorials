@@ -28,6 +28,7 @@ set(TUTORIAL_UTILS_SRC
         ../tutorial-utils/matrix-library/args/MatMulArgs.cpp
         )
 
+add_definitions(-DPROFILE)
 
 add_executable(tutorial3
         tutorial3-matrix-mul-main.cpp

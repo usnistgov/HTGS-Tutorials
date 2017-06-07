@@ -8,8 +8,10 @@
 
 #include <iostream>
 #include <util-stitching.h>
-#include <htgs/api/Runtime.hpp>
-#include <htgs/api/TaskGraph.hpp>
+
+#include <htgs/api/TaskGraphRuntime.hpp>
+#include <htgs/api/TaskGraphConf.hpp>
+
 
 #include "cpu/tasks/ReadTask.h"
 #include "cpu/tasks/FFTTask.h"
@@ -85,18 +87,17 @@ int main(int argc, char **argv) {
 
   // Create task graph
   DEBUG("Creating task graph");
-  TaskGraph<FFTData, FFTData> *taskGraph = new TaskGraph<FFTData, FFTData>();
+  TaskGraphConf<FFTData, FFTData> *taskGraph = new TaskGraphConf<FFTData, FFTData>();
 
   // Setup connections
   DEBUG("Adding edges");
   taskGraph->addEdge(readTask, fftTask);
   taskGraph->addEdge(fftTask, bookkeeper);
-  taskGraph->addRule(bookkeeper, pciamTask, stitchingRule);
-  taskGraph->addGraphInputConsumer(readTask);
-  taskGraph->incrementGraphInputProducer();
+  taskGraph->addRuleEdge(bookkeeper, stitchingRule, pciamTask);
+  taskGraph->setGraphConsumerTask(readTask);
 
-  ReadMemory *readMemAlloc = new ReadMemory(tile->getSize());
-  FFTWMemory *fftwMemAlloc = new FFTWMemory(tile->fftSize);
+  ReadMemory *readMemAlloc = new ReadMemory((size_t)tile->getSize());
+  FFTWMemory *fftwMemAlloc = new FFTWMemory((size_t)tile->fftSize);
 
   int memoryPoolSize = min(extentWidth, extentHeight) + 1;
 
@@ -110,13 +111,10 @@ int main(int argc, char **argv) {
   }
 
 
-  taskGraph->addMemoryManagerEdge("read", readTask, pciamTask, readMemAlloc, memoryPoolSize, MMType::Static);
-  taskGraph->addMemoryManagerEdge("fft", readTask, pciamTask, fftwMemAlloc, memoryPoolSize, MMType::Static);
+//  taskGraph->addMemoryManagerEdge("read", readTask, readMemAlloc, memoryPoolSize, MMType::Static);
+//  taskGraph->addMemoryManagerEdge("fft", readTask, fftwMemAlloc, memoryPoolSize, MMType::Static);
 
-//    TaskGraph<FFTData, FFTData> *copy = taskGraph->copy(0, 1);
-//    copy->incrementGraphInputProducer();
-
-  Runtime *runTime = new Runtime(taskGraph);
+  TaskGraphRuntime *runTime = new TaskGraphRuntime(taskGraph);
 //    Runtime *runTime = new Runtime(taskGraph);
 
   DEBUG("Producing data for graph edge");
@@ -124,12 +122,10 @@ int main(int argc, char **argv) {
   while (traverser->hasNext()) {
     FFTData *data = new FFTData(traverser->nextPtr(), count);
     taskGraph->produceData(data);
-//        copy->produceData(data);
     count++;
   }
 
   taskGraph->finishedProducingData();
-//    copy->finishedProducingData();
 
   auto start = std::chrono::high_resolution_clock::now();
 

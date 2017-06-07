@@ -6,11 +6,9 @@
 #include "FFTTask.h"
 
 
-void FFTTask::initializeCudaGPU(CUcontext context, CUstream stream, int cudaId, int numGPUs, int pipelineId,
-                                int numPipelines) {
+void FFTTask::initializeCudaGPU() {
   this->memory = new ImageStitching::CUDATileWorkerMemory(this->initTile);
-  this->pipelineId = pipelineId;
-  ImageStitching::CUDAImageTile::bindFwdPlanToStream(stream, pipelineId);
+  ImageStitching::CUDAImageTile::bindFwdPlanToStream(this->getStream(), this->getPipelineId());
 }
 
 void FFTTask::shutdownCuda() {
@@ -32,19 +30,13 @@ htgs::ITask<FFTData, FFTData> *FFTTask::copy() {
                      this->extentHeight);
 }
 
-bool FFTTask::isTerminated(std::shared_ptr<htgs::BaseConnector> inputConnector) {
-  return inputConnector->isInputTerminated();
-}
-
-
-void FFTTask::executeGPUTask(std::shared_ptr<FFTData> data, CUstream stream) {
+void FFTTask::executeTask(std::shared_ptr<FFTData> data) {
   ImageStitching::CUDAImageTile *tile = data->getTile();
 
   tile->setDev(this->getCudaId());
 
-  DEBUG("FFTTask: " << this->pipelineId << " Computing FFT for " << tile->getFilename());
   if (data->getFftData() != nullptr) {
-    tile->computeFFT(data->getFftData()->get(), this->memory, stream, true);
+    tile->computeFFT(data->getFftData()->get(), this->memory, this->getStream(), true);
   }
   else {
     tile->computeFFT();

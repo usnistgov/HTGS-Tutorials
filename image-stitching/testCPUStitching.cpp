@@ -8,8 +8,8 @@
 
 #include <iostream>
 #include <util-stitching.h>
-#include <htgs/api/TaskGraph.hpp>
-#include <htgs/api/Runtime.hpp>
+#include <htgs/api/TaskGraphConf.hpp>
+#include <htgs/api/TaskGraphRuntime.hpp>
 
 #include "cpu/tasks/ReadTask.h"
 #include "cpu/tasks/FFTTask.h"
@@ -89,20 +89,19 @@ int main(int argc, char **argv) {
 
   // Create task graph
   DEBUG("Creating task graph");
-  TaskGraph<FFTData, FFTData> *taskGraph = new TaskGraph<FFTData, FFTData>();
+  TaskGraphConf<FFTData, FFTData> *taskGraph = new TaskGraphConf<FFTData, FFTData>();
 
   // Setup connections
   DEBUG("Adding edges");
   taskGraph->addEdge(readTask, fftTask);
   taskGraph->addEdge(fftTask, bookkeeper);
-  taskGraph->addRule(bookkeeper, pciamTask, stitchingRule);
-  taskGraph->addGraphInputConsumer(readTask);
-  taskGraph->incrementGraphInputProducer();
+  taskGraph->addRuleEdge(bookkeeper, stitchingRule, pciamTask);
+  taskGraph->setGraphConsumerTask(readTask);
 
 //  TaskGraph<FFTData, FFTData> *copy = taskGraph->copy(0, 1);
 //  copy->incrementGraphInputProducer();
 
-  Runtime *runTime = new Runtime(taskGraph);
+  TaskGraphRuntime *runTime = new TaskGraphRuntime(taskGraph);
 
   DEBUG("Producing data for graph edge");
   int count = 0;

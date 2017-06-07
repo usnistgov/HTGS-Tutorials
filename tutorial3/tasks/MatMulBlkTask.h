@@ -21,7 +21,7 @@ class MatMulBlkTask : public htgs::ITask<MatrixBlockMulData<double *>, MatrixBlo
 
  public:
   MatMulBlkTask(size_t numThreads, bool colMajor) :
-      ITask(numThreads), colMajor(colMajor) {}
+      ITask(numThreads), colMajor(colMajor), numOps(0) {}
 
 
   virtual void executeTask(std::shared_ptr<MatrixBlockMulData<double *>> data) {
@@ -50,9 +50,13 @@ class MatMulBlkTask : public htgs::ITask<MatrixBlockMulData<double *>, MatrixBlo
     computeMatMul(height, width, matAData->getMatrixWidth(), 1.0, matrixA, lda,
                   matrixB, ldb, 0.0, result, ldc, colMajor);
 
+    numOps += height * width * matAData->getMatrixWidth();
+
     std::shared_ptr<MatrixRequestData> matReq(new MatrixRequestData(matAData->getRequest()->getRow(),
                                                                     matBData->getRequest()->getCol(),
                                                                     MatrixType::MatrixC));
+
+
 
 //    std::cout << "Computing A(" << matAData->getRequest()->getRow() << ", " << matAData->getRequest()->getCol() <<
 //              ") x B(" << matBData->getRequest()->getRow() << ", " << matBData->getRequest()->getCol() <<
@@ -69,9 +73,18 @@ class MatMulBlkTask : public htgs::ITask<MatrixBlockMulData<double *>, MatrixBlo
     return new MatMulBlkTask(this->getNumThreads(), colMajor);
   }
 
+  std::string getDotCustomProfile() override {
+    auto microTime = this->getTaskComputeTime();
+    double numGFlop = ((double)numOps * 2.0) * 1.0e-9d;
+
+    double timeSec = (double)microTime / 1000000.0;
+
+    return "Performance: " + std::to_string(numGFlop / timeSec) + " gflops";
+  }
 
  private:
   bool colMajor;
+  size_t numOps;
 
 };
 

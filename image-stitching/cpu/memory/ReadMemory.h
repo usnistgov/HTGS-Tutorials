@@ -8,7 +8,7 @@
 
 #include <htgs/api/IMemoryAllocator.hpp>
 
-class ReadMemory: public htgs::IMemoryAllocator<img_t *> {
+class ReadMemory: public htgs::IMemoryAllocator<img_t> {
  public:
   ReadMemory(size_t size) : IMemoryAllocator(size) { }
 

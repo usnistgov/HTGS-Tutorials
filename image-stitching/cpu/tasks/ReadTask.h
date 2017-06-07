@@ -23,18 +23,11 @@ class ReadTask: public htgs::ITask<FFTData, FFTData> {
 
   ~ReadTask() { }
 
-  virtual void initialize(int pipelineId,
-                          int numPipeline) override;
-
-  virtual void shutdown() override;
-
   virtual void executeTask(std::shared_ptr<FFTData> data) override;
 
   virtual std::string getName() override;
 
   virtual htgs::ITask<FFTData, FFTData> *copy() override;
-
-  virtual bool isTerminated(std::shared_ptr<htgs::BaseConnector> inputConnector) override;
 
  private:
   int startCol;

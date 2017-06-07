@@ -22,26 +22,26 @@ class FFTData: public htgs::IData {
     return tile;
   }
 
-  std::shared_ptr<htgs::MemoryData<img_t *>> getReadData() const {
+  std::shared_ptr<htgs::MemoryData<img_t>> getReadData() const {
     return readData;
   }
 
-  void setReadData(std::shared_ptr<htgs::MemoryData<img_t *>> readData) {
+  void setReadData(std::shared_ptr<htgs::MemoryData<img_t>> readData) {
     FFTData::readData = readData;
   }
 
-  std::shared_ptr<htgs::MemoryData<cuda_t *>> getFftData() const {
+  std::shared_ptr<htgs::MemoryData<cuda_t>> getFftData() const {
     return fftData;
   }
 
-  void setFftData(std::shared_ptr<htgs::MemoryData<cuda_t *>> fftData) {
+  void setFftData(std::shared_ptr<htgs::MemoryData<cuda_t>> fftData) {
     FFTData::fftData = fftData;
   }
 
  private:
   ImageStitching::CUDAImageTile *tile;
-  std::shared_ptr<htgs::MemoryData<img_t *>> readData;
-  std::shared_ptr<htgs::MemoryData<cuda_t *>> fftData;
+  std::shared_ptr<htgs::MemoryData<img_t>> readData;
+  std::shared_ptr<htgs::MemoryData<cuda_t>> fftData;
 
 };
 

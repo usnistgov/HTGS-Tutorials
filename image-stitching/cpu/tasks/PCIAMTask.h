@@ -14,15 +14,12 @@ class PCIAMTask: public htgs::ITask<PCIAMData, PCIAMData> {
 
  public:
 
-  PCIAMTask(int numThreads, ImageStitching::FFTWImageTile *tile) : ITask(numThreads) {
+  PCIAMTask(size_t numThreads, ImageStitching::FFTWImageTile *tile) : ITask(numThreads) {
     this->tile = tile;
     this->memory = new ImageStitching::FFTWTileWorkerMemory(this->tile);
   }
 
   ~PCIAMTask() { }
-
-  virtual void initialize(int pipelineId,
-                          int numPipeline) override;
 
   virtual void shutdown() override;
 
@@ -31,8 +28,6 @@ class PCIAMTask: public htgs::ITask<PCIAMData, PCIAMData> {
   virtual std::string getName() override;
 
   virtual htgs::ITask<PCIAMData, PCIAMData> *copy() override;
-
-  virtual bool isTerminated(std::shared_ptr<htgs::BaseConnector> inputConnector) override;
 
  private:
   ImageStitching::FFTWTileWorkerMemory *memory;

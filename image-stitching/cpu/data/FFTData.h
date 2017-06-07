@@ -10,6 +10,7 @@
 #include <htgs/api/IData.hpp>
 #include <htgs/api/MemoryData.hpp>
 
+
 class FFTData: public htgs::IData {
 
  public:
@@ -26,27 +27,27 @@ class FFTData: public htgs::IData {
     return this->tile;
   }
 
-  std::shared_ptr<htgs::MemoryData<img_t *>> getReadMemory() {
+  std::shared_ptr<htgs::MemoryData<img_t>> getReadMemory() {
     return this->readMemory;
   }
 
-  std::shared_ptr<htgs::MemoryData<fftw_t *>> getFFTMemory() {
+  std::shared_ptr<htgs::MemoryData<fftw_t>> getFFTMemory() {
     return this->fftMemory;
   }
 
 
-  void setReadMemory(std::shared_ptr<htgs::MemoryData<img_t *>> readMemory) {
+  void setReadMemory(std::shared_ptr<htgs::MemoryData<img_t>> readMemory) {
     this->readMemory = readMemory;
   }
 
-  void setFftMemory(std::shared_ptr<htgs::MemoryData<fftw_t *>> fftMemory) {
+  void setFftMemory(std::shared_ptr<htgs::MemoryData<fftw_t>> fftMemory) {
     this->fftMemory = fftMemory;
   }
 
  private:
   ImageStitching::FFTWImageTile *tile;
-  std::shared_ptr<htgs::MemoryData<img_t *>> readMemory;
-  std::shared_ptr<htgs::MemoryData<fftw_t *>> fftMemory;
+  std::shared_ptr<htgs::MemoryData<img_t>> readMemory;
+  std::shared_ptr<htgs::MemoryData<fftw_t>> fftMemory;
 };
 
 

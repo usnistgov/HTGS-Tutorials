@@ -8,6 +8,7 @@
 
 #include <fftw-image-tile.h>
 #include <tile-grid.hpp>
+#include <htgs/api/IMemoryReleaseRule.hpp>
 
 class FFTMemoryRule: public htgs::IMemoryReleaseRule {
  public:

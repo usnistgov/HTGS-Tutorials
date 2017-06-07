@@ -5,12 +5,6 @@
 #include <util-stitching.h>
 #include "CCFTask.h"
 
-void CCFTask::initialize(int pipelineId, int numPipeline) {
-}
-
-void CCFTask::shutdown() {
-}
-
 void CCFTask::executeTask(std::shared_ptr<CCFData> data) {
   this->multiCcfs.clear();
 
@@ -42,10 +36,11 @@ void CCFTask::executeTask(std::shared_ptr<CCFData> data) {
   }
 
   // release memory
-  if (this->hasMemReleaser("read")) {
-    this->memRelease("read", data->getOrigin()->getReadData());
-    this->memRelease("read", data->getNeighbor()->getReadData());
-  }
+  if (data->getOrigin()->getReadData() != nullptr)
+    this->releaseMemory(data->getOrigin()->getReadData());
+
+  if (data->getNeighbor()->getReadData() != nullptr)
+    this->releaseMemory(data->getNeighbor()->getReadData());
 
 }
 
@@ -55,11 +50,4 @@ std::string CCFTask::getName() {
 
 htgs::ITask<CCFData, htgs::VoidData> *CCFTask::copy() {
   return new CCFTask(this->getNumThreads());
-}
-
-bool CCFTask::isTerminated(std::shared_ptr<htgs::BaseConnector> inputConnector) {
-  return inputConnector->isInputTerminated();
-}
-
-void CCFTask::debug() {
 }

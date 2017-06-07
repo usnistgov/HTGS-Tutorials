@@ -3,14 +3,13 @@
 //
 
 #include <fftw-image-tile.h>
+#include <htgs/api/ITask.hpp>
 
 #include "FFTTask.h"
 #include "../memory/FFTMemoryRule.h"
 
-void FFTTask::initialize(int pipelineId,
-                         int numPipeline) {
+void FFTTask::initialize() {
   this->memory = new ImageStitching::FFTWTileWorkerMemory(this->initTile);
-  this->pipelineId = pipelineId;
 }
 
 void FFTTask::shutdown() {
@@ -20,10 +19,8 @@ void FFTTask::shutdown() {
 void FFTTask::executeTask(std::shared_ptr<FFTData> data) {
   ImageStitching::FFTWImageTile *tile = data->getTile();
 
-  DEBUG("FFTTask: " << this->pipelineId << " Computing FFT for " << tile->getFilename());
   if (data->getFFTMemory() != nullptr) {
         tile->computeFFT(this->memory->getFFTInP(), data->getFFTMemory()->get());
-//    tile->computeFFT();
   }
   else {
     tile->computeFFT();
@@ -45,6 +42,6 @@ htgs::ITask<FFTData, FFTData> *FFTTask::copy() {
                      this->extentHeight);
 }
 
-bool FFTTask::isTerminated(std::shared_ptr<htgs::BaseConnector> inputConnector) {
+bool FFTTask::canTerminate(std::shared_ptr<htgs::AnyConnector> inputConnector) {
   return inputConnector->isInputTerminated();
 }

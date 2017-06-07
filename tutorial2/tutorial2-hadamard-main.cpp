@@ -109,6 +109,8 @@ int main(int argc, char *argv[]) {
     }
     runtime->waitForRuntime();
 
+    taskGraph->writeDotToFile("hadamard-product.dot");
+
     clk.stopAndIncrement();
     delete runtime;
   }

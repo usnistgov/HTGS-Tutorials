@@ -1,5 +1,6 @@
 find_package(TIFF REQUIRED)
 find_package(FFTW REQUIRED)
+find_package(ImageStitching REQUIRED)
 
 set(PARAMS_SRC
         tclap/Arg.h
@@ -48,12 +49,15 @@ set(IMAGE_STITCHING_SRC
         cpu/tasks/ReadTask.h
         )
 
-set(STITCHING_CPP_LIBRARIES imageStitching ${FFTW_LIBRARIES} ${TIFF_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+set(STITCHING_CPP_LIBRARIES
+        ${FFTW_LIBRARIES}
+        ${TIFF_LIBRARIES}
+        ${CMAKE_THREAD_LIBS_INIT}
+        ${LIB_ImageStitching_LIBRARIES})
 
 ## Edit Here to specify location of image stitching library
-include_directories(/home/tjb3/local/include)
 include_directories(.)
-link_directories(/home/tjb3/local/lib)
+include_directories(${LIB_ImageStitching_INCLUDE_DIRS})
 
 add_executable(testCPUStitching testCPUStitching.cpp ${IMAGE_STITCHING_SRC} ${PARAMS_SRC})
 add_executable(testCPUStitchingWithMemory testCPUStitchingWithMemory.cpp ${IMAGE_STITCHING_SRC} ${PARAMS_SRC})
@@ -64,6 +68,7 @@ target_link_libraries(testCPUStitchingWithMemory ${STITCHING_CPP_LIBRARIES})
 target_link_libraries(testStitchingAPI ${STITCHING_CPP_LIBRARIES})
 
 if (CUDA_FOUND)
+    find_package(ImageStitchingCuda REQUIRED)
     add_definitions(-DUSE_CUDA)
 
     set(IMAGE_STITCHING_CUDA_SRC
@@ -82,7 +87,7 @@ if (CUDA_FOUND)
             cuda/tasks/ReadTask.cpp
             cuda/tasks/ReadTask.h
             )
-    set(STITCHING_CUDA_LIBRARIES imageStitchingCuda ${FFTW_LIBRARIES} ${TIFF_LIBRARIES} -lcuda ${CUDA_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+    set(STITCHING_CUDA_LIBRARIES ${LIB_ImageStitchingCuda_LIBRARIES} ${FFTW_LIBRARIES} ${TIFF_LIBRARIES} -lcuda ${CUDA_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 
     cuda_add_executable(testCudaStitching testCudaStitching.cpp ${IMAGE_STITCHING_CUDA_SRC})
     cuda_add_executable(testCudaStitchingExecutionPipeline testCudaStitchingExecutionPipeline.cpp ${IMAGE_STITCHING_CUDA_SRC})

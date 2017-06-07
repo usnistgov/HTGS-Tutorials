@@ -6,6 +6,7 @@
 #define HTGS_PCIAMDATA_H
 
 #include <fftw-image-tile.h>
+#include <htgs/api/IData.hpp>
 #include "FFTData.h"
 
 enum PCIAMDirection {

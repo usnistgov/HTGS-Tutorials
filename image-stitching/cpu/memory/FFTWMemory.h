@@ -8,7 +8,9 @@
 #include <fftw3.h>
 #include <stitching-types.h>
 
-class FFTWMemory: public htgs::IMemoryAllocator<fftw_t *> {
+#include <htgs/api/IMemoryAllocator.hpp>
+
+class FFTWMemory: public htgs::IMemoryAllocator<fftw_t> {
  public:
   FFTWMemory(size_t size) : IMemoryAllocator(size) { }
 

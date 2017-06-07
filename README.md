@@ -2,6 +2,12 @@
 
 In this repository we present the tutorials for the [HTGS API](https://github.com/usnistgov/htgs).
 
+## Getting Started
+Please refer to [**tutorial0**](https://pages.nist.gov/HTGS/doxygen/tutorial0.html) for details on how to compile and run
+the tutorials. 
+
+**Installation of [HTGS](https://github.com/usnistgov/htgs) is required, and specified using 'cmake -DHTGS_INCLUDE_DIR=<dir>'
+
 ## [**tutorial1**](https://pages.nist.gov/HTGS/doxygen/tutorial1.html)
 Adds two numbers together, purely for demonstration purposes of HTGS. (Note: Computational tasks for an algorithm's implementation should provide enough computational complexity to justify shipping data between tasks, see [Figure](https://pages.nist.gov/HTGS/doxygen/figures/blocksize-impact.png))
 

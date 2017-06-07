@@ -4,10 +4,7 @@
 
 #include "PCIAMTask.h"
 #include <fftw-stitching.h>
-
-void PCIAMTask::initialize(int pipelineId,
-                           int numPipeline) {
-}
+#include <htgs/api/ITask.hpp>
 
 void PCIAMTask::shutdown() {
   delete this->memory;
@@ -34,15 +31,15 @@ void PCIAMTask::executeTask(std::shared_ptr<PCIAMData> data) {
   }
 
   // release memory
-  if (this->hasMemReleaser("read")) {
-    this->memRelease("read", data->getOrigin()->getReadMemory());
-    this->memRelease("read", data->getNeighbor()->getReadMemory());
-  }
+  if (data->getOrigin()->getReadMemory() != nullptr)
+    this->releaseMemory(data->getOrigin()->getReadMemory());
+  if (data->getNeighbor()->getReadMemory() != nullptr)
+    this->releaseMemory(data->getNeighbor()->getReadMemory());
 
-  if (this->hasMemReleaser("fft")) {
-    this->memRelease("fft", data->getOrigin()->getFFTMemory());
-    this->memRelease("fft", data->getNeighbor()->getFFTMemory());
-  }
+  if (data->getOrigin()->getFFTMemory() != nullptr)
+    this->releaseMemory(data->getOrigin()->getFFTMemory());
+  if (data->getNeighbor()->getFFTMemory() != nullptr)
+    this->releaseMemory(data->getNeighbor()->getFFTMemory());
 
 }
 
@@ -54,6 +51,3 @@ htgs::ITask<PCIAMData, PCIAMData> *PCIAMTask::copy() {
   return new PCIAMTask(this->getNumThreads(), this->tile);
 }
 
-bool PCIAMTask::isTerminated(std::shared_ptr<htgs::BaseConnector> inputConnector) {
-  return inputConnector->isInputTerminated();
-}

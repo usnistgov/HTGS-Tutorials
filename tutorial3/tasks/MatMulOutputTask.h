@@ -56,7 +56,7 @@ class MatMulOutputTask : public htgs::ITask<MatrixBlockData<double *>, MatrixReq
     addResult(data->getRequest());
   }
   virtual std::string getName() {
-    return "MatMulOutputTaskWithDisk";
+    return "MatMulOutputTask";
   }
   virtual MatMulOutputTask *copy() {
     return new MatMulOutputTask(matrix, leadingDim, blockSize, colMajor);

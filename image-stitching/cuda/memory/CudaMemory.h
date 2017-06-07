@@ -9,7 +9,7 @@
 #include <cufft.h>
 #include <cuda_runtime.h>
 
-class CudaMemory: public htgs::IMemoryAllocator<cuda_t *> {
+class CudaMemory: public htgs::IMemoryAllocator<cuda_t> {
 
  public:
   CudaMemory(size_t size) : IMemoryAllocator(size) { }

@@ -17,14 +17,12 @@ class PCIAMTask: public htgs::ICudaTask<PCIAMData, CCFData> {
 
   ~PCIAMTask() { }
 
-  virtual void initializeCudaGPU(CUcontext context, CUstream stream, int cudaId, int numGPUs, int pipelineId,
-                                 int numPipelines);
+  virtual void initializeCudaGPU() override;
 
-  virtual void executeGPUTask(std::shared_ptr<PCIAMData> data, CUstream stream);
+  virtual void executeTask(std::shared_ptr<PCIAMData> data);
 
   virtual void shutdownCuda();
 
-  virtual void debug();
 
   PCIAMTask(CUcontext *contexts, int *cudaIds, int numGpus, ImageStitching::CUDAImageTile *tile) : ICudaTask(contexts,
                                                                                                              cudaIds,
@@ -36,16 +34,12 @@ class PCIAMTask: public htgs::ICudaTask<PCIAMData, CCFData> {
 
   virtual htgs::ITask<PCIAMData, CCFData> *copy() override;
 
-  virtual bool isTerminated(std::shared_ptr<htgs::BaseConnector> inputConnector) override;
-
  private:
   ImageStitching::CUDATileWorkerMemory *memory;
   ImageStitching::CUDAImageTile *tile;
 //    double *pcmMemory;
   cuda_t *originDevMem;
   cuda_t *neighborDevMem;
-  int pipelineId;
-  int gpuId;
 };
 
 

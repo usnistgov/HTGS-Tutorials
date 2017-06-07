@@ -15,7 +15,7 @@
 
 class FFTTask: public htgs::ITask<FFTData, FFTData> {
  public:
-  FFTTask(int numThreads,
+  FFTTask(size_t numThreads,
           ImageStitching::FFTWImageTile *initTile,
           int startCol,
           int startRow,
@@ -32,8 +32,7 @@ class FFTTask: public htgs::ITask<FFTData, FFTData> {
   ~FFTTask() {
   }
 
-  virtual void initialize(int pipelineId,
-                          int numPipeline) override;
+  virtual void initialize() override;
 
   virtual void shutdown() override;
 
@@ -43,7 +42,7 @@ class FFTTask: public htgs::ITask<FFTData, FFTData> {
 
   virtual htgs::ITask<FFTData, FFTData> *copy() override;
 
-  virtual bool isTerminated(std::shared_ptr<htgs::BaseConnector> inputConnector) override;
+  virtual bool canTerminate(std::shared_ptr<htgs::AnyConnector> inputConnector) override;
 
  private:
   ImageStitching::FFTWTileWorkerMemory *memory;
@@ -52,7 +51,6 @@ class FFTTask: public htgs::ITask<FFTData, FFTData> {
   int startRow;
   int extentWidth;
   int extentHeight;
-  int pipelineId;
 };
 
 

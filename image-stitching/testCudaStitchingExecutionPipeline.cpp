@@ -8,7 +8,7 @@
 #include <tile-grid.hpp>
 #include <tile-grid-traverser.hpp>
 #include <util-stitching.h>
-#include <htgs/api/TaskGraph.hpp>
+#include <htgs/api/TaskGraphConf.hpp>
 #include <htgs/api/ExecutionPipeline.hpp>
 
 
@@ -88,20 +88,19 @@ int main() {
 
   // Create task graph
   DEBUG("Creating task graph");
-  TaskGraph<FFTData, CCFData> *taskGraph = new TaskGraph<FFTData, CCFData>();
+  TaskGraphConf<FFTData, CCFData> *taskGraph = new TaskGraphConf<FFTData, CCFData>();
 
   // Setup connections
   DEBUG("Adding edges");
   taskGraph->addEdge(readTask, fftTask);
   taskGraph->addEdge(fftTask, bookkeeper);
-  taskGraph->addRule(bookkeeper, pciamTask, stitchingRule);
-  taskGraph->addGraphInputConsumer(readTask);
-  taskGraph->addGraphOutputProducer(pciamTask);
+  taskGraph->addRuleEdge(bookkeeper, stitchingRule, pciamTask);
+  taskGraph->setGraphConsumerTask(readTask);
+  taskGraph->addGraphProducerTask(pciamTask);
 
-  taskGraph->addMemoryManagerEdge("read", readTask, ccfTask, new ReadMemory(tile->getSize()), 500, MMType::Static);
+  taskGraph->addMemoryManagerEdge("read", readTask, new ReadMemory(tile->getSize()), 500, MMType::Static);
   taskGraph->addCudaMemoryManagerEdge("fft",
                                       readTask,
-                                      pciamTask,
                                       new CudaMemory(tile->fftSize),
                                       500,
                                       MMType::Static,
@@ -118,14 +117,13 @@ int main() {
 //    Task<FFTData, CCFData> *execPipelineTask = new Task<FFTData, CCFData>(execPipelineI, 1, false, 0, 1);
 
 
-  TaskGraph<FFTData, VoidData> *mainGraph = new TaskGraph<FFTData, VoidData>();
-  mainGraph->addGraphInputConsumer(execPipeline);
+  TaskGraphConf<FFTData, VoidData> *mainGraph = new TaskGraphConf<FFTData, VoidData>();
+  mainGraph->setGraphConsumerTask(execPipeline);
   mainGraph->addEdge(execPipeline, ccfTask);
-  mainGraph->incrementGraphInputProducer();
 
   mainGraph->writeDotToFile("/home/tjb3/cuda.dot");
 
-  Runtime *runTime = new Runtime(mainGraph);
+  TaskGraphRuntime *runTime = new TaskGraphRuntime(mainGraph);
 
   DEBUG("Producing data for graph edge");
   int count = 0;

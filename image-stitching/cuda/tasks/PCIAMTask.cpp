@@ -14,25 +14,16 @@ htgs::ITask<PCIAMData, CCFData> *PCIAMTask::copy() {
   return new PCIAMTask(this->getContexts(), this->getCudaIds(), this->getNumGPUs(), this->tile);
 }
 
-bool PCIAMTask::isTerminated(std::shared_ptr<htgs::BaseConnector> inputConnector) {
-  return inputConnector->isInputTerminated();
-}
-
-void PCIAMTask::initializeCudaGPU(CUcontext context, CUstream stream, int cudaId, int numGPUs, int pipelineId,
-                                  int numPipelines) {
+void PCIAMTask::initializeCudaGPU() {
   this->memory = new ImageStitching::CUDATileWorkerMemory(this->tile);
 //    cudaMalloc((void **)&pcmMemory, sizeof(double) * this->tile->getSize());
   cudaMalloc((void **) &originDevMem, sizeof(cuda_t) * ImageStitching::CUDAImageTile::fftSize);
   cudaMalloc((void **) &neighborDevMem, sizeof(cuda_t) * ImageStitching::CUDAImageTile::fftSize);
 
-  ImageStitching::CUDAImageTile::bindBwdPlanToStream(stream, pipelineId);
-
-  this->pipelineId = pipelineId;
-  this->gpuId = cudaId;
-
+  ImageStitching::CUDAImageTile::bindBwdPlanToStream(this->getStream(), this->getPipelineId());
 }
 
-void PCIAMTask::executeGPUTask(std::shared_ptr<PCIAMData> data, CUstream stream) {
+void PCIAMTask::executeTask(std::shared_ptr<PCIAMData> data) {
 
   std::shared_ptr<FFTData> originData = data->getOrigin();
   std::shared_ptr<FFTData> neighborData = data->getNeighbor();
@@ -64,26 +55,25 @@ void PCIAMTask::executeGPUTask(std::shared_ptr<PCIAMData> data, CUstream stream)
     neighborMemory = neighborData->getFftData()->get();
   }
 
-  peakCorrelationMatrix(originMemory, neighborMemory, pcmMemory, this->memory, stream, this->pipelineId);
+  peakCorrelationMatrix(originMemory, neighborMemory, pcmMemory, this->memory, this->getStream(), this->getPipelineId());
   int *indices = multiPeakCorrelationMatrixIndices(pcmMemory,
                                                    NUM_PEAKS,
                                                    origin->getWidth(),
                                                    origin->getHeight(),
                                                    this->memory,
-                                                   stream);
+                                                   this->getStream());
 
   CCFData *ccfData = new CCFData(indices, data);
   addResult(ccfData);
 
-  if (this->hasMemReleaser("fft")) {
-    this->memRelease("fft", data->getOrigin()->getFftData());
-    this->memRelease("fft", data->getNeighbor()->getFftData());
-  }
+  if (data->getOrigin()->getFftData() != nullptr)
+    this->releaseMemory(data->getOrigin()->getFftData());
 
+  if (data->getNeighbor()->getFftData() != nullptr)
+    this->releaseMemory(data->getNeighbor()->getFftData());
 }
 
 void PCIAMTask::shutdownCuda() {
+  // TODO: Release memory from initialize
 }
 
-void PCIAMTask::debug() {
-}

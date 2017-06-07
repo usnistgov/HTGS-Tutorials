@@ -40,12 +40,10 @@ class StitchingRule: public htgs::IRule<FFTData, PCIAMData> {
     deAllocFFTDataGrid();
   }
 
-  bool isRuleTerminated(int pipelineId) { return false; }
-
 
   std::string getName() { return "StitchingRule"; }
 
-  void applyRule(std::shared_ptr<FFTData> data, int pipelineId) {
+  void applyRule(std::shared_ptr<FFTData> data, size_t pipelineId) {
     ImageStitching::CUDAImageTile *tile = data->getTile();
 
     DEBUG("Stitching rule received tile: " << tile->getFilename());
@@ -88,10 +86,6 @@ class StitchingRule: public htgs::IRule<FFTData, PCIAMData> {
 //        printArr(this->pciamNorthState);
 //        std::cout << "PCIAM WEST State width : " << this->width << " height: " << this->height << std::endl;
 //        printArr(this->pciamWestState);
-
-  }
-
-  void shutdownRule(int pipelineId) {
 
   }
 

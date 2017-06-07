@@ -3,7 +3,6 @@
 //
 
 #include <htgs/api/IRule.hpp>
-#include <htgs/debug/debug_message.h>
 
 #include "../data/FFTData.h"
 
@@ -28,11 +27,7 @@ class GridDecompositionRule: public htgs::IRule<FFTData, FFTData> {
     deallocPartitionGrid();
   }
 
-  bool isRuleTerminated(int pipelineId) {
-    return false;
-  }
-
-  void applyRule(std::shared_ptr<FFTData> data, int pipelineId) {
+  void applyRule(std::shared_ptr<FFTData> data, size_t pipelineId) {
     ImageStitching::CUDAImageTile *tile = data->getTile();
 
     int r = tile->getRowIdx();
@@ -46,9 +41,6 @@ class GridDecompositionRule: public htgs::IRule<FFTData, FFTData> {
 
   virtual std::string getName() {
     return "Grid Decomposition Rule";
-  }
-
-  void shutdownRule(int pipelineId) {
   }
 
  private:

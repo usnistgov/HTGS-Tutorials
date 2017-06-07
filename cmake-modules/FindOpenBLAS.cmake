@@ -1,76 +1,57 @@
-if(MKL_FOUND)
-    message(ERROR " OpenBLAS is not required since MKL is enabled")
+
+# - Try to find openblas
+# Once done, this will define
+#
+#  LIB_OpenBLAS_FOUND - system has openblas
+#  LIB_OpenBLAS_INCLUDE_DIRS - the openblas include directories
+#  LIB_OpenBLAS_LIBRARIES - link these to use libuv
+#
+# Set the LIB_OpenBLAS_USE_STATIC variable to specify if static libraries should
+# be preferred to shared ones.
+
+if(NOT USE_BUNDLED_LIB_OpenBLAS)
+    find_package(PkgConfig)
+    if (PKG_CONFIG_FOUND)
+        pkg_check_modules(PC_LIB_OpenBLAS QUIET libopenblas)
+    endif()
+else()
+    set(PC_LIB_OpenBLAS_INCLUDEDIR)
+    set(PC_LIB_OpenBLAS_INCLUDE_DIRS)
+    set(PC_LIB_OpenBLAS_LIBDIR)
+    set(PC_LIB_OpenBLAS_LIBRARY_DIRS)
+    set(LIMIT_SEARCH NO_DEFAULT_PATH)
 endif()
-file(TO_CMAKE_PATH "$ENV{OpenBLAS_HOME}" OpenBLAS_HOME)
-file(TO_CMAKE_PATH "$ENV{OpenBLAS}" OpenBLAS_DIR)
 
-SET(Open_BLAS_INCLUDE_SEARCH_PATHS
-        /usr/include
-        /usr/include/openblas
-        /usr/include/openblas-base
-        /usr/local/include
-        /usr/local/include/openblas
-        /usr/local/include/openblas-base
-        /opt/OpenBLAS/include
-        /usr/local/opt/openblas/include
-        ${PROJECT_SOURCE_DIR}/3rdparty/OpenBLAS/include
-        ${PROJECT_SOURCE_DIR}/thirdparty/OpenBLAS/include
-        ${OpenBLAS_HOME}
-        ${OpenBLAS_HOME}/include
-        )
+find_path(LIB_OpenBLAS_INCLUDE_DIR cblas.h
+        HINTS ${PC_LIB_OpenBLAS_INCLUDEDIR} ${PC_LIB_OpenBLAS_INCLUDE_DIRS}
+        ${LIMIT_SEARCH})
 
-SET(Open_BLAS_LIB_SEARCH_PATHS
-        /lib/
-        /lib/openblas-base
-        /lib64/
-        /usr/lib
-        /usr/lib/openblas-base
-        /usr/lib64
-        /usr/local/lib
-        /usr/local/lib64
-        /opt/OpenBLAS/lib
-        /usr/local/opt/openblas/lib
-        ${PROJECT_SOURCE_DIR}/3rdparty/OpenBLAS/lib
-        ${PROJECT_SOURCE_DIR}/thirdparty/OpenBLAS/lib
-        ${OpenBLAS_DIR}
-        ${OpenBLAS_DIR}/lib
-        ${OpenBLAS_HOME}
-        ${OpenBLAS_HOME}/lib
-        )
+# If we're asked to use static linkage, add libopenblas.a as a preferred library name.
+if(LIB_OpenBLAS_USE_STATIC)
+    list(APPEND LIB_OpenBLAS_NAMES
+            "${CMAKE_STATIC_LIBRARY_PREFIX}openblas${CMAKE_STATIC_LIBRARY_SUFFIX}")
+endif(LIB_OpenBLAS_USE_STATIC)
 
-FIND_PATH(OpenBLAS_INCLUDE_DIR NAMES cblas.h PATHS ${Open_BLAS_INCLUDE_SEARCH_PATHS})
-FIND_LIBRARY(OpenBLAS_LIB NAMES openblas PATHS ${Open_BLAS_LIB_SEARCH_PATHS})
-IF(NOT OpenBLAS_LIB)
-    FIND_FILE(OpenBLAS_LIB NAMES libopenblas.so PATHS ${Open_BLAS_LIB_SEARCH_PATHS})
-ENDIF()
+list(APPEND LIB_OpenBLAS_NAMES openblas)
 
-SET(OpenBLAS_FOUND ON)
+find_library(LIB_OpenBLAS_LIBRARY NAMES ${LIB_OpenBLAS_NAMES}
+        HINTS ${PC_LIB_OpenBLAS_LIBDIR} ${PC_LIB_OpenBLAS_LIBRARY_DIRS}
+        ${LIMIT_SEARCH})
 
-#    Check include files
-IF(NOT OpenBLAS_INCLUDE_DIR)
-    SET(OpenBLAS_FOUND OFF)
-    MESSAGE(STATUS "Could not find OpenBLAS include. Turning OpenBLAS_FOUND off")
-ENDIF()
+mark_as_advanced(LIB_OpenBLAS_INCLUDE_DIR LIB_OpenBLAS_LIBRARY)
 
-#    Check libraries
-IF(NOT OpenBLAS_LIB)
-    SET(OpenBLAS_FOUND OFF)
-    MESSAGE(STATUS "Could not find OpenBLAS lib. Turning OpenBLAS_FOUND off")
-ENDIF()
+if(PC_LIB_OpenBLAS_LIBRARIES)
+    list(REMOVE_ITEM PC_LIB_OpenBLAS_LIBRARIES openblas)
+endif()
 
-IF (OpenBLAS_FOUND)
-    IF (NOT OpenBLAS_FIND_QUIETLY)
-        MESSAGE(STATUS "Found OpenBLAS libraries: ${OpenBLAS_LIB}")
-        MESSAGE(STATUS "Found OpenBLAS include: ${OpenBLAS_INCLUDE_DIR}")
-    ENDIF (NOT OpenBLAS_FIND_QUIETLY)
-ELSE (OpenBLAS_FOUND)
-    IF (OpenBLAS_FIND_REQUIRED)
-        MESSAGE(FATAL_ERROR "Could not find OpenBLAS")
-    ENDIF (OpenBLAS_FIND_REQUIRED)
-ENDIF (OpenBLAS_FOUND)
+set(LIB_OpenBLAS_LIBRARIES ${LIB_OpenBLAS_LIBRARY} ${PC_LIB_OpenBLAS_LIBRARIES})
+set(LIB_OpenBLAS_INCLUDE_DIRS ${LIB_OpenBLAS_INCLUDE_DIR})
 
-MARK_AS_ADVANCED(
-        OpenBLAS_INCLUDE_DIR
-        OpenBLAS_LIB
-        OpenBLAS
-)
+include(FindPackageHandleStandardArgs)
+
+# handle the QUIETLY and REQUIRED arguments and set LIB_OpenBLAS_FOUND to TRUE
+# if all listed variables are TRUE
+find_package_handle_standard_args(LibOpenBLAS DEFAULT_MSG
+        LIB_OpenBLAS_LIBRARY LIB_OpenBLAS_INCLUDE_DIR)
+
+mark_as_advanced(LIB_OpenBLAS_INCLUDE_DIR LIB_OpenBLAS_LIBRARY)

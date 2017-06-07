@@ -22,18 +22,15 @@ class FFTTask: public htgs::ICudaTask<FFTData, FFTData> {
 
   ~FFTTask() { }
 
-  virtual void initializeCudaGPU(CUcontext context, CUstream stream, int cudaId, int numGPUs, int pipelineId,
-                                 int numPipelines) override;
+  virtual void initializeCudaGPU() override;
 
-  virtual void executeGPUTask(std::shared_ptr<FFTData> data, CUstream stream) override;
+  virtual void executeTask(std::shared_ptr<FFTData> data) override;
 
   virtual void shutdownCuda() override;
 
   virtual std::string getName() override;
 
   virtual htgs::ITask<FFTData, FFTData> *copy() override;
-
-  virtual bool isTerminated(std::shared_ptr<htgs::BaseConnector> inputConnector) override;
 
  private:
   ImageStitching::CUDATileWorkerMemory *memory;
@@ -42,7 +39,6 @@ class FFTTask: public htgs::ICudaTask<FFTData, FFTData> {
   int startRow;
   int extentWidth;
   int extentHeight;
-  int pipelineId;
 };
 
 
