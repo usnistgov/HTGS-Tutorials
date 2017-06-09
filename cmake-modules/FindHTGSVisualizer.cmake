@@ -170,69 +170,6 @@ mark_as_advanced(LIBUWS_INCLUDE_DIR LIBUWS_LIBRARY)
 find_package(OpenSSL REQUIRED)
 find_package(ZLIB REQUIRED)
 
-
-
-# - Try to find libuv
-# Once done, this will define
-#
-#  LIBUWS_FOUND - system has libuv
-#  LIBUWS_INCLUDE_DIRS - the libuv include directories
-#  LIBUWS_LIBRARIES - link these to use libuv
-#
-# Set the LIBUWS_USE_STATIC variable to specify if static libraries should
-# be preferred to shared ones.
-
-if(NOT USE_BUNDLED_LIBUWS)
-    find_package(PkgConfig)
-    if (PKG_CONFIG_FOUND)
-        pkg_check_modules(PC_LIBUWS QUIET libuWS)
-    endif()
-else()
-    set(PC_LIBUWS_INCLUDEDIR)
-    set(PC_LIBUWS_INCLUDE_DIRS)
-    set(PC_LIBUWS_LIBDIR)
-    set(PC_LIBUWS_LIBRARY_DIRS)
-    set(LIMIT_SEARCH NO_DEFAULT_PATH)
-endif()
-
-find_path(LIBUWS_INCLUDE_DIR uWS.h
-        HINTS ${PC_LIBUWS_INCLUDEDIR} ${PC_LIBUWS_INCLUDE_DIRS}
-        ${LIMIT_SEARCH})
-
-# If we're asked to use static linkage, add libuv.a as a preferred library name.
-if(LIBUWS_USE_STATIC)
-    list(APPEND LIBUWS_NAMES
-            "${CMAKE_STATIC_LIBRARY_PREFIX}uWS${CMAKE_STATIC_LIBRARY_SUFFIX}")
-endif(LIBUWS_USE_STATIC)
-
-list(APPEND LIBUWS_NAMES uWS)
-
-
-find_library(LIBUWS_LIBRARY NAMES ${LIBUWS_NAMES}
-        HINTS ${PC_LIBUWS_LIBDIR} ${PC_LIBUWS_LIBRARY_DIRS}
-        ${LIMIT_SEARCH})
-
-mark_as_advanced(LIBUWS_INCLUDE_DIR LIBUWS_LIBRARY)
-
-if(PC_LIBUWS_LIBRARIES)
-    list(REMOVE_ITEM PC_LIBUWS_LIBRARIES uWS)
-endif()
-
-set(LIBUWS_LIBRARIES ${LIBUWS_LIBRARY} ${PC_LIBUWS_LIBRARIES})
-set(LIBUWS_INCLUDE_DIRS ${LIBUWS_INCLUDE_DIR})
-
-include(FindPackageHandleStandardArgs)
-
-# handle the QUIETLY and REQUIRED arguments and set LIBUWS_FOUND to TRUE
-# if all listed variables are TRUE
-find_package_handle_standard_args(LibUWS DEFAULT_MSG
-        LIBUWS_LIBRARY LIBUWS_INCLUDE_DIR)
-
-mark_as_advanced(LIBUWS_INCLUDE_DIR LIBUWS_LIBRARY)
-
-
-
-
 # - Try to find libhtgsVisualizer
 # Once done, this will define
 #
