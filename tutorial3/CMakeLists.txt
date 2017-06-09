@@ -3,11 +3,11 @@
 # NIST-developed software is expressly provided "AS IS." NIST MAKES NO WARRANTY OF ANY KIND, EXPRESS, IMPLIED, IN FACT OR ARISING BY OPERATION OF LAW, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTY OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, NON-INFRINGEMENT AND DATA ACCURACY. NIST NEITHER REPRESENTS NOR WARRANTS THAT THE OPERATION OF THE SOFTWARE WILL BE UNINTERRUPTED OR ERROR-FREE, OR THAT ANY DEFECTS WILL BE CORRECTED. NIST DOES NOT WARRANT OR MAKE ANY REPRESENTATIONS REGARDING THE USE OF THE SOFTWARE OR THE RESULTS THEREOF, INCLUDING BUT NOT LIMITED TO THE CORRECTNESS, ACCURACY, RELIABILITY, OR USEFULNESS OF THE SOFTWARE.
 # You are solely responsible for determining the appropriateness of using and distributing the software and you assume all risks associated with its use, including but not limited to the risks and costs of program errors, compliance with applicable laws, damage to or loss of data, programs or equipment, and the unavailability or interruption of operation. This software is not intended to be used in any situation where a failure could cause risk of injury or damage to property. The software developed by NIST employees is not subject to copyright protection within the United States.
 
-if (OpenBLAS_FOUND)
-    include_directories(${OpenBLAS_INCLUDE_DIR})
-    link_directories(${OpenBLAS_LIB})
+if (LIB_OpenBLAS_FOUND)
+    include_directories(${LIB_OpenBLAS_INCLUDE_DIRS})
+    link_libraries(${LIB_OpenBLAS_LIBRARIES})
     add_definitions(-DUSE_OPENBLAS)
-endif (OpenBLAS_FOUND)
+endif (LIB_OpenBLAS_FOUND)
 
 
 set(TUTORIAL_UTILS_SRC
@@ -28,8 +28,6 @@ set(TUTORIAL_UTILS_SRC
         ../tutorial-utils/matrix-library/args/MatMulArgs.cpp
         )
 
-add_definitions(-DPROFILE)
-
 add_executable(tutorial3
         tutorial3-matrix-mul-main.cpp
         tasks/MatMulAccumTask.h
@@ -41,10 +39,6 @@ add_executable(tutorial3
         rules/MatMulOutputRule.h
         ${TUTORIAL_UTILS_SRC}
         )
-
-if (OpenBLAS_FOUND)
-    target_link_libraries(tutorial3 openblas)
-endif (OpenBLAS_FOUND)
 
 add_subdirectory(with-mmap)
 add_subdirectory(with-disk)
