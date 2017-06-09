@@ -8,9 +8,8 @@ the tutorials.
 
 ### Dependencies
 [HTGS](https://github.com/usnistgov/htgs) is required, location is specified using:
-```
 cmake -DHTGS_INCLUDE_DIR=<dir>
-```
+
 (Optional) [OpenBlas](http://www.openblas.net/); required for [Tutorial3b](https://pages.nist.gov/HTGS/doxygen/tutorial3b.html)
 
 ## [**tutorial1**](https://pages.nist.gov/HTGS/doxygen/tutorial1.html)
