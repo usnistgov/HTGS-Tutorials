@@ -314,7 +314,7 @@ int main(int argc, char *argv[]) {
       auto data = taskGraph->consumeData();
       if (data != nullptr) {
 //      std::cout << "Result received: " << data->getRow() << ", " << data->getCol() <<std::endl;
-        taskGraph->writeDotToFile("matmul.dot");
+//        taskGraph->writeDotToFile("matmul.dot");
 
       }
     }
