@@ -46,9 +46,11 @@ int main() {
   while (!taskGraph->isOutputTerminated()) {
     auto data = taskGraph->consumeData();
 
-    int result = data->getResult();
+    if (data != nullptr) {
+      int result = data->getResult();
 
-    std::cout << "Result: " << result << std::endl;
+      std::cout << "Result: " << result << std::endl;
+    }
   }
   // Wait until the runtime has finished processing data
 
