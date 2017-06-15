@@ -12,6 +12,7 @@
 #define HTGS_MATMULACCUMTASK_H
 
 #include "../../tutorial-utils/matrix-library/data/MatrixBlockData.h"
+#include "../../tutorial-utils/matrix-library/data/MatrixBlockMulData.h"
 #include "../../tutorial-utils/util-matrix.h"
 
 #include <htgs/api/ITask.hpp>
@@ -36,7 +37,7 @@ class MatMulAccumTask : public htgs::ITask<MatrixBlockMulData<double *>, MatrixB
     {
         for (size_t j = 0; j < width; j++) {
           for (size_t i = 0; i < height; i++) {
-          matrixA[IDX2C(i, j, height)] = matrixA[IDX2C(i, j, matAData->getLeadingDimension())]
+          matrixA[IDX2C(i, j, matAData->getLeadingDimension())] = matrixA[IDX2C(i, j, matAData->getLeadingDimension())]
               + matrixB[IDX2C(i, j, matBData->getLeadingDimension())];
         }
       }

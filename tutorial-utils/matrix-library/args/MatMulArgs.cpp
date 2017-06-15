@@ -56,9 +56,19 @@ void MatMulArgs::processArgs(int argc, char **argv) {
       runSequential = true;
     }
 
+    if (argvs == "--num-gpus") {
+      arg++;
+      numGPUs = (size_t)atoi(argv[arg]);
+    }
+
+    if (argvs == "--gpu-ids") {
+      arg++;
+      gpuIds = std::string(argv[arg]);
+    }
+
     if (argvs == "--help") {
       std::cout << argv[0]
-                << " args: [--width-b <#>] [--height-a <#>] [--shared-dim <#>] [--block-size <#>] [--num-readers <#>] [--num-workers <#>] [--dir <dir>] [--output-dir <dir>] [--validate-results] [--run-sequential] [--help]"
+                << " args: [--width-b <#>] [--height-a <#>] [--shared-dim <#>] [--block-size <#>] [--num-gpus <#>] [--gpu-ids <#,#,...,#>] [--num-readers <#>] [--num-workers <#>] [--dir <dir>] [--output-dir <dir>] [--validate-results] [--run-sequential] [--help]"
                 << std::endl;
       exit(0);
     }

@@ -43,7 +43,11 @@ endif(CMAKE_USE_PTHREADS_INIT)
 add_subdirectory(tutorial1)
 add_subdirectory(tutorial2)
 add_subdirectory(tutorial3)
-#add_subdirectory(tutorial4)
+
+if (CUDA_FOUND)
+    add_subdirectory(tutorial4)
+endif (CUDA_FOUND)
+
 #add_subdirectory(tutorial5)
 #add_subdirectory(tutorial6)
 #add_subdirectory(tutorial7)

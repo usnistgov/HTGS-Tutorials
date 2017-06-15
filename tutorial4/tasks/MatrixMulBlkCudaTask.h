@@ -8,65 +8,67 @@
 //
 
 
-#ifndef HTGS_MATRIXMULBLKTASK_H
-#define HTGS_MATRIXMULBLKTASK_H
+#ifndef HTGS_MATRIXMULBLKCUDATASK_H
+#define HTGS_MATRIXMULBLKCUDATASK_H
+#include <cuda.h>
+#include <cublas_v2.h>
 
-#include "../data/MatrixBlockMulData.h"
-#include "../data/MatrixBlockData.h"
 #include <htgs/api/ICudaTask.hpp>
+#include "../../tutorial-utils/matrix-library/data/MatrixBlockData.h"
+#include "../../tutorial-utils/matrix-library/data/MatrixBlockMulData.h"
+#include "../../tutorial-utils/matrix-library/rules/MatrixMemoryRule.h"
 
-class MatrixMulBlkTask : public htgs::ICudaTask<MatrixBlockMulData<MatrixMemoryData_t>,
-                                                MatrixBlockData<MatrixMemoryData_t>> {
+class MatrixMulBlkCudaTask : public htgs::ICudaTask<MatrixBlockMulData<htgs::m_data_t<double>>,
+                                                MatrixBlockData<htgs::m_data_t<double>>> {
 
  public:
-  MatrixMulBlkTask(CUcontext *contexts, int *cudaIds, int numGpus) : ICudaTask(contexts, cudaIds, numGpus) {}
-
-  virtual ~MatrixMulBlkTask() {
-
-  }
-
-  virtual void
-  initializeCudaGPU(CUcontext context, CUstream stream, int cudaId, int numGPUs, int pipelineId, int numPipelines) {
-    cublasCreate_v2(&handle);
-    cublasSetStream_v2(handle, stream);
-    alpha = new double[1];
+  MatrixMulBlkCudaTask(CUcontext *contexts,
+                   int *cudaIds,
+                   size_t numGpus) :
+      ICudaTask(contexts, cudaIds, numGpus) {
     alpha[0] = 1.0;
-    beta = new double[1];
     beta[0] = 0.0;
   }
 
-  virtual void shutdownCuda() {
+  virtual ~MatrixMulBlkCudaTask() {
+
+  }
+  void initializeCudaGPU() override {
+
+    cublasCreate_v2(&handle);
+    cublasSetStream_v2(handle, this->getStream());
+  }
+  void shutdownCuda() override {
     cublasDestroy_v2(handle);
-    delete[] alpha;
-    delete[] beta;
   }
 
-  virtual void executeGPUTask(std::shared_ptr<MatrixBlockMulData<MatrixMemoryData_t>> data, CUstream stream) {
+  void executeTask(std::shared_ptr<MatrixBlockMulData<htgs::m_data_t<double>>> data) override {
+
     auto matAData = data->getMatrixA();
     auto matBData = data->getMatrixB();
 
-    MatrixMemoryData_t matrixA = matAData->getMatrixData();
-    MatrixMemoryData_t matrixB = matBData->getMatrixData();
+    auto matrixA = matAData->getMatrixData();
+    auto matrixB = matBData->getMatrixData();
 
-    int width = matBData->getMatrixWidth();
-    int height = matAData->getMatrixHeight();
+    size_t width = matBData->getMatrixWidth();
+    size_t height = matAData->getMatrixHeight();
 
-    auto result = this->memGet<double *>("MatrixC", new MatrixMemoryRule(1));
+    auto result = this->getMemory<double>(matrixTypeToString(MatrixType::MatrixC), new MatrixMemoryRule(1));
 
     cublasDgemm_v2(handle,
                    CUBLAS_OP_N,
                    CUBLAS_OP_N,
-                   height,
-                   width,
-                   matAData->getMatrixWidth(),
+                   (int) height,
+                   (int) width,
+                   (int) matAData->getMatrixWidth(),
                    alpha,
                    matrixA->get(),
-                   matAData->getMatrixHeight(),
+                   (int) matAData->getLeadingDimension(),
                    matrixB->get(),
-                   matBData->getMatrixHeight(),
+                   (int) matBData->getLeadingDimension(),
                    beta,
                    result->get(),
-                   height);
+                   (int) height);
 
     this->syncStream();
 
@@ -74,29 +76,27 @@ class MatrixMulBlkTask : public htgs::ICudaTask<MatrixBlockMulData<MatrixMemoryD
                                                                     matBData->getRequest()->getCol(),
                                                                     MatrixType::MatrixC));
 
-    addResult(new MatrixBlockData<MatrixMemoryData_t>(matReq, result, width, height));
+    addResult(new MatrixBlockData<htgs::m_data_t<double>>(matReq, result, width, height, height));
 
-    std::string matrixNameA = matrixTypeToString(matAData->getRequest()->getType());
-    std::string matrixNameB = matrixTypeToString(matBData->getRequest()->getType());
+    this->releaseMemory(matrixA);
+    this->releaseMemory(matrixB);
 
-    this->memRelease(matrixNameA + "Copy", matrixA);
-    this->memRelease(matrixNameB + "Copy", matrixB);
+  }
+  std::string getName() override {
+    return "MatrixMulBlkCudaTask";
   }
 
-  virtual std::string getName() {
-    return "MatrixMulBlkTask";
-  }
-  virtual MatrixMulBlkTask *copy() {
-    return new MatrixMulBlkTask(this->getContexts(), this->getCudaIds(), this->getNumGPUs());
-  }
-  virtual bool isTerminated(std::shared_ptr<htgs::BaseConnector> inputConnector) {
-    return inputConnector->isInputTerminated();
+  MatrixMulBlkCudaTask *copy() override{
+    return new MatrixMulBlkCudaTask(this->getContexts(),
+                                this->getCudaIds(),
+                                this->getNumGPUs());
   }
 
  private:
+
+  double alpha[1];
+  double beta[1];
   cublasHandle_t handle;
-  double *alpha;
-  double *beta;
 };
 
-#endif //HTGS_MATRIXMULBLKTASK_H
+#endif //HTGS_MATRIXMULBLKCUDATASK_H

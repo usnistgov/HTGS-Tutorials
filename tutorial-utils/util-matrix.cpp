@@ -57,7 +57,7 @@ void initMatrixDiagDom(double * matrix, long width, long height, bool columnStor
 }
 
 void initMatrix(double *matrix, long width, long height, bool columnStore) {
-  long min = 1;
+  long min = 42;
   long max = 9000;
   unsigned long seed = 9000;
 

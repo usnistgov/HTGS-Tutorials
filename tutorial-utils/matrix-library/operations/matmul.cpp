@@ -12,9 +12,7 @@
 
 void computeMatMul(size_t M, size_t N, size_t K, double alpha, double *A, size_t LDA, double *B, size_t LDB, double beta, double *C, size_t LDC, bool ColMajor)
 {
-#ifdef USE_CUDA
-// TODO: Add CUDA
-#elif USE_OPENBLAS
+#ifdef USE_OPENBLAS
   cblas_dgemm(ColMajor ? CblasColMajor : CblasRowMajor, CblasNoTrans, CblasNoTrans, M, N, K, alpha, A, LDA, B, LDB, beta, C, LDC);
 #else
   if (ColMajor) {
@@ -62,7 +60,7 @@ bool validateMatMulResults(size_t numItemsPrint, double *a1, double *a2, size_t 
     }
   }
 
-  return true;
+  return count == 0;
 }
 void initMatMul(size_t numThreads) {
 #ifdef USE_OPENBLAS

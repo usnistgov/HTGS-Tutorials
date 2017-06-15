@@ -6,8 +6,55 @@
 include_directories(${OpenBLAS_INCLUDE_DIR})
 link_directories(${OpenBLAS_LIBRARIES})
 
-if (CUDA_FOUND)
-    add_subdirectory(matrix-mul-cuda)
-    add_subdirectory(matrix-mul-in-memory-cuda)
-    add_subdirectory(matrix-mul-in-memory-cuda-alternate)
-endif (CUDA_FOUND)
+set(TUTORIAL_UTILS_SRC
+        ../../tutorial-utils/util-matrix.h
+        ../../tutorial-utils/util-matrix.cpp
+        ../../tutorial-utils/util-filesystem.cpp
+        ../../tutorial-utils/util-filesystem.h
+        ../../tutorial-utils/util-cuda.h
+        ../../tutorial-utils/util-cuda.cpp
+        ../../tutorial-utils/SimpleClock.h
+        ../../tutorial-utils/enums/MatrixType.h
+        ../../tutorial-utils/enums/MatrixType.cpp
+        ../tutorial-utils/matrix-library/data/MatrixBlockData.h
+        ../tutorial-utils/matrix-library/data/MatrixRequestData.h
+        ../tutorial-utils/matrix-library/data/MatrixBlockMulData.h
+        ../tutorial-utils/matrix-library/tasks/LoadMatrixTask.h
+        ../tutorial-utils/matrix-library/operations/matmul.cpp
+        ../tutorial-utils/matrix-library/operations/matmul.h
+        ../tutorial-utils/matrix-library/args/MatMulArgs.h
+        ../tutorial-utils/matrix-library/args/MatMulArgs.cpp
+        ../tutorial-utils/matrix-library/tasks/CudaCopyInTask.h
+        ../tutorial-utils/matrix-library/tasks/CudaCopyOutTask.h
+        ../tutorial-utils/matrix-library/allocator/CudaAllocator.h
+        )
+
+set(CUDA_SRC
+        tasks/MatrixMulBlkCudaTask.h
+        )
+
+cuda_add_executable(tutorial4-matrixMul-cuda-with-memory
+        tutorial4-cuda-matrix-mul-with-memory.cpp
+#        tasks/ReadMatrixTask.h
+#        tasks/OutputTask.h
+#        tasks/MatrixAccumTask.h
+#        memory/MatrixMemoryRule.h
+#        memory/MatrixAllocator.h
+#        memory/CudaMatrixAllocator.h
+#        rules/MatrixLoadRule.h
+#        rules/MatrixDistributeRule.h
+#        rules/MatrixAccumulateRule.h
+#        rules/MatrixOutputRule.h
+#        tasks/MatrixMulBlkTask.h
+#        tasks/OutputTask.h
+#        tasks/MatrixCopyInTask.h
+#        tasks/MatrixCopyOutTask.h
+        ${TUTORIAL_UTILS_SRC}
+        ${CUDA_SRC}
+        )
+
+target_compile_definitions(tutorial4-matrixMul-cuda-with-memory PUBLIC -DUSE_CUDA)
+cuda_add_cublas_to_target(tutorial4-matrixMul-cuda-with-memory)
+target_link_libraries(tutorial4-matrixMul-cuda-with-memory ${CUDA_LIBRARIES})
+target_link_libraries(tutorial4-matrixMul-cuda-with-memory cuda)
+#target_link_libraries(tutorial4-matrixMul-cuda-with-memory openblas)

@@ -8,6 +8,7 @@
 #include <cstddef>
 #include <string>
 #include <iostream>
+#include <sstream>
 class MatMulArgs {
  public:
 
@@ -20,6 +21,8 @@ class MatMulArgs {
     numReadThreads = 1;
     numMatMulThreads = 10;
     directory = "data";
+    numGPUs = 1;
+    gpuIds = "0";
     outputDir = directory;
     runSequential = false;
     validateResults = false;
@@ -55,6 +58,32 @@ class MatMulArgs {
   bool isValidateResults() const {
     return validateResults;
   }
+  size_t getNumGPUs() const {
+    return numGPUs;
+  }
+  const std::string &getGpuIds() const {
+    return gpuIds;
+  }
+
+  void copyGpuIds(int *idArr)
+  {
+    std::istringstream iss(gpuIds);
+    std::string token;
+    size_t count = 0;
+    while(std::getline(iss, token, ','))
+    {
+      if (count >= numGPUs)
+      {
+        std::cerr << "Num GPUs specified = " << numGPUs << " too many GPU ids specified: " << gpuIds << std::endl;
+        exit(1);
+      }
+
+      int gpuId = std::stoi(token);
+      idArr[count] = gpuId;
+
+      count++;
+    }
+  }
 
   void processArgs(int argc, char** argv);
 
@@ -68,6 +97,9 @@ class MatMulArgs {
   size_t numMatMulThreads;
   std::string directory;
   std::string outputDir;
+
+  size_t numGPUs;
+  std::string gpuIds;
 
   bool runSequential;
   bool validateResults;
