@@ -6,6 +6,7 @@
 #include <htgs/api/TaskGraphConf.hpp>
 #include <htgs/api/TaskGraphRuntime.hpp>
 #include <cublasXt.h>
+
 #include "../tutorial-utils/matrix-library/tasks/CudaCopyInTask.h"
 #include "../tutorial-utils/matrix-library/operations/matmul.h"
 #include "../tutorial-utils/matrix-library/args/MatMulArgs.h"
@@ -22,8 +23,6 @@
 #include "../tutorial3/rules/MatMulDistributeRule.h"
 #include "../tutorial3/rules/MatMulLoadRule.h"
 #include "../tutorial3/rules/MatMulAccumulateRule.h"
-
-
 
 #include "tasks/MatrixMulBlkCudaTask.h"
 

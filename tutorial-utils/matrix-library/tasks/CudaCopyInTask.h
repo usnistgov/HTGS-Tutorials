@@ -23,6 +23,7 @@ class CudaCopyInTask : public htgs::ICudaTask<MatrixBlockData<double *>, MatrixB
                                         matrixType(matrixType),
                                         releaseCount(releaseCount) {
     matrixName = matrixTypeToString(matrixType);
+    numBytes = 0;
   }
 
   void initializeCudaGPU() override {
@@ -47,6 +48,7 @@ class CudaCopyInTask : public htgs::ICudaTask<MatrixBlockData<double *>, MatrixB
                           memoryIn, (int) data->getLeadingDimension(),
                           memoryOut->get(), (int)data->getMatrixHeight(), this->getStream());
 
+    numBytes += data->getMatrixHeight() * data->getMatrixWidth() * sizeof(double);
     this->syncStream();
 
     this->addResult(new MatrixBlockData<htgs::m_data_t<double>>(data->getRequest(),
@@ -59,9 +61,20 @@ class CudaCopyInTask : public htgs::ICudaTask<MatrixBlockData<double *>, MatrixB
     return new CudaCopyInTask(this->getContexts(), this->getCudaIds(), this->getNumGPUs(), this->matrixType, this->releaseCount);
   }
 
+  std::string getDotCustomProfile() override {
+    auto microTime = this->getTaskComputeTime();
+    double numGFlop = ((double)numBytes) * 1.0e-9d;
+
+    double timeSec = (double)microTime / 1000000.0;
+
+    return "Performance: " + std::to_string(numGFlop / timeSec) + " GB/s";
+  }
+
  private:
   MatrixType matrixType;
   size_t releaseCount;
   std::string matrixName;
+  size_t numBytes;
+
 };
 #endif //HTGS_TUTORIALS_CUDACOPYINTASK_H

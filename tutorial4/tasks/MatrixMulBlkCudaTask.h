@@ -28,6 +28,7 @@ class MatrixMulBlkCudaTask : public htgs::ICudaTask<MatrixBlockMulData<htgs::m_d
       ICudaTask(contexts, cudaIds, numGpus) {
     alpha[0] = 1.0;
     beta[0] = 0.0;
+    numOps = 0;
   }
 
   virtual ~MatrixMulBlkCudaTask() {
@@ -70,6 +71,8 @@ class MatrixMulBlkCudaTask : public htgs::ICudaTask<MatrixBlockMulData<htgs::m_d
                    result->get(),
                    (int) height);
 
+    numOps += height * width * matAData->getMatrixWidth();
+
     this->syncStream();
 
     std::shared_ptr<MatrixRequestData> matReq(new MatrixRequestData(matAData->getRequest()->getRow(),
@@ -92,11 +95,22 @@ class MatrixMulBlkCudaTask : public htgs::ICudaTask<MatrixBlockMulData<htgs::m_d
                                 this->getNumGPUs());
   }
 
+  std::string getDotCustomProfile() override {
+    auto microTime = this->getTaskComputeTime();
+    double numGFlop = ((double)numOps * 2.0) * 1.0e-9d;
+
+    double timeSec = (double)microTime / 1000000.0;
+
+    return "Performance: " + std::to_string(numGFlop / timeSec) + " gflops";
+  }
+
  private:
 
   double alpha[1];
   double beta[1];
   cublasHandle_t handle;
+  size_t numOps;
+
 };
 
 #endif //HTGS_MATRIXMULBLKCUDATASK_H
