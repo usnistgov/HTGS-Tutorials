@@ -4,44 +4,54 @@
 // You are solely responsible for determining the appropriateness of using and distributing the software and you assume all risks associated with its use, including but not limited to the risks and costs of program errors, compliance with applicable laws, damage to or loss of data, programs or equipment, and the unavailability or interruption of operation. This software is not intended to be used in any situation where a failure could cause risk of injury or damage to property. The software developed by NIST employees is not subject to copyright protection within the United States.
 
 //
-// Created by tjb3 on 2/23/16.
+// Created by tjb3 on 6/21/16.
 //
 
-#ifndef HTGS_MATRIXDISTRIBUTERULE_H
-#define HTGS_MATRIXDISTRIBUTERULE_H
+#ifndef HTGS_TUTORIALS_MATRIXDECOMPOSITIONRULE_H
+#define HTGS_TUTORIALS_MATRIXDECOMPOSITIONRULE_H
 
-#include <htgs/api/IRule.hpp>
-#include "../data/MatrixRequestData.h"
-
-class MatrixDistributeRule : public htgs::IRule<MatrixRequestData, MatrixRequestData> {
-
+class MatrixDecompositionRule : public htgs::IRule<MatrixRequestData, MatrixRequestData> {
  public:
-  MatrixDistributeRule(MatrixType type) {
-    this->type = type;
-  }
+  MatrixDecompositionRule(size_t numGpus) : numGpus(numGpus) {}
 
-  ~MatrixDistributeRule() {
-  }
+  virtual void applyRule(std::shared_ptr<MatrixRequestData> data, size_t pipelineId) {
 
-  bool isRuleTerminated(int pipelineId) {
-    return false;
-  }
+    MatrixType type = data->getType();
+    int row = data->getRow();
+    int col = data->getCol();
+    size_t gpuId;
+    switch (type) {
+      case MatrixType::MatrixA:
+        // One column per GPU
+        gpuId = col % numGpus;
 
-  void shutdownRule(int pipelineId) {
-  }
+        if (pipelineId == gpuId) {
+          addResult(data);
+//          std::cout << "sending matrixA: " << row << ", " << col << " to gpu: " << pipelineId << std::endl;
+        }
 
-  void applyRule(std::shared_ptr<MatrixRequestData> data, int pipelineId) {
-    if (data->getType() == this->type) {
-      addResult(data);
+        break;
+      case MatrixType::MatrixB:
+        // One row per GPU
+        gpuId = row % numGpus;
+
+        if (pipelineId == gpuId) {
+          addResult(data);
+//          std::cout << "sending matrixB: " << row << ", " << col << " to gpu: " << pipelineId << std::endl;
+        }
+        break;
+
+      case MatrixType::MatrixC:break;
+      case MatrixType::MatrixAny:break;
     }
-  }
 
-  std::string getName() {
-    return "MatrixDistributeRule";
+  }
+  virtual std::string getName() {
+    return "MatrixDecompositionRule";
   }
 
  private:
-  MatrixType type;
+  size_t numGpus;
 };
 
-#endif //HTGS_MATRIXDISTRIBUTERULE_H
+#endif //HTGS_TUTORIALS_MATRIXDECOMPOSITIONRULE_H
