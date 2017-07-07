@@ -6,7 +6,7 @@
 include_directories(${OpenBLAS_INCLUDE_DIR})
 link_directories(${OpenBLAS_LIBRARIES})
 
-add_definitions(-DPROFILE)
+#add_definitions(-DPROFILE)
 
 set(TUTORIAL_UTILS_SRC
         ../../tutorial-utils/util-matrix.h

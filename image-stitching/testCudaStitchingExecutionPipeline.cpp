@@ -21,20 +21,42 @@
 #include "cuda/tasks/PCIAMTask.h"
 #include "cuda/tasks/CCFTask.h"
 #include "cuda/rules/GridDecompositionRule.h"
+#include "StitchingParams.h"
 
 using namespace htgs;
 
 namespace is = ImageStitching;
 
-int main() {
+int main(int argc, char *argv[]) {
 
   std::cout << "Testing CUDA Runtime Execution Pipeline" << std::endl;
 
-  int startRow = 0;
-  int startCol = 0;
-  int extentWidth = 220;
-  int extentHeight = 220;
-  int numGpus = 1;
+  StitchingParams params(argc, argv);
+
+  if (params.parseArgs() < 0)
+  {
+    return -1;
+  }
+
+  if (params.isSaveParams()) {
+    params.saveArgs(params.getOutputParamFile());
+  }
+
+
+  std::cout << "Testing Runtime with Memory" << std::endl;
+
+  int startRow = params.getStartRow();
+  int startCol = params.getStartCol();
+  int extentWidth = params.getExtentWidth();
+  int extentHeight = params.getExtentHeight();
+  int numThreadsFFT = params.getNumThreadsFFT();
+  int numThreadsPCIAM = params.getNumThreadsPCIAM();
+  std::vector<int> gpuIdsV = params.getGpuIds();
+
+  int numGpus = (int)gpuIdsV.size();
+  int *gpuIds = gpuIdsV.data();
+
+
 
   DEBUG("Building Grid");
   std::string path("/home/tjb3/datasets/image-stitching/synth_large_grid_sequential");
@@ -42,13 +64,13 @@ int main() {
                                                                       startCol,
                                                                       extentWidth,
                                                                       extentHeight,
-                                                                      220,
-                                                                      220,
-                                                                      GridOrigin::UpperLeft,
-                                                                      GridNumbering::Row,
-                                                                      1,
-                                                                      path,
-                                                                      "img_000{ppppp}.tif",
+                                                                      params.getGridWidth(),
+                                                                      params.getGridHeight(),
+                                                                      params.getOrigin(),
+                                                                      params.getNumbering(),
+                                                                      params.getStartTile(),
+                                                                      params.getImageDir(),
+                                                                      params.getFilenamePattern(),
                                                                       is::ImageTileType::CUDA);
 
   is::CUDAImageTile *tile = grid->getSubGridTilePtr(0, 0);
@@ -56,7 +78,7 @@ int main() {
   TileGridTraverser<is::CUDAImageTile> *traverser = createTraverser(grid, Traversal::DiagonalTraversal);
 
   DEBUG("Initializing CUDA contexts");
-  int gpuIds[2] = {1, 2};
+
 
   CUcontext *contexts = is::CUDAImageTile::initCUDA(tile, numGpus, gpuIds);
 
@@ -141,13 +163,14 @@ int main() {
 
   runTime->waitForRuntime();
 
-  mainGraph->writeDotToFile("/home/tjb3/cuda-run.dot");
 
   auto finish = std::chrono::high_resolution_clock::now();
   std::cout << "Execution time: " << std::chrono::duration_cast<std::chrono::milliseconds>(finish - start).count()
       << " ms" << std::endl;
 
-  writeTranslationsToFile(grid, "/home/tjb3/cpp-htgs-out-cuda-runtime-executionPipeline.txt");
+  mainGraph->writeDotToFile("image-stitching-multigpu.dot", DOTGEN_COLOR_COMP_TIME);
+
+  writeTranslationsToFile(grid, "/home/tjb3/cpp-htgs-out-cuda-runtime-executionPipeline-" + std::to_string(numGpus)  + ".txt");
 
   std::cout << "Finished CUDA Runtime Execution Pipeline Test " << std::endl;
 

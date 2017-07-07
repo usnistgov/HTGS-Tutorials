@@ -86,6 +86,10 @@ if (CUDA_FOUND)
             cuda/tasks/PCIAMTask.h
             cuda/tasks/ReadTask.cpp
             cuda/tasks/ReadTask.h
+            StitchingParams.cpp
+            StitchingParams.h
+            ParamValidators.h
+            util-filesystem.h
             )
     set(STITCHING_CUDA_LIBRARIES ${LIB_ImageStitchingCuda_LIBRARIES} ${FFTW_LIBRARIES} ${TIFF_LIBRARIES} -lcuda ${CUDA_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 

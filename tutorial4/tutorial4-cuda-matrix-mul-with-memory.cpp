@@ -249,8 +249,9 @@ int main(int argc, char *argv[])
 
 
 //      taskGraph->writeDotToFile("profile-graph.dot");
-      taskGraph->writeDotToFile("profile-all-threads-graph.dot", DOTGEN_FLAG_SHOW_ALL_THREADING);
-      taskGraph->writeDotToFile("profile-graph.dot", DOTGEN_COLOR_COMP_TIME);
+//      taskGraph->writeDotToFile("profile-all-threads-graph.dot", DOTGEN_FLAG_SHOW_ALL_THREADING);
+      taskGraph->writeDotToFile("matrix-multiplication-cuda.dot", DOTGEN_COLOR_COMP_TIME);
+
 
       clk.stopAndIncrement();
 
@@ -297,7 +298,7 @@ int main(int argc, char *argv[])
 
               << std::endl;
 
-    runtimeFile << (runSequential ? "sequential" : "htgs") << ", " << numProdThreads
+    runtimeFile << "GPU-MM" << (runSequential ? "sequential" : "htgs") << ", " << numProdThreads
                 << ", " << numAccumThreads << ", "
                 << matrixBWidth << ", " << matrixAHeight
                 << ", " << sharedDim << ", " << blockSize << ", " << clk.getAverageTime(TimeVal::MILLI)

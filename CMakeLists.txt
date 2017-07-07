@@ -16,16 +16,20 @@ find_package(Threads REQUIRED)
 find_package(HTGS REQUIRED)
 find_package(OpenBLAS QUIET)
 find_package(CUDA QUIET)
-find_package(HTGSVisualizer QUIET)
+#find_package(HTGSVisualizer QUIET)
 #find_package(MAGMA QUIET)
 #find_package(PLASMA QUIET)
 #find_package(MKL REQUIRED)
 
 option(BUILD_STITCHING_TEST "Enables building the stitching test" OFF)
-
+option(DO_PROFILE "Enables profiling" OFF)
 
 include_directories(${HTGS_INCLUDE_DIR})
 link_libraries(${CMAKE_THREAD_LIBS_INIT})
+
+if (DO_PROFILE)
+    add_definitions(-DPROFILE)
+endif(DO_PROFILE)
 
 if (LIBHTGS_VISUALIZER_FOUND)
     include_directories(${LIBHTGS_VISUALIZER_INCLUDE_DIRS})
@@ -33,7 +37,7 @@ if (LIBHTGS_VISUALIZER_FOUND)
     add_definitions(${HTGS_VISUALIZER_DEFINITIONS})
 endif(LIBHTGS_VISUALIZER_FOUND)
 
-set (CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wextra -Wno-unused-parameter -Wno-reorder -g")
+set (CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wextra -Wno-unused-parameter -Wno-reorder")
 if(CMAKE_USE_PTHREADS_INIT)
     set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -pthread")
 endif(CMAKE_USE_PTHREADS_INIT)

@@ -135,6 +135,8 @@ int main(int argc, char **argv) {
   std::cout << "Execution time: " << std::chrono::duration_cast<std::chrono::milliseconds>(finish - start).count()
       << " ms" << std::endl;
 
+  taskGraph->writeDotToFile("image-stitching.dot", DOTGEN_COLOR_COMP_TIME);
+
   std::stringstream outputFile;
   outputFile << params.getOutputDir() << "/" << params.getOutputFilePrefix() << "-pre-optimization-translations-fftw-with-memorypool" << params.getExtentWidth() << "-" << params.getExtentHeight() << ".txt";
   writeTranslationsToFile(grid, outputFile.str());

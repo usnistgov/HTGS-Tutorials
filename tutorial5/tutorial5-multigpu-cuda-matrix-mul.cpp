@@ -230,7 +230,7 @@ int main(int argc, char *argv[])
 
       mainTaskGraph->addGraphProducerTask(outputTask);
 
-      mainTaskGraph->writeDotToFile("pre-execution.dot");
+//      mainTaskGraph->writeDotToFile("pre-execution.dot");
 
       htgs::TaskGraphRuntime *runtime = new htgs::TaskGraphRuntime(mainTaskGraph);
 
@@ -267,8 +267,8 @@ int main(int argc, char *argv[])
 
 
 //      taskGraph->writeDotToFile("profile-graph.dot");
-      mainTaskGraph->writeDotToFile("profile-all-threads-graph.dot", DOTGEN_FLAG_SHOW_ALL_THREADING);
-      mainTaskGraph->writeDotToFile("profile-graph.dot", DOTGEN_COLOR_COMP_TIME);
+//      mainTaskGraph->writeDotToFile("profile-all-threads-graph.dot", DOTGEN_FLAG_SHOW_ALL_THREADING);
+      mainTaskGraph->writeDotToFile("matrix-multiplication-cuda-multigpu.dot", DOTGEN_COLOR_COMP_TIME);
 
       clk.stopAndIncrement();
 
@@ -315,7 +315,7 @@ int main(int argc, char *argv[])
 
               << std::endl;
 
-    runtimeFile << (runSequential ? "sequential" : "htgs") << ", " << numProdThreads
+    runtimeFile << "MULTIGPU-MM" << (runSequential ? "sequential" : "htgs") << ", " << numProdThreads
                 << ", " << numAccumThreads << ", "
                 << matrixBWidth << ", " << matrixAHeight
                 << ", " << sharedDim << ", " << blockSize << ", " << clk.getAverageTime(TimeVal::MILLI)
