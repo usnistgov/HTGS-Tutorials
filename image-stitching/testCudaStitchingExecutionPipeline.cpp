@@ -165,13 +165,13 @@ int main(int argc, char *argv[]) {
 
 
   auto finish = std::chrono::high_resolution_clock::now();
+  std::cout << "Execution time: " << std::chrono::duration_cast<std::chrono::milliseconds>(finish - start).count()
+            << " ms" << std::endl;
+
+  mainGraph->writeDotToFile("image-stitching-multigpu.dot", DOTGEN_COLOR_COMP_TIME);
 
   delete runTime;
 
-  std::cout << "Execution time: " << std::chrono::duration_cast<std::chrono::milliseconds>(finish - start).count()
-      << " ms" << std::endl;
-
-  mainGraph->writeDotToFile("image-stitching-multigpu.dot", DOTGEN_COLOR_COMP_TIME);
 
   writeTranslationsToFile(grid, "/home/tjb3/cpp-htgs-out-cuda-runtime-executionPipeline-" + std::to_string(numGpus)  + ".txt");
 

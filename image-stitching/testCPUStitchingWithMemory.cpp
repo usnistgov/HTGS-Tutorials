@@ -133,12 +133,12 @@ int main(int argc, char **argv) {
 
   auto finish = std::chrono::high_resolution_clock::now();
 
-  delete runTime;
-
   std::cout << "Execution time: " << std::chrono::duration_cast<std::chrono::milliseconds>(finish - start).count()
-      << " ms" << std::endl;
+            << " ms" << std::endl;
 
   taskGraph->writeDotToFile("image-stitching.dot", DOTGEN_COLOR_COMP_TIME);
+
+  delete runTime;
 
   std::stringstream outputFile;
   outputFile << params.getOutputDir() << "/" << params.getOutputFilePrefix() << "-pre-optimization-translations-fftw-with-memorypool" << params.getExtentWidth() << "-" << params.getExtentHeight() << ".txt";
