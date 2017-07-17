@@ -126,6 +126,9 @@ int main() {
   runTime->executeAndWaitForRuntime();
 
   auto finish = std::chrono::high_resolution_clock::now();
+
+  delete runTime;
+
   std::cout << "Execution time: " << std::chrono::duration_cast<std::chrono::milliseconds>(finish - start).count()
       << " ms" << std::endl;
 
