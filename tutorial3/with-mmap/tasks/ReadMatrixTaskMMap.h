@@ -14,7 +14,6 @@
 #include <sys/mman.h>
 #include <fcntl.h>
 #include <err.h>
-#include <zconf.h>
 
 #include "../../../tutorial-utils/matrix-library/data/MatrixRequestData.h"
 #include "../../../tutorial-utils/matrix-library/data/MatrixBlockData.h"

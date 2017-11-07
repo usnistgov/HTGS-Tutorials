@@ -13,7 +13,6 @@
 #include <fstream>
 #include <htgs/api/ITask.hpp>
 #include <sys/mman.h>
-#include <zconf.h>
 #include <err.h>
 #include <fcntl.h>
 #include "../../../tutorial-utils/util-filesystem.h"
