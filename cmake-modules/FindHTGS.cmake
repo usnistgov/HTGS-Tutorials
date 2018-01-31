@@ -4,24 +4,69 @@
 # You are solely responsible for determining the appropriateness of using and distributing the software and you assume all risks associated with its use, including but not limited to the risks and costs of program errors, compliance with applicable laws, damage to or loss of data, programs or equipment, and the unavailability or interruption of operation. This software is not intended to be used in any situation where a failure could cause risk of injury or damage to property. The software developed by NIST employees is not subject to copyright protection within the United States.
 
 
-# - Find HTGS includes
+# - Find HTGS includes and required compiler flags and library dependencies
+# Dependencies: C++11 support and threading library
+#
+# The HTGS_CXX_FLAGS should be added to the CMAKE_CXX_FLAGS
 #
 # This module defines
 #  HTGS_INCLUDE_DIR
+#  HTGS_LIBRARIES
+#  HTGS_CXX_FLAGS
 #  HTGS_FOUND
 #
+
+SET(HTGS_FOUND ON)
+
+include(CheckCXXCompilerFlag)
+
+#set(CMAKE_CXX_STANDARD 11)
+#set(CMAKE_XX_STANDARD_REQUIRED ON)
+
+CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
+
+if (COMPILER_SUPPORTS_CXX11)
+    set(HTGS_CXX_FLAGS "${HTGS_CXX_FLAGS} -std=c++11")
+else()
+    if (HTGS_FIND_REQUIRED)
+        message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler for HTGS.")
+    else()
+        message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler for HTGS.")
+    endif()
+
+    SET(HTGS_FOUND OFF)
+endif()
+
+
+find_package(Threads QUIET)
+
+if (Threads_FOUND)
+    if(CMAKE_USE_PTHREADS_INIT)
+        set(HTGS_CXX_FLAGS  "${HTGS_CXX_FLAGS} -pthread")
+    endif(CMAKE_USE_PTHREADS_INIT)
+
+    set(HTGS_LIBRARIES "${HTGS_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT}")
+
+else()
+    if (HTGS_FIND_REQUIRED)
+        message(FATAL_ERROR "Unable to find threads. HTGS must have a threading library i.e. pthreads.")
+    else()
+        message(STATUS "Unable to find threads. HTGS must have a threading library i.e. pthreads.")
+    endif()
+    SET(HTGS_FOUND OFF)
+endif()
+
 
 FIND_PATH(HTGS_INCLUDE_DIR htgs/api/TaskGraph.hpp
         /usr/include
         /usr/local/include
         )
 
-SET(HTGS_FOUND ON)
 
 #    Check include files
 IF (NOT HTGS_INCLUDE_DIR)
     SET(HTGS_FOUND OFF)
-    MESSAGE(STATUS "Could not find HTGS includes. Turning HTGS_FOUND off")
+    MESSAGE(STATUS "Could not find HTGS includes. HTGS_FOUND now off")
 ENDIF ()
 
 IF (HTGS_FOUND)
