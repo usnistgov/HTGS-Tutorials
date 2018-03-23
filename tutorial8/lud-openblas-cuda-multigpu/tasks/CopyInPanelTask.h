@@ -43,15 +43,12 @@ class CopyInPanelTask : public htgs::ICudaTask<MatrixPanelData, MatrixPanelData>
         {
           int updatePanelOwnerId = (j-1) % this->getNumGPUs();
 
-          if (updatePanelOwnerId == pipelineId)
+          if (updatePanelOwnerId == this->getPipelineId())
             factorReleaseCounts[i] += 1;
         }
       }
     }
 
-
-
-    this->pipelineId = pipelineId;
   }
 
 
@@ -115,7 +112,6 @@ class CopyInPanelTask : public htgs::ICudaTask<MatrixPanelData, MatrixPanelData>
   std::string memoryEdge;
   PanelState panelState;
   std::string name;
-  int pipelineId;
   int *factorReleaseCounts;
 };
 

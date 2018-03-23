@@ -34,7 +34,6 @@ class MatrixMulPanelTask : public htgs::ICudaTask<MatrixPanelMulData, MatrixPane
 
   virtual void initializeCudaGPU() override {
 
-    this->pipelineId = this->getPipelineId();
     alpha = new double[1]{-1.0};
     beta = new double[1]{1.0};
 
@@ -123,7 +122,6 @@ class MatrixMulPanelTask : public htgs::ICudaTask<MatrixPanelMulData, MatrixPane
   cublasHandle_t handle;
   double *alpha;
   double *beta;
-  int pipelineId;
 };
 
 #endif //HTGS_MATRIXMULPANELTASK_H
