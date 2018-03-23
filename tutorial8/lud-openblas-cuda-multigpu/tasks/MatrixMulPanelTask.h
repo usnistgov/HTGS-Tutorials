@@ -28,32 +28,27 @@ class MatrixMulPanelTask : public htgs::ICudaTask<MatrixPanelMulData, MatrixPane
                    int blockSize) :
       ICudaTask(contexts, gpuIds, numGpus), fullMatrixWidthA(fullMatrixWidthA), fullMatrixHeightA(fullMatrixHeightA),
       fullMatrixWidthB(fullMatrixWidthB), fullMatrixHeightB(fullMatrixHeightB), blockSize(blockSize) {
-    this->setNumThreads(numCpuThreads);
+//    this->setNumThreads(numCpuThreads);
   }
 
 
-  virtual void initializeCudaGPU(CUcontext context,
-                                 CUstream stream,
-                                 int cudaId,
-                                 int numGPUs,
-                                 int pipelineId,
-                                 int numPipelines) {
+  virtual void initializeCudaGPU() override {
 
-    this->pipelineId = pipelineId;
+    this->pipelineId = this->getPipelineId();
     alpha = new double[1]{-1.0};
     beta = new double[1]{1.0};
 
     cublasCreate_v2(&handle);
-    cublasSetStream_v2(handle, stream);
+    cublasSetStream_v2(handle, this->getStream());
   }
 
-  virtual void shutdownCuda() {
+  virtual void shutdownCuda() override {
     delete []alpha;
     delete[] beta;
     cublasDestroy_v2(handle);
   }
 
-  virtual void executeGPUTask(std::shared_ptr<MatrixPanelMulData> data, CUstream stream) {
+  virtual void executeTask(std::shared_ptr<MatrixPanelMulData> data) override {
 
     auto factored = data->getFactoredMatrix();
     auto update = data->getUpdateMatrix();
@@ -94,7 +89,7 @@ class MatrixMulPanelTask : public htgs::ICudaTask<MatrixPanelMulData, MatrixPane
 
     this->syncStream();
 
-    this->memRelease("FactorMem", factored->getMemoryData());
+    this->releaseMemory(factored->getMemoryData());
 
     auto updated = data->getUpdateMatrix();
     updated->setPanelState(PanelState::UPDATED);

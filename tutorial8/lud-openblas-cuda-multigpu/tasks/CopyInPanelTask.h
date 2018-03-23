@@ -31,7 +31,7 @@ class CopyInPanelTask : public htgs::ICudaTask<MatrixPanelData, MatrixPanelData>
   }
 
   virtual void
-  initializeCudaGPU(CUcontext context, CUstream stream, int cudaId, int numGPUs, int pipelineId, int numPipelines) {
+  initializeCudaGPU() override {
     if (panelState == PanelState::ALL_FACTORED)
     {
       factorReleaseCounts = new int[numBlocksWidth];
@@ -41,7 +41,7 @@ class CopyInPanelTask : public htgs::ICudaTask<MatrixPanelData, MatrixPanelData>
         factorReleaseCounts[i] = 0;
         for (int j = i+1; j < numBlocksWidth; j++)
         {
-          int updatePanelOwnerId = (j-1) % numGPUs;
+          int updatePanelOwnerId = (j-1) % this->getNumGPUs();
 
           if (updatePanelOwnerId == pipelineId)
             factorReleaseCounts[i] += 1;
@@ -55,7 +55,7 @@ class CopyInPanelTask : public htgs::ICudaTask<MatrixPanelData, MatrixPanelData>
   }
 
 
-  virtual void executeGPUTask(std::shared_ptr<MatrixPanelData> data, CUstream stream) {
+  virtual void executeTask(std::shared_ptr<MatrixPanelData> data) override {
 
     // CPU Memory
     double *memoryIn = data->getMemory();
@@ -71,11 +71,11 @@ class CopyInPanelTask : public htgs::ICudaTask<MatrixPanelData, MatrixPanelData>
     }
 
 
-    auto memoryOut = this->memGet<double *>(memoryEdge, new MatrixMemoryRule(releaseCount));
+    auto memoryOut = this->getMemory<double>(memoryEdge, new MatrixMemoryRule(releaseCount));
 
     cublasSetMatrixAsync((int) data->getHeight(), (int) blockSize, sizeof(double),
                          memoryIn, (int) leadingDimensionFullMatrix,
-                         memoryOut->get(), (int) leadingDimensionFullMatrix, stream);
+                         memoryOut->get(), (int) leadingDimensionFullMatrix, this->getStream());
 
 
     data->setMemoryData(memoryOut);

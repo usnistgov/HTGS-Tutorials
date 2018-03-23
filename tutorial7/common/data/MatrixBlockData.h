@@ -12,8 +12,6 @@
 
 #include <htgs/api/MemoryData.hpp>
 
-typedef std::shared_ptr<htgs::MemoryData<double *>> MatrixMemoryData_t;
-
 template<class T>
 class MatrixBlockData : public htgs::IData {
  public:

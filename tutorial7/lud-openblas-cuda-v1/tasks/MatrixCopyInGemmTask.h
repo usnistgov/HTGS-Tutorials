@@ -11,10 +11,10 @@
 #define HTGS_TUTORIALS_MATRIXCOPYINGEMMTASK_H
 
 #include <htgs/api/ICudaTask.hpp>
-#include "../data/MatrixBlockData.h"
+#include "../../common/data/MatrixBlockData.h"
 #include <cuda.h>
 
-class MatrixCopyInGemmTask : public htgs::ICudaTask<MatrixBlockMulDataPreCopy<double *>, MatrixBlockMulData<MatrixMemoryData_t>> {
+class MatrixCopyInGemmTask : public htgs::ICudaTask<MatrixBlockMulDataPreCopy, MatrixBlockMulData<MatrixMemoryData_t>> {
  public:
   MatrixCopyInGemmTask(int blockSize,
                    CUcontext *contexts, int *cudaIds, int numGpus, long leadingDimensionFullMatrix) :
@@ -22,11 +22,7 @@ class MatrixCopyInGemmTask : public htgs::ICudaTask<MatrixBlockMulDataPreCopy<do
       blockSize(blockSize),
       leadingDimensionFullMatrix(leadingDimensionFullMatrix) {}
 
-  virtual void
-  initializeCudaGPU(CUcontext context, CUstream stream, int cudaId, int numGPUs, int pipelineId, int numPipelines) {
-  }
-
-  virtual void executeGPUTask(std::shared_ptr<MatrixBlockMulDataPreCopy<double *>> data, CUstream stream) {
+  virtual void executeTask(std::shared_ptr<MatrixBlockMulDataPreCopy> data) {
 
     // CPU Memory
     auto upperMatrix = data->getUpperMatrix();
@@ -35,24 +31,24 @@ class MatrixCopyInGemmTask : public htgs::ICudaTask<MatrixBlockMulDataPreCopy<do
 
     // Cuda Memory
 //    std::cout << "Getting memory upper" << std::endl;
-    auto memoryOutUpper = this->memGet<double *>("FactorUpperMem", new MatrixMemoryRule(1));
+    auto memoryOutUpper = this->getMemory<double>("FactorUpperMem", new MatrixMemoryRule(1));
 //    std::cout << "Done getting memory upper" << "row: " << upperMatrix->getRequest()->getRow() << ", " << upperMatrix->getRequest()->getCol() << std::endl;
 
     cublasSetMatrixAsync((int) upperMatrix->getMatrixHeight(), (int) upperMatrix->getMatrixWidth(), sizeof(double),
                          upperMem, (int) leadingDimensionFullMatrix,
-                         memoryOutUpper->get(), (int) upperMatrix->getMatrixHeight(), stream);
+                         memoryOutUpper->get(), (int) upperMatrix->getMatrixHeight(), this->getStream());
 
 
     auto resultMatrix = data->getResultMatrix();
     double *resultMem = resultMatrix->getMatrixData();
 
 //    std::cout << "Getting memory result" << std::endl;
-    auto memoryOutResult = this->memGet<double *>("ResultMatrixMem", new MatrixMemoryRule(1));
+    auto memoryOutResult = this->getMemory<double>("ResultMatrixMem", new MatrixMemoryRule(1));
 //    std::cout << "Done getting memory result" << "row: " << resultMatrix->getRequest()->getRow() << ", " << resultMatrix->getRequest()->getCol() << std::endl;
 
     cublasSetMatrixAsync((int) resultMatrix->getMatrixHeight(), (int) resultMatrix->getMatrixWidth(), sizeof(double),
                          resultMem, (int) leadingDimensionFullMatrix,
-                         memoryOutResult->get(), (int) resultMatrix->getMatrixHeight(), stream);
+                         memoryOutResult->get(), (int) resultMatrix->getMatrixHeight(), this->getStream());
 
 
     std::shared_ptr<MatrixBlockData<MatrixMemoryData_t>> upperMatrixOut(

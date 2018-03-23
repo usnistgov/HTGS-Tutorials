@@ -11,21 +11,21 @@
 #define HTGS_MATRIXMULRULE_H
 #include <htgs/api/IRule.hpp>
 #include <vector>
-#include "../data/MatrixBlockData.h"
-#include "../data/MatrixBlockMulData.h"
-#include "../data/MatrixRequestData.h"
-#include "../data/MatrixBlockMulDataPreCopy.h"
-#include "../data/MatrixBlockMultiData.h"
+#include "../../common/data/MatrixBlockData.h"
+#include "../../common/data/MatrixBlockMulData.h"
+#include "../../common/data/MatrixRequestData.h"
+#include "../../common/data/MatrixBlockMulDataPreCopy.h"
+#include "../../common/data/MatrixBlockMultiData.h"
 
 enum class MatrixState {
   NONE,
   IN_FLIGHT
 };
 
-class MatrixMulRule : public htgs::IRule<MatrixBlockMultiData<double *>, MatrixBlockMulDataPreCopy<double *>> {
+class MatrixMulRule : public htgs::IRule<MatrixBlockMultiData, MatrixBlockMulDataPreCopy> {
 
  public:
-  MatrixMulRule(htgs::StateContainer<std::shared_ptr<MatrixBlockData<double *>>> *matrixBlocks,
+  MatrixMulRule(htgs::StateContainer<std::shared_ptr<MatrixBlockData<data_ptr>>> *matrixBlocks,
                  int gridHeight, int gridWidth) :
       matrixBlocks(matrixBlocks), gridWidth(gridWidth), gridHeight(gridHeight)
   {
@@ -40,7 +40,7 @@ class MatrixMulRule : public htgs::IRule<MatrixBlockMultiData<double *>, MatrixB
     delete matrixMemoryBlocks;
   }
 
-  void applyRule(std::shared_ptr<MatrixBlockMultiData<double *>> data, int pipelineId) {
+  void applyRule(std::shared_ptr<MatrixBlockMultiData> data, size_t pipelineId) override {
     std::shared_ptr<MatrixRequestData> request = data->getRequest();
 
     int dataRow = request->getRow();
@@ -68,7 +68,7 @@ class MatrixMulRule : public htgs::IRule<MatrixBlockMultiData<double *>, MatrixB
           auto matrixLower = this->matrixMemoryBlocks->get(r, dataRow); //this->matrixBlocks->get(r, dataRow);
 
           auto matrixResult = this->matrixBlocks->get(r, dataCol);
-          addResult(new MatrixBlockMulDataPreCopy<double *>(matrixLower, data->getMatrixBlockData(), matrixResult));
+          addResult(new MatrixBlockMulDataPreCopy(matrixLower, data->getMatrixBlockData(), matrixResult));
 
 //          std::cout << "Sending "
 //                    << matrixLower->getRequest()->getRow() << ", " << matrixLower->getRequest()->getCol()
@@ -105,7 +105,7 @@ class MatrixMulRule : public htgs::IRule<MatrixBlockMultiData<double *>, MatrixB
             // data is matrixA
             auto matrixUpper = this->matrixBlocks->get(dataCol, c);
             auto matrixResult = this->matrixBlocks->get(dataRow, c);
-            addResult(new MatrixBlockMulDataPreCopy<double *>(data->getMatrixBlockMemoryData(),
+            addResult(new MatrixBlockMulDataPreCopy(data->getMatrixBlockMemoryData(),
                                                               matrixUpper,
                                                               matrixResult));
 
@@ -144,14 +144,14 @@ class MatrixMulRule : public htgs::IRule<MatrixBlockMultiData<double *>, MatrixB
   }
 
 
-  std::string getName() {
+  std::string getName() override {
     return "MatrixMulRule";
   }
 
  private:
   htgs::StateContainer<int> *matrixState;
   htgs::StateContainer<int> *updateState;
-  htgs::StateContainer<std::shared_ptr<MatrixBlockData<double *>>> *matrixBlocks;
+  htgs::StateContainer<std::shared_ptr<MatrixBlockData<data_ptr>>> *matrixBlocks;
   htgs::StateContainer<std::shared_ptr<MatrixBlockData<MatrixMemoryData_t>>> *matrixMemoryBlocks;
   int gridWidth;
   int gridHeight;

@@ -11,7 +11,7 @@
 #define HTGS_CUDAMATRIXALLOCATOR_H
 #include <htgs/api/IMemoryAllocator.hpp>
 
-class CudaMatrixAllocator : public htgs::IMemoryAllocator<double *> {
+class CudaMatrixAllocator : public htgs::IMemoryAllocator<double> {
  public:
   CudaMatrixAllocator(int width, int height) : IMemoryAllocator((size_t) width * height) {}
 

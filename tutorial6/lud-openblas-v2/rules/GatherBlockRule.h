@@ -19,14 +19,14 @@ class GatherBlockRule : public htgs::IRule<MatrixBlockData<double *>, MatrixPane
 
  public:
 
-  GatherBlockRule(int numBlocksHeight, int numBlocksWidth, long blockSize,
+  GatherBlockRule(size_t numBlocksHeight, size_t numBlocksWidth, long blockSize,
                   htgs::StateContainer<std::shared_ptr<MatrixBlockData<double *>>> *matrixBlocks) :
       numBlocksHeight(numBlocksHeight), blockSize(blockSize), matrixBlocks(matrixBlocks)
   {
     gatherBlockState = this->allocStateContainer<GatherState>(numBlocksHeight, numBlocksWidth, GatherState::None);
   }
 
-  virtual void applyRule(std::shared_ptr<MatrixBlockData<double *>> data, int pipelineId) {
+  virtual void applyRule(std::shared_ptr<MatrixBlockData<double *>> data, size_t pipelineId) override {
 
     int row = data->getRequest()->getRow();
     int col = data->getRequest()->getCol();
@@ -63,7 +63,7 @@ class GatherBlockRule : public htgs::IRule<MatrixBlockData<double *>, MatrixPane
 
 
   }
-  std::string getName() {
+  std::string getName() override {
     return "GatherBlockRule";
   }
 

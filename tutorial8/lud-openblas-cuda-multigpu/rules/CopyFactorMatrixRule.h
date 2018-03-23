@@ -17,7 +17,7 @@ class CopyFactorMatrixRule : public htgs::IRule<MatrixPanelData, MatrixPanelData
   CopyFactorMatrixRule()
   { }
 
-  virtual void applyRule(std::shared_ptr<MatrixPanelData> data, int pipelineId) {
+  virtual void applyRule(std::shared_ptr<MatrixPanelData> data, size_t pipelineId) override {
     // Send the all factored panel to ALL gpus (broadcast)
     if (data->getPanelState() == PanelState::ALL_FACTORED)
     {

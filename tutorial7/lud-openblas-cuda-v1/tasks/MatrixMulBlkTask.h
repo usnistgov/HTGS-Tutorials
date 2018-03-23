@@ -11,8 +11,8 @@
 #ifndef HTGS_MATRIXMULBLKTASK_H
 #define HTGS_MATRIXMULBLKTASK_H
 
-#include "../data/MatrixBlockMulData.h"
-#include "../data/MatrixBlockData.h"
+#include "../../common/data/MatrixBlockMulData.h"
+#include "../../common/data/MatrixBlockData.h"
 #include "../memory/MatrixMemoryRule.h"
 #include <htgs/api/ITask.hpp>
 #include <htgs/api/ICudaTask.hpp>
@@ -21,7 +21,7 @@
 class MatrixMulBlkTask : public htgs::ICudaTask<MatrixBlockMulData<MatrixMemoryData_t>, MatrixBlockData<MatrixMemoryData_t>> {
 
  public:
-  MatrixMulBlkTask(CUcontext *contexts, int *gpuIds, int numGpus,
+  MatrixMulBlkTask(CUcontext *contexts, int *gpuIds, size_t numGpus,
                    int fullMatrixWidthA,
                    int fullMatrixHeightA,
                    int fullMatrixWidthB,
@@ -30,36 +30,34 @@ class MatrixMulBlkTask : public htgs::ICudaTask<MatrixBlockMulData<MatrixMemoryD
       ICudaTask(contexts, gpuIds, numGpus), fullMatrixWidthA(fullMatrixWidthA), fullMatrixHeightA(fullMatrixHeightA),
       fullMatrixWidthB(fullMatrixWidthB), fullMatrixHeightB(fullMatrixHeightB), blockSize(blockSize) {}
 
-  virtual void initializeCudaGPU(CUcontext context,
-                                 CUstream stream,
-                                 int cudaId,
-                                 int numGPUs,
-                                 int pipelineId,
-                                 int numPipelines) {
+
+  void initializeCudaGPU() override {
 
     alpha = new double[1]{-1.0};
     beta = new double[1]{1.0};
 
     cublasCreate_v2(&handle);
-    cublasSetStream_v2(handle, stream);
+    cublasSetStream_v2(handle, this->getStream());
   }
-  virtual void shutdownCuda() {
+
+  void shutdownCuda() override {
     delete []alpha;
     delete[] beta;
     cublasDestroy_v2(handle);
   }
 
-  virtual void executeGPUTask(std::shared_ptr<MatrixBlockMulData<MatrixMemoryData_t>> data, CUstream stream) {
+  void executeTask(std::shared_ptr<MatrixBlockMulData<MatrixMemoryData_t>> data) override {
     auto matAData = data->getMatrixA();
     auto matBData = data->getMatrixB();
-    auto resultData = data->getMatrixC();
+    std::shared_ptr<MatrixBlockData<MatrixMemoryData_t>> resultData = data->getMatrixC();
 
-    auto matrixA = matAData->getMatrixData();
-    auto matrixB = matBData->getMatrixData();
-    auto result = resultData->getMatrixData();
+    MatrixMemoryData_t matrixA = matAData->getMatrixData();
+    MatrixMemoryData_t matrixB = matBData->getMatrixData();
+    MatrixMemoryData_t result = resultData->getMatrixData();
 
     long width = matBData->getMatrixWidth();
     long height = matAData->getMatrixHeight();
+
 
     cublasDgemm_v2(handle,
                    CUBLAS_OP_N,
@@ -81,18 +79,18 @@ class MatrixMulBlkTask : public htgs::ICudaTask<MatrixBlockMulData<MatrixMemoryD
 //    MatrixMemoryRule * rule = (MatrixMemoryRule *)matrixA->getMemoryReleaseRule();
 //    std::cout << " Release count for matrix A: " << matAData->getRequest()->getRow() << ", " << matAData->getRequest()->getCol() << ":  " << rule->getReleaseCount() << std::endl;
 
-    this->memRelease("FactorLowerMem", matrixA);
-    this->memRelease("FactorUpperMem", matrixB);
+    this->releaseMemory(matrixA);
+    this->releaseMemory(matrixB);
 
     addResult(resultData);
 
 
   }
 
-  virtual std::string getName() {
+  virtual std::string getName() override {
     return "MatrixMulBlkTask";
   }
-  virtual MatrixMulBlkTask *copy() {
+  MatrixMulBlkTask *copy() override {
     return new MatrixMulBlkTask(this->getContexts(),
                                 this->getCudaIds(),
                                 this->getNumGPUs(),

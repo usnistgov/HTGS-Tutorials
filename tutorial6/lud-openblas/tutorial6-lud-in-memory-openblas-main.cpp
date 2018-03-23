@@ -11,8 +11,8 @@
 
 //typedef long long int lapack_int;
 
-#include <htgs/api/TaskGraph.hpp>
-#include <htgs/api/Runtime.hpp>
+#include <htgs/api/TaskGraphConf.hpp>
+#include <htgs/api/TaskGraphRuntime.hpp>
 #include <cblas.h>
 #include <iomanip>
 #include <cfloat>
@@ -270,39 +270,40 @@ int main(int argc, char *argv[]) {
       UpdateRule *updateRule = new UpdateRule(numUpdates);
       UpdateRule *updateRule2 = new UpdateRule(numUpdates);
 
-      auto taskGraph = new htgs::TaskGraph<MatrixBlockData<double *>, htgs::VoidData>();
-      taskGraph->addGraphInputConsumer(gausElimTask);
+      auto taskGraph = new htgs::TaskGraphConf<MatrixBlockData<double *>, htgs::VoidData>();
+      taskGraph->setGraphConsumerTask(gausElimTask);
+//      taskGraph->addGraphInputConsumer(gausElimTask);
 
       taskGraph->addEdge(gausElimTask, gausElimBk);
-      taskGraph->addRule(gausElimBk, factorUpperTask, gausElimRuleUpper);
-      taskGraph->addRule(gausElimBk, factorLowerTask, gausElimRuleLower);
+      taskGraph->addRuleEdge(gausElimBk, gausElimRuleUpper, factorUpperTask);
+      taskGraph->addRuleEdge(gausElimBk, gausElimRuleLower, factorLowerTask);
 
       taskGraph->addEdge(factorUpperTask, matrixMulBk);
       taskGraph->addEdge(factorLowerTask, matrixMulBk);
 
-      taskGraph->addRule(matrixMulBk, matrixMulTask, matrixMulRule);
+      taskGraph->addRuleEdge(matrixMulBk, matrixMulRule, matrixMulTask);
       taskGraph->addEdge(matrixMulTask, matrixMulResultBk);
 
       if (numDiagonals > 0)
-        taskGraph->addRule(matrixMulResultBk, gausElimTask, gausElimRule);
+        taskGraph->addRuleEdge(matrixMulResultBk, gausElimRule, gausElimTask);
       else
         delete gausElimRule;
 
       if (numUpdates > 0)
-        taskGraph->addRule(matrixMulResultBk, matrixMulBk, updateRule);
+        taskGraph->addRuleEdge(matrixMulResultBk, updateRule, matrixMulBk);
       else
         delete updateRule;
 
       if (numUpdates > 0)
-        taskGraph->addRule(matrixMulResultBk, gausElimBk, updateRule2);
+        taskGraph->addRuleEdge(matrixMulResultBk, updateRule2, gausElimBk);
       else
         delete updateRule2;
 
-      taskGraph->incrementGraphInputProducer();
+//      taskGraph->incrementGraphProducer();
 
-//      taskGraph->writeDotToFile("lud-graph.dot");
+      taskGraph->writeDotToFile("lud-graph.dot");
 
-      htgs::Runtime *runtime = new htgs::Runtime(taskGraph);
+      htgs::TaskGraphRuntime *runtime = new htgs::TaskGraphRuntime(taskGraph);
 
       clk.start();
 
@@ -311,12 +312,22 @@ int main(int argc, char *argv[]) {
       taskGraph->produceData(matrixBlocks->get(0, 0));
       taskGraph->finishedProducingData();
       runtime->waitForRuntime();
-
       clk.stopAndIncrement();
+
+
+      double operations = (2.0 * (matrixSize * matrixSize * matrixSize)) / 3.0;
+      double flops = operations / clk.getAverageTime(TimeVal::SEC);
+      double gflops = flops / 1073741824.0;
+
+
+      taskGraph->writeDotToFile(std::to_string(matrixSize) + "-" + std::to_string(blockSize) + "-end-lud-graph.dot", DOTGEN_COLOR_COMP_TIME, std::to_string(matrixSize) + "-" + std::to_string(blockSize) + "-Block-LUD", std::to_string(gflops) + " GFLOPS");
+
 
       delete runtime;
       delete matrixBlocks;
+
       endToEnd.stopAndIncrement();
+
     }
 
     double operations = (2.0 * (matrixSize * matrixSize * matrixSize)) / 3.0;

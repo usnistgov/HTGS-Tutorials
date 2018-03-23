@@ -7,16 +7,16 @@
 
 #include <htgs/api/ITask.hpp>
 #include <cblas.h>
-#include "../data/MatrixBlockData.h"
-#include "../data/MatrixFactorData.h"
-class FactorLowerTask : public htgs::ITask<MatrixFactorData<double *>, MatrixBlockData<double *>>
+#include "../../common/data/MatrixBlockData.h"
+#include "../../common/data/MatrixFactorData.h"
+class FactorLowerTask : public htgs::ITask<MatrixFactorData, MatrixBlockData<data_ptr>>
 {
  public:
 
   FactorLowerTask(int numThreads, long fullMatrixHeight, long fullMatrixWidth) : ITask(numThreads), fullMatrixHeight(fullMatrixHeight), fullMatrixWidth(fullMatrixWidth) {}
 
 
-  virtual void executeTask(std::shared_ptr<MatrixFactorData<double *>> data) {
+  virtual void executeTask(std::shared_ptr<MatrixFactorData> data) {
 
     double *matrix = data->getUnFactoredMatrix()->getMatrixData();
     double *triMatrix = data->getTriangleMatrix()->getMatrixData();
@@ -32,11 +32,11 @@ class FactorLowerTask : public htgs::ITask<MatrixFactorData<double *>, MatrixBlo
     addResult(data->getUnFactoredMatrix());
 
   }
-  virtual FactorLowerTask *copy() {
+  FactorLowerTask *copy() override {
     return new FactorLowerTask(this->getNumThreads(), fullMatrixHeight, fullMatrixWidth);
   }
 
-  virtual std::string getName() {
+  std::string getName() override {
     return "FactorLowerTask";
   }
 

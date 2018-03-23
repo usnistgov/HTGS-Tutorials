@@ -30,7 +30,7 @@ class MatrixMulRule : public htgs::IRule<MatrixPanelData, MatrixPanelMulData> {
     panels = new htgs::StateContainer<std::shared_ptr<MatrixPanelData>>*[numGpus];
     for (int i = 0; i < numGpus; i++) {
       factorState[i] = this->allocStateContainer<bool>(gridHeight, gridWidth, false);
-      panels[i] = this->allocStateContainer(gridHeight, gridWidth);
+      panels[i] = this->allocStateContainer((size_t)gridHeight, (size_t)gridWidth);
     }
   }
 
@@ -44,7 +44,7 @@ class MatrixMulRule : public htgs::IRule<MatrixPanelData, MatrixPanelMulData> {
     delete [] factorState;
   }
 
-  void applyRule(std::shared_ptr<MatrixPanelData> data, int pipelineId) {
+  void applyRule(std::shared_ptr<MatrixPanelData> data, size_t pipelineId) override {
 
     int panelColumn =data->getPanelCol();
     int diagonalColumn = data->getPanelOperatingDiagonal();

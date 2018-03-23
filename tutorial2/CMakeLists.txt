@@ -14,7 +14,7 @@ set(TUTORIAL_UTILS_SRC
         ../tutorial-utils/matrix-library/data/MatrixRequestData.h
         ../tutorial-utils/matrix-library/data/MatrixBlockData.h
         ../tutorial-utils/matrix-library/data/MatrixBlockMulData.h
-        ../tutorial-utils/matrix-library/tasks/LoadMatrixTask.h)
+        ../tutorial-utils/matrix-library/tasks/LoadMatrixTask.h ../tutorial7/common/types/MatrixTypes.h)
 
 add_executable(tutorial2
         tutorial2-hadamard-main.cpp

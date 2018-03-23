@@ -30,7 +30,7 @@ class GatherBlockRule : public htgs::IRule<MatrixBlockData<double *>, MatrixPane
     delete gatherBlockState;
   }
 
-  virtual void applyRule(std::shared_ptr<MatrixBlockData<double *>> data, int pipelineId) {
+  virtual void applyRule(std::shared_ptr<MatrixBlockData<double *>> data, size_t pipelineId) override {
 
     int row = data->getRequest()->getRow();
     int col = data->getRequest()->getCol();

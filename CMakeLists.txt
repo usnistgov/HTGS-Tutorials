@@ -17,7 +17,7 @@ find_package(HTGS REQUIRED)
 find_package(OpenBLAS QUIET)
 find_package(CUDA QUIET)
 #find_package(HTGSVisualizer QUIET)
-#find_package(MAGMA QUIET)
+find_package(MAGMA QUIET)
 #find_package(PLASMA QUIET)
 #find_package(MKL REQUIRED)
 
@@ -53,9 +53,9 @@ if (CUDA_FOUND)
     add_subdirectory(tutorial5)
 endif (CUDA_FOUND)
 
-#add_subdirectory(tutorial6)
+add_subdirectory(tutorial6)
 #add_subdirectory(tutorial7)
-#add_subdirectory(tutorial8)
+add_subdirectory(tutorial8)
 
 
 if (BUILD_STITCHING_TEST)

@@ -6,14 +6,14 @@
 #define HTGS_TUTORIALS_GAUSELIMRULEUPPER_H
 
 #include <htgs/api/IRule.hpp>
-#include "../data/MatrixFactorData.h"
+#include "../../common/data/MatrixFactorData.h"
 #include "../../../tutorial-utils/util-matrix.h"
-class GausElimRuleUpper : public htgs::IRule<MatrixBlockData<double *>, MatrixFactorData<double *>>
+class GausElimRuleUpper : public htgs::IRule<MatrixBlockData<data_ptr>, MatrixFactorData>
 {
 
  public:
 
-  GausElimRuleUpper(htgs::StateContainer<std::shared_ptr<MatrixBlockData<double *>>> *matrixBlocks, int gridHeight, int gridWidth) :
+  GausElimRuleUpper(htgs::StateContainer<std::shared_ptr<MatrixBlockData<data_ptr>>> *matrixBlocks, int gridHeight, int gridWidth) :
       matrixBlocks(matrixBlocks), gridWidth(gridWidth), gridHeight(gridHeight)
   {
     this->upperState = this->allocStateContainer<int>(gridHeight, gridWidth, 0);
@@ -23,7 +23,7 @@ class GausElimRuleUpper : public htgs::IRule<MatrixBlockData<double *>, MatrixFa
     delete upperState;
   }
 
-  virtual void applyRule(std::shared_ptr<MatrixBlockData<double *>> data, int pipelineId) {
+  virtual void applyRule(std::shared_ptr<MatrixBlockData<data_ptr>> data, size_t pipelineId) override {
     int row = data->getRequest()->getRow();
     int col = data->getRequest()->getCol();
 
@@ -42,7 +42,7 @@ class GausElimRuleUpper : public htgs::IRule<MatrixBlockData<double *>, MatrixFa
           // if the state value is equal to the row value, then it is ready to be sent
           if (stateVal == row) {
             auto matrix = matrixBlocks->get(row, c);
-            addResult(new MatrixFactorData<double *>(data, matrix));
+            addResult(new MatrixFactorData(data, matrix));
 //            std::cout << "Sending " << row << ", " << col << " with " << row << ", " << c << std::endl;
           }
         }
@@ -59,7 +59,7 @@ class GausElimRuleUpper : public htgs::IRule<MatrixBlockData<double *>, MatrixFa
 
           // Diagonal and data are ready to be factored
           auto diagonal = matrixBlocks->get(row, row);
-          addResult(new MatrixFactorData<double *>(diagonal, data));
+          addResult(new MatrixFactorData(diagonal, data));
 //          std::cout << "Sending " << row << ", " << row << " with " << row << ", " << col << std::endl;
         }
       }
@@ -70,13 +70,13 @@ class GausElimRuleUpper : public htgs::IRule<MatrixBlockData<double *>, MatrixFa
 //    std::cout << std::endl;
   }
 
-  std::string getName() {
+  std::string getName() override {
     return "GausElimRuleUpper";
   }
  private:
   // Store state . . .
   htgs::StateContainer<int> *upperState;
-  htgs::StateContainer<std::shared_ptr<MatrixBlockData<double *>>> *matrixBlocks;
+  htgs::StateContainer<std::shared_ptr<MatrixBlockData<data_ptr>>> *matrixBlocks;
 
   int gridWidth;
   int gridHeight;

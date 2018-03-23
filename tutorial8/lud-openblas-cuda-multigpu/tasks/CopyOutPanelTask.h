@@ -25,11 +25,8 @@ class CopyOutPanelTask : public htgs::ICudaTask<MatrixPanelData, MatrixPanelData
       numBlocksWidth(numBlocksWidth),
       memoryEdge(memoryEdge){}
 
-  virtual void
-  initializeCudaGPU(CUcontext context, CUstream stream, int cudaId, int numGPUs, int pipelineId, int numPipelines) {
-  }
 
-  virtual void executeGPUTask(std::shared_ptr<MatrixPanelData> data, CUstream stream) {
+  virtual void executeTask(std::shared_ptr<MatrixPanelData> data) override {
 
     if (data->isWindowed())
     {
@@ -46,12 +43,12 @@ class CopyOutPanelTask : public htgs::ICudaTask<MatrixPanelData, MatrixPanelData
 
         cublasGetMatrixAsync((int) data->getOrigHeight(), (int) blockSize, sizeof(double),
                              memoryIn, (int) leadingDimensionFullMatrix,
-                             memoryOut, (int) leadingDimensionFullMatrix, stream);
+                             memoryOut, (int) leadingDimensionFullMatrix, this->getStream());
 
         this->syncStream();
       }
 
-      this->memRelease("UpdateWindowMem", data->getMemoryData());
+      this->releaseMemory(data->getMemoryData());
     }
     else {
       // CPU Memory
@@ -62,11 +59,11 @@ class CopyOutPanelTask : public htgs::ICudaTask<MatrixPanelData, MatrixPanelData
 
       cublasGetMatrixAsync((int) data->getHeight(), (int) blockSize, sizeof(double),
                            memoryIn, (int) leadingDimensionFullMatrix,
-                           memoryOut, (int) leadingDimensionFullMatrix, stream);
+                           memoryOut, (int) leadingDimensionFullMatrix, this->getStream());
 
       this->syncStream();
 
-      this->memRelease("UpdateMem", data->getMemoryData());
+      this->releaseMemory(data->getMemoryData());
     }
 
     this->addResult(data);

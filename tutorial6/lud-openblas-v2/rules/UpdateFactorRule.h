@@ -11,14 +11,14 @@
 class UpdateFactorRule : public htgs::IRule<MatrixPanelData, MatrixBlockData<double *>>
 {
  public:
-  UpdateFactorRule(int totalBlocks, int gridHeight, htgs::StateContainer<std::shared_ptr<MatrixBlockData<double *>>> *matrixBlocks) :
+  UpdateFactorRule(size_t totalBlocks, size_t gridHeight, htgs::StateContainer<std::shared_ptr<MatrixBlockData<double *>>> *matrixBlocks) :
       totalBlocks(totalBlocks), gridHeight(gridHeight), matrixBlocks(matrixBlocks) {}
 
-  virtual bool isRuleTerminated(int pipelineId) {
+  virtual bool canTerminateRule(size_t pipelineId) override {
     return this->totalBlocks == 0;
   }
 
-  virtual void applyRule(std::shared_ptr<MatrixPanelData> data, int pipelineId) {
+  virtual void applyRule(std::shared_ptr<MatrixPanelData> data, size_t pipelineId) override {
 
     // Notify a block has been updated
     totalBlocks--;
@@ -40,13 +40,13 @@ class UpdateFactorRule : public htgs::IRule<MatrixPanelData, MatrixBlockData<dou
     }
   }
 
-  std::string getName() {
+  std::string getName() override {
     return "UpdateFactorRule";
   }
 
  private:
-  int totalBlocks;
-  int gridHeight;
+  size_t totalBlocks;
+  size_t gridHeight;
   htgs::StateContainer<std::shared_ptr<MatrixBlockData<double *>>> *matrixBlocks;
 };
 

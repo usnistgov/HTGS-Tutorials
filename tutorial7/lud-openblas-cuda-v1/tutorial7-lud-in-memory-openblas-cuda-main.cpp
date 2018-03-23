@@ -7,20 +7,19 @@
 //
 //#define DEBUG_FLAG
 //#define DEBUG_LEVEL_VERBOSE
-#define PROFILE
 
 #define MAGMA_ILP64
 typedef long int lapack_int;
 
-#include <htgs/api/TaskGraph.hpp>
-#include <htgs/api/Runtime.hpp>
+#include <htgs/api/TaskGraphConf.hpp>
+#include <htgs/api/TaskGraphRuntime.hpp>
 #include <cblas.h>
 #include <iomanip>
 #include <cfloat>
 #include <zconf.h>
 
-#include "data/MatrixRequestData.h"
-#include "data/MatrixBlockData.h"
+#include "../common/data/MatrixRequestData.h"
+#include "../common/data/MatrixBlockData.h"
 #include "rules/GausElimRuleUpper.h"
 #include "rules/GausElimRuleLower.h"
 #include "rules/UpdateRule.h"
@@ -33,7 +32,7 @@ typedef long int lapack_int;
 #include "tasks/FactorLowerTask.h"
 #include "rules/MatrixMulRule.h"
 #include "tasks/MatrixMulBlkTask.h"
-#include "data/MatrixBlockMultiData.h"
+#include "../common/data/MatrixBlockMultiData.h"
 #include "../../tutorial-utils/util-cuda.h"
 #include "tasks/MatrixCopyInFactorTask.h"
 #include "tasks/MatrixCopyInGemmTask.h"
@@ -260,7 +259,7 @@ int main(int argc, char *argv[]) {
 
       auto factorCopyInTask = new MatrixCopyInFactorTask(blockSize, contexts, gpuIds, numGpus, matrixSize, gridWidth);
 
-      auto matrixMulBk = new htgs::Bookkeeper<MatrixBlockMultiData<double *>>();
+      auto matrixMulBk = new htgs::Bookkeeper<MatrixBlockMultiData>();
       MatrixMulRule *matrixMulRule = new MatrixMulRule(matrixBlocks, gridHeight, gridWidth);
 
       MatrixCopyInGemmTask *gemmCopyInTask = new MatrixCopyInGemmTask(blockSize, contexts, gpuIds, numGpus, matrixSize);
@@ -282,47 +281,47 @@ int main(int argc, char *argv[]) {
       UpdateRuleMatMul *updateMatMulRule = new UpdateRuleMatMul(numUpdates);
 //      UpdateRule *updateRule2 = new UpdateRule(numUpdates);
 
-      auto taskGraph = new htgs::TaskGraph<MatrixBlockData<double *>, htgs::VoidData>();
-      taskGraph->addGraphInputConsumer(gausElimTask);
+      auto taskGraph = new htgs::TaskGraphConf<MatrixBlockData<double *>, htgs::VoidData>();
+      taskGraph->setGraphConsumerTask(gausElimTask);
       taskGraph->addEdge(gausElimTask, gausElimBk);
-      taskGraph->addRule(gausElimBk, factorUpperTask, gausElimRuleUpper);
-      taskGraph->addRule(gausElimBk, factorLowerTask, gausElimRuleLower);
+      taskGraph->addRuleEdge(gausElimBk, gausElimRuleUpper, factorUpperTask);
+      taskGraph->addRuleEdge(gausElimBk, gausElimRuleLower, factorLowerTask);
       taskGraph->addEdge(factorLowerTask, factorCopyInTask);
 
       taskGraph->addEdge(factorUpperTask, matrixMulBk);
       taskGraph->addEdge(factorCopyInTask, matrixMulBk);
 
-      taskGraph->addRule(matrixMulBk, gemmCopyInTask, matrixMulRule);
+      taskGraph->addRuleEdge(matrixMulBk, matrixMulRule, gemmCopyInTask);
       taskGraph->addEdge(gemmCopyInTask, matrixMulTask);
       taskGraph->addEdge(matrixMulTask, matrixCopyOutTask);
 
       taskGraph->addEdge(matrixCopyOutTask, matrixMulResultBk);
 
-      taskGraph->addCudaMemoryManagerEdge("FactorLowerMem", factorCopyInTask, matrixMulTask, new CudaMatrixAllocator(blockSize, blockSize), gridHeight*2, htgs::MMType::Static, contexts);
-      taskGraph->addCudaMemoryManagerEdge("FactorUpperMem", gemmCopyInTask, matrixMulTask, new CudaMatrixAllocator(blockSize, blockSize), gridWidth, htgs::MMType::Static, contexts);
-      taskGraph->addCudaMemoryManagerEdge("ResultMatrixMem", gemmCopyInTask, matrixCopyOutTask, new CudaMatrixAllocator(blockSize, blockSize), gridWidth, htgs::MMType::Static, contexts);
+      taskGraph->addCudaMemoryManagerEdge("FactorLowerMem", factorCopyInTask, new CudaMatrixAllocator(blockSize, blockSize), gridHeight*2, htgs::MMType::Static, contexts);
+      taskGraph->addCudaMemoryManagerEdge("FactorUpperMem", gemmCopyInTask, new CudaMatrixAllocator(blockSize, blockSize), gridWidth, htgs::MMType::Static, contexts);
+      taskGraph->addCudaMemoryManagerEdge("ResultMatrixMem", gemmCopyInTask, new CudaMatrixAllocator(blockSize, blockSize), gridWidth, htgs::MMType::Static, contexts);
 
 
       if (numDiagonals > 0)
-        taskGraph->addRule(matrixMulResultBk, gausElimTask, gausElimRule);
+        taskGraph->addRuleEdge(matrixMulResultBk, gausElimRule, gausElimTask);
       else
         delete gausElimRule;
 
       if (numUpdates > 0)
-        taskGraph->addRule(matrixMulResultBk, matrixMulBk, updateMatMulRule);
+        taskGraph->addRuleEdge(matrixMulResultBk, updateMatMulRule, matrixMulBk);
       else
         delete updateMatMulRule;
 
       if (numUpdates > 0)
-        taskGraph->addRule(matrixMulResultBk, gausElimBk, updateRule);
+        taskGraph->addRuleEdge(matrixMulResultBk, updateRule, gausElimBk);
       else
         delete updateRule;
 //
-      taskGraph->incrementGraphInputProducer();
+//      taskGraph->incrementGraphInputProducer();
 
 //      taskGraph->writeDotToFile("lud-cuda-graph-v1.dot");
 
-      htgs::Runtime *runtime = new htgs::Runtime(taskGraph);
+      htgs::TaskGraphRuntime *runtime = new htgs::TaskGraphRuntime(taskGraph);
 
       clk.start();
 
@@ -341,7 +340,7 @@ int main(int argc, char *argv[]) {
 
       runtime->waitForRuntime();
 
-      taskGraph->writeDotToFile("lud-cuda-graph-exec-v1.dot", DOTGEN_FLAG_SHOW_PROFILE_MAX_Q_SZ | DOTGEN_FLAG_HIDE_MEM_EDGES);
+      taskGraph->writeDotToFile("lud-cuda-graph-exec-v1.dot", DOTGEN_FLAG_HIDE_MEM_EDGES);
 
       clk.stopAndIncrement();
 

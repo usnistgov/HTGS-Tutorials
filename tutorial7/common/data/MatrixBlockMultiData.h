@@ -11,20 +11,18 @@
 #define HTGS_MATRIXBLOCKMULTIDATA_H
 
 #include <htgs/api/MemoryData.hpp>
+#include "../types/MatrixTypes.h"
 
-typedef std::shared_ptr<htgs::MemoryData<double *>> MatrixMemoryData_t;
-
-template<class T>
 class MatrixBlockMultiData : public htgs::IData {
  public:
 
-  MatrixBlockMultiData(std::shared_ptr<MatrixBlockData<T>> matrixData,
-                  std::shared_ptr<htgs::MemoryData<T>> matrixMemoryData) :
+  MatrixBlockMultiData(std::shared_ptr<MatrixBlockData<data_ptr>> matrixData,
+                       MatrixMemoryData_t matrixMemoryData) :
       matrixData(matrixData)
   {
 
-    this->matrixMemoryData = std::shared_ptr<MatrixBlockData<std::shared_ptr<htgs::MemoryData<T>>>>(
-        new MatrixBlockData<std::shared_ptr<htgs::MemoryData<T>>>(matrixData->getRequest(),
+    this->matrixMemoryData = std::shared_ptr<MatrixBlockData<MatrixMemoryData_t>>(
+        new MatrixBlockData<MatrixMemoryData_t>(matrixData->getRequest(),
                                                                         matrixMemoryData,
                                                                         matrixData->getMatrixWidth(),
                                                                         matrixData->getMatrixHeight()));
@@ -34,19 +32,19 @@ class MatrixBlockMultiData : public htgs::IData {
     return matrixData->getRequest();
   }
 
-  std::shared_ptr<MatrixBlockData<T>> getMatrixBlockData() const {
+  std::shared_ptr<MatrixBlockData<data_ptr>> getMatrixBlockData() const {
     return matrixData;
   }
 
-  std::shared_ptr<MatrixBlockData<std::shared_ptr<htgs::MemoryData<T>>>> getMatrixBlockMemoryData() {
+  std::shared_ptr<MatrixBlockData<MatrixMemoryData_t>> getMatrixBlockMemoryData() {
     return matrixMemoryData;
   }
 
 
 
  private:
-  std::shared_ptr<MatrixBlockData<T>> matrixData;
-  std::shared_ptr<MatrixBlockData<std::shared_ptr<htgs::MemoryData<T>>>> matrixMemoryData;
+  std::shared_ptr<MatrixBlockData<data_ptr>> matrixData;
+  std::shared_ptr<MatrixBlockData<MatrixMemoryData_t>> matrixMemoryData;
 
 };
 #endif //HTGS_MATRIXBLOCKMULTIDATA_H

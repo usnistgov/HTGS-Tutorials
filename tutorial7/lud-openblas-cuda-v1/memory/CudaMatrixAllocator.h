@@ -11,23 +11,23 @@
 #define HTGS_CUDAMATRIXALLOCATOR_H
 #include <htgs/api/IMemoryAllocator.hpp>
 
-class CudaMatrixAllocator : public htgs::IMemoryAllocator<double *> {
+class CudaMatrixAllocator : public htgs::IMemoryAllocator<double> {
  public:
   CudaMatrixAllocator(int width, int height) : IMemoryAllocator((size_t) width * height) {}
 
-  double *memAlloc(size_t size) {
+  double *memAlloc(size_t size) override {
     double *mem;
     cudaMalloc((void **) &mem, sizeof(double) * size);
     return mem;
   }
 
-  double *memAlloc() {
+  double *memAlloc() override {
     double *mem;
     cudaMalloc((void **) &mem, sizeof(double) * this->size());
     return mem;
   }
 
-  void memFree(double *&memory) {
+  void memFree(double *&memory) override {
     cudaFree(memory);
   }
 

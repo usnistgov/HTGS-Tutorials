@@ -11,11 +11,11 @@
 #define HTGS_TUTORIALS_MATRIXCOPYOUTTASK_H
 
 #include <htgs/api/ICudaTask.hpp>
-#include "../data/MatrixBlockData.h"
+#include "../../common/data/MatrixBlockData.h"
 #include <cuda.h>
 #include <cublas_v2.h>
 
-class MatrixCopyOutTask : public htgs::ICudaTask<MatrixBlockData<MatrixMemoryData_t>, MatrixBlockData<double *>> {
+class MatrixCopyOutTask : public htgs::ICudaTask<MatrixBlockData<MatrixMemoryData_t>, MatrixBlockData<data_ptr>> {
  public:
   MatrixCopyOutTask(int blockSize, CUcontext *contexts, int *cudaIds, int numGpus,
                     htgs::StateContainer<std::shared_ptr<MatrixBlockData<double *>>> *matrixBlocks, long matrixLeadingDimension) :
@@ -26,7 +26,7 @@ class MatrixCopyOutTask : public htgs::ICudaTask<MatrixBlockData<MatrixMemoryDat
 //    cudaMallocHost((void **)&cudaMemPinned, sizeof(double)*blockSize*blockSize);
   }
 
-  virtual void executeGPUTask(std::shared_ptr<MatrixBlockData<MatrixMemoryData_t>> data, CUstream stream) {
+  virtual void executeTask(std::shared_ptr<MatrixBlockData<MatrixMemoryData_t>> data) override {
     // Cuda Memory
     auto memoryIn = data->getMatrixData();
 
@@ -36,14 +36,14 @@ class MatrixCopyOutTask : public htgs::ICudaTask<MatrixBlockData<MatrixMemoryDat
 
     cublasGetMatrixAsync((int) data->getMatrixHeight(), (int) data->getMatrixWidth(), sizeof(double),
                          memoryIn->get(), (int) data->getMatrixHeight(),
-                         memoryOut, (int) matrixLeadingDimension, stream);
+                         memoryOut, (int) matrixLeadingDimension, this->getStream());
 
     this->syncStream();
 
 //    MatrixMemoryRule * rule = (MatrixMemoryRule *)memoryIn->getMemoryReleaseRule();
 //    std::cout << " Release count for matrix result: " << data->getRequest()->getRow() << ", " << data->getRequest()->getCol() << ":  " << rule->getReleaseCount() << std::endl;
 
-    this->memRelease("ResultMatrixMem", memoryIn);
+    this->releaseMemory( memoryIn);
 
     this->addResult(result);
   }

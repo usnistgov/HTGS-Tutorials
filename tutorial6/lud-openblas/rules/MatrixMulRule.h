@@ -24,7 +24,7 @@ class MatrixMulRule : public htgs::IRule<MatrixBlockData<double *>, MatrixBlockM
 
  public:
   MatrixMulRule(htgs::StateContainer<std::shared_ptr<MatrixBlockData<double *>>> *matrixBlocks,
-                 int gridHeight, int gridWidth) :
+                 size_t gridHeight, size_t gridWidth) :
       matrixBlocks(matrixBlocks), gridWidth(gridWidth), gridHeight(gridHeight)
   {
     matrixState = this->allocStateContainer<int>(gridHeight, gridWidth, 0);
@@ -36,7 +36,7 @@ class MatrixMulRule : public htgs::IRule<MatrixBlockData<double *>, MatrixBlockM
     delete updateState;
   }
 
-  void applyRule(std::shared_ptr<MatrixBlockData<double *>> data, int pipelineId) {
+  void applyRule(std::shared_ptr<MatrixBlockData<double *>> data, size_t pipelineId) override {
     std::shared_ptr<MatrixRequestData> request = data->getRequest();
 
     int dataRow = request->getRow();
@@ -106,7 +106,7 @@ class MatrixMulRule : public htgs::IRule<MatrixBlockData<double *>, MatrixBlockM
   }
 
 
-  std::string getName() {
+  std::string getName() override {
     return "MatrixMulRule";
   }
 
@@ -114,7 +114,7 @@ class MatrixMulRule : public htgs::IRule<MatrixBlockData<double *>, MatrixBlockM
   htgs::StateContainer<int> *matrixState;
   htgs::StateContainer<int> *updateState;
   htgs::StateContainer<std::shared_ptr<MatrixBlockData<double *>>> *matrixBlocks;
-  int gridWidth;
-  int gridHeight;
+  size_t gridWidth;
+  size_t gridHeight;
 };
 #endif //HTGS_MATRIXMULRULE_H

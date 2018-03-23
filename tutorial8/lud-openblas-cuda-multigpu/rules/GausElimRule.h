@@ -16,11 +16,11 @@ class GausElimRule : public htgs::IRule<MatrixPanelData, MatrixBlockData<double 
       totalBlocksDiagonal(totalBlocksDiagonal), matrixBlocks(matrixBlocks)
   {}
 
-  virtual bool isRuleTerminated(int pipelineId) {
+  virtual bool canTerminateRule(size_t pipelineId) override {
     return totalBlocksDiagonal == 0;
   }
 
-  virtual void applyRule(std::shared_ptr<MatrixPanelData> data, int pipelineId) {
+  virtual void applyRule(std::shared_ptr<MatrixPanelData> data, size_t pipelineId) override {
 
     int col = data->getPanelCol();
     int operatingDiagonal = data->getPanelOperatingDiagonal();

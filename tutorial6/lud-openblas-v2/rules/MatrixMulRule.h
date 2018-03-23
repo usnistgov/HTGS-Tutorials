@@ -23,7 +23,7 @@ enum class MatrixState {
 class MatrixMulRule : public htgs::IRule<MatrixPanelData, MatrixPanelMulData> {
 
  public:
-  MatrixMulRule(int gridHeight, int gridWidth) :
+  MatrixMulRule(size_t gridHeight, size_t gridWidth) :
       gridWidth(gridWidth), gridHeight(gridHeight)
   {
     factorState = this->allocStateContainer<bool>(gridHeight, gridWidth, false);
@@ -35,7 +35,7 @@ class MatrixMulRule : public htgs::IRule<MatrixPanelData, MatrixPanelMulData> {
     delete factorState;
   }
 
-  void applyRule(std::shared_ptr<MatrixPanelData> data, int pipelineId) {
+  void applyRule(std::shared_ptr<MatrixPanelData> data, size_t pipelineId) override {
 
     int panelColumn =data->getPanelCol();
     int diagonalColumn = data->getPanelOperatingDiagonal();
@@ -88,7 +88,7 @@ class MatrixMulRule : public htgs::IRule<MatrixPanelData, MatrixPanelMulData> {
   }
 
 
-  std::string getName() {
+  std::string getName() override {
     return "MatrixMulRule";
   }
 
@@ -96,7 +96,7 @@ class MatrixMulRule : public htgs::IRule<MatrixPanelData, MatrixPanelMulData> {
 
   htgs::StateContainer<std::shared_ptr<MatrixPanelData>> *panels;
   htgs::StateContainer<bool> *factorState;
-  int gridWidth;
-  int gridHeight;
+  size_t gridWidth;
+  size_t gridHeight;
 };
 #endif //HTGS_MATRIXMULRULE_H

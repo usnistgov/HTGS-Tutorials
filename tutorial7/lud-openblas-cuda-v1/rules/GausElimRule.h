@@ -6,8 +6,8 @@
 #define HTGS_TUTORIALS_GAUSELIMRULE_H
 
 #include <htgs/api/IRule.hpp>
-#include "../data/MatrixBlockData.h"
-class GausElimRule : public htgs::IRule<MatrixBlockData<double *>, MatrixBlockData<double *>>
+#include "../../common/data/MatrixBlockData.h"
+class GausElimRule : public htgs::IRule<MatrixBlockData<data_ptr>, MatrixBlockData<data_ptr>>
 {
  public:
 
@@ -20,11 +20,11 @@ class GausElimRule : public htgs::IRule<MatrixBlockData<double *>, MatrixBlockDa
     delete diagonalState;
   }
 
-  virtual bool isRuleTerminated(int pipelineId) {
+  virtual bool canTerminateRule(size_t pipelineId) override {
     return totalBlocksDiagonal == 0;
   }
 
-  virtual void applyRule(std::shared_ptr<MatrixBlockData<double *>> data, int pipelineId) {
+  virtual void applyRule(std::shared_ptr<MatrixBlockData<data_ptr>> data, size_t pipelineId) override {
 
     // if it is the diagonal, then ship it
     int row = data->getRequest()->getRow();
@@ -53,7 +53,7 @@ class GausElimRule : public htgs::IRule<MatrixBlockData<double *>, MatrixBlockDa
 
   }
 
-  std::string getName() {
+  std::string getName() override {
     return "GausElimRule";
   }
 

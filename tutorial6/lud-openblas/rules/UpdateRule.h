@@ -12,11 +12,11 @@ class UpdateRule : public htgs::IRule<MatrixBlockData<double *>, MatrixBlockData
  public:
   UpdateRule(int totalBlocks) : totalBlocks(totalBlocks) {}
 
-  virtual bool isRuleTerminated(int pipelineId) {
+  virtual bool canTerminateRule(size_t pipelineId) override {
     return this->totalBlocks == 0;
   }
 
-  virtual void applyRule(std::shared_ptr<MatrixBlockData<double *>> data, int pipelineId) {
+  virtual void applyRule(std::shared_ptr<MatrixBlockData<double *>> data, size_t pipelineId) override {
 //    int row = data->getRequest()->getRow();
 //    int col = data->getRequest()->getCol();
 
@@ -27,7 +27,7 @@ class UpdateRule : public htgs::IRule<MatrixBlockData<double *>, MatrixBlockData
 
   }
 
-  std::string getName() {
+  std::string getName() override {
     return "UpdateRule";
   }
 

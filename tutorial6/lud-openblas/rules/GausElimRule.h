@@ -20,11 +20,11 @@ class GausElimRule : public htgs::IRule<MatrixBlockData<double *>, MatrixBlockDa
     delete diagonalState;
   }
 
-  virtual bool isRuleTerminated(int pipelineId) {
+  virtual bool canTerminateRule(size_t pipelineId) override {
     return totalBlocksDiagonal == 0;
   }
 
-  virtual void applyRule(std::shared_ptr<MatrixBlockData<double *>> data, int pipelineId) {
+  virtual void applyRule(std::shared_ptr<MatrixBlockData<double *>> data, size_t pipelineId) override {
 
     // if it is the diagonal, then ship it
     int row = data->getRequest()->getRow();
@@ -53,7 +53,7 @@ class GausElimRule : public htgs::IRule<MatrixBlockData<double *>, MatrixBlockDa
 
   }
 
-  std::string getName() {
+  std::string getName() override {
     return "GausElimRule";
   }
 

@@ -11,8 +11,8 @@
 
 //typedef long long int lapack_int;
 
-#include <htgs/api/TaskGraph.hpp>
-#include <htgs/api/Runtime.hpp>
+#include <htgs/api/TaskGraphConf.hpp>
+#include <htgs/api/TaskGraphRuntime.hpp>
 #include <cblas.h>
 #include <iomanip>
 #include <cfloat>
@@ -432,61 +432,61 @@ int main(int argc, char *argv[]) {
       int numUpdates = (1.0/2.0) * (double)gridWidth * (gridWidth-1);
       UpdateFactorRule *updateFactorRule = new UpdateFactorRule(numUpdates, gridHeight, matrixBlocks);
 
-      auto gpuTaskGraph = new htgs::TaskGraph<MatrixPanelData, MatrixPanelData>();
+      auto gpuTaskGraph = new htgs::TaskGraphConf<MatrixPanelData, MatrixPanelData>();
 
-      gpuTaskGraph->addGraphInputConsumer(distributePanelBk);
-      gpuTaskGraph->addRule(distributePanelBk, copyInLower, copyFactorMatrixRule);
-      gpuTaskGraph->addRule(distributePanelBk, copyInUpperWindow, copyUpperWindowRule);
-      gpuTaskGraph->addRule(distributePanelBk, copyInUpper, copyUpperRule);
+      gpuTaskGraph->setGraphConsumerTask(distributePanelBk);
+      gpuTaskGraph->addRuleEdge(distributePanelBk, copyFactorMatrixRule, copyInLower);
+      gpuTaskGraph->addRuleEdge(distributePanelBk, copyUpperWindowRule, copyInUpperWindow);
+      gpuTaskGraph->addRuleEdge(distributePanelBk, copyUpperRule, copyInUpper);
 
       gpuTaskGraph->addEdge(copyInLower, matrixMulBk);
       gpuTaskGraph->addEdge(copyInUpper, matrixMulBk);
       gpuTaskGraph->addEdge(copyInUpperWindow, matrixMulBk);
 
-      gpuTaskGraph->addRule(matrixMulBk, matrixMulTask, matrixMulRule);
+      gpuTaskGraph->addRuleEdge(matrixMulBk, matrixMulRule, matrixMulTask);
       gpuTaskGraph->addEdge(matrixMulTask, copyResultBack);
 
-      gpuTaskGraph->addGraphOutputProducer(copyResultBack);
+      gpuTaskGraph->addGraphProducerTask(copyResultBack);
 
-      gpuTaskGraph->addCudaMemoryManagerEdge("FactorMem", copyInLower, matrixMulTask, new CudaMatrixAllocator(blockSize, matrixSize), numPanelsFactor, htgs::MMType::Static, contexts);
-      gpuTaskGraph->addCudaMemoryManagerEdge("UpdateMem", copyInUpper, copyResultBack, new CudaMatrixAllocator(blockSize, matrixSize), numPanelsUpdate, htgs::MMType::Static, contexts);
-      gpuTaskGraph->addCudaMemoryManagerEdge("UpdateWindowMem", copyInUpperWindow, copyResultBack, new CudaMatrixAllocator(blockSize, matrixSize), windowSize == 0 ? 1 : windowSize, htgs::MMType::Static, contexts);
+      gpuTaskGraph->addCudaMemoryManagerEdge("FactorMem", copyInLower, new CudaMatrixAllocator(blockSize, matrixSize), numPanelsFactor, htgs::MMType::Static, contexts);
+      gpuTaskGraph->addCudaMemoryManagerEdge("UpdateMem", copyInUpper, new CudaMatrixAllocator(blockSize, matrixSize), numPanelsUpdate, htgs::MMType::Static, contexts);
+      gpuTaskGraph->addCudaMemoryManagerEdge("UpdateWindowMem", copyInUpperWindow, new CudaMatrixAllocator(blockSize, matrixSize), windowSize == 0 ? 1 : windowSize, htgs::MMType::Static, contexts);
 
       auto execPipeline = new htgs::ExecutionPipeline<MatrixPanelData, MatrixPanelData>(numGpus, gpuTaskGraph);
       DecompositionRule *decompRule = new DecompositionRule(gridWidth, numGpus);
       execPipeline->addInputRule(decompRule);
 
-      auto taskGraph = new htgs::TaskGraph<MatrixBlockData<double *>, htgs::VoidData>();
-      taskGraph->addGraphInputConsumer(gausElimTask);
+      auto taskGraph = new htgs::TaskGraphConf<MatrixBlockData<double *>, htgs::VoidData>();
+      taskGraph->setGraphConsumerTask(gausElimTask);
 
       taskGraph->addEdge(gausElimTask, gausElimBk);
-      taskGraph->addRule(gausElimBk, execPipeline, gausElimRuleUpper);
-      taskGraph->addRule(gausElimBk, factorLowerTask, gausElimRuleLower);
+      taskGraph->addRuleEdge(gausElimBk, gausElimRuleUpper, execPipeline);
+      taskGraph->addRuleEdge(gausElimBk, gausElimRuleLower, factorLowerTask);
 
       taskGraph->addEdge(factorLowerTask, factorLowerBk);
 
-      taskGraph->addRule(factorLowerBk, execPipeline, gatherBlockRule);
+      taskGraph->addRuleEdge(factorLowerBk, gatherBlockRule, execPipeline);
 
 
       taskGraph->addEdge(execPipeline, matrixMulResultBk);
 
       if (numDiagonals > 0)
-        taskGraph->addRule(matrixMulResultBk, gausElimTask, gausElimRule);
+        taskGraph->addRuleEdge(matrixMulResultBk, gausElimRule, gausElimTask);
       else
         delete gausElimRule;
 
       if (numUpdates > 0)
-        taskGraph->addRule(matrixMulResultBk, gausElimBk, updateFactorRule);
+        taskGraph->addRuleEdge(matrixMulResultBk, updateFactorRule, gausElimBk);
       else
         delete updateFactorRule;
 
-      taskGraph->incrementGraphInputProducer();
+//      taskGraph->incrementGraphInputProducer();
 
 //      taskGraph->writeDotToFile("lud-graph.dot");
 //      taskGraph->writeDotToFile("pre-exec-testing-output.dot", DOTGEN_FLAG_SHOW_IN_OUT_TYPES); // | DOTGEN_FLAG_HIDE_MEM_EDGES);
 
 
-      htgs::Runtime *runtime = new htgs::Runtime(taskGraph);
+      htgs::TaskGraphRuntime *runtime = new htgs::TaskGraphRuntime(taskGraph);
 
 
       taskGraph->produceData(matrixBlocks->get(0, 0));
@@ -499,7 +499,14 @@ int main(int argc, char *argv[]) {
 
       runtime->waitForRuntime();
 
-      taskGraph->writeDotToFile(computeProfileStr, DOTGEN_FLAG_SHOW_PROFILE_COMP_TIME | DOTGEN_FLAG_HIDE_MEM_EDGES);
+      double operations = (2.0 * (matrixSize * matrixSize * matrixSize)) / 3.0;
+      double flops = operations / clk.getAverageTime(TimeVal::SEC);
+      double gflops = flops / 1073741824.0;
+
+      taskGraph->writeDotToFile(std::to_string(matrixSize) + "-" + std::to_string(blockSize) + "-end-lud-multigpu-graph-blockpanel.dot", DOTGEN_COLOR_COMP_TIME, std::to_string(matrixSize) + "-" + std::to_string(blockSize) + "-MultiGPU-Block-Panel-LUD", std::to_string(gflops) + " GFLOPS");
+
+
+//      taskGraph->writeDotToFile(computeProfileStr, DOTGEN_FLAG_HIDE_MEM_EDGES | DOTGEN_COLOR_COMP_TIME);
 //      taskGraph->writeDotToFile("wait-output.dot", DOTGEN_FLAG_SHOW_PROFILE_WAIT_TIME | DOTGEN_FLAG_HIDE_MEM_EDGES);
 //      taskGraph->writeDotToFile("maxq-output.dot", DOTGEN_FLAG_SHOW_PROFILE_MAX_Q_SZ | DOTGEN_FLAG_HIDE_MEM_EDGES);
 

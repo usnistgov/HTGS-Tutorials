@@ -11,12 +11,12 @@
 #define HTGS_TUTORIALS_MATRIXCOPYINFACTORTASK_H
 
 #include <htgs/api/ICudaTask.hpp>
-#include "../data/MatrixFactorCudaData.h"
+#include "../../common/data/MatrixFactorCudaData.h"
 #include "../memory/MatrixMemoryRule.h"
 #include <cuda.h>
 #include <cublas_v2.h>
 
-class MatrixCopyInFactorTask : public htgs::ICudaTask<MatrixBlockData<double *>, MatrixBlockMultiData<double *>> {
+class MatrixCopyInFactorTask : public htgs::ICudaTask<MatrixBlockData<data_ptr>, MatrixBlockMultiData> {
  public:
   MatrixCopyInFactorTask(int blockSize, CUcontext *contexts, int *cudaIds, int numGpus, long leadingDimensionFullMatrix, int numBlocksWidth) :
       ICudaTask(contexts, cudaIds, numGpus),
@@ -24,11 +24,11 @@ class MatrixCopyInFactorTask : public htgs::ICudaTask<MatrixBlockData<double *>,
       leadingDimensionFullMatrix(leadingDimensionFullMatrix),
       numBlocksWidth(numBlocksWidth){}
 
-  virtual void
-  initializeCudaGPU(CUcontext context, CUstream stream, int cudaId, int numGPUs, int pipelineId, int numPipelines) {
+
+  void initializeCudaGPU() override {
   }
 
-  virtual void executeGPUTask(std::shared_ptr<MatrixBlockData<double *>> data, CUstream stream) {
+  virtual void executeTask(std::shared_ptr<MatrixBlockData<data_ptr>> data) {
 
     // CPU Memory
     double *memoryIn = data->getMatrixData();
@@ -37,16 +37,16 @@ class MatrixCopyInFactorTask : public htgs::ICudaTask<MatrixBlockData<double *>,
     // Cuda Memory
     int releaseCount = numBlocksWidth - (data->getRequest()->getCol() +1);
 //    std::cout << "Getting memory Lower" << std::endl;
-    auto memoryOut = this->memGet<double *>("FactorLowerMem", new MatrixMemoryRule(releaseCount));
+    auto memoryOut = this->getMemory<double>("FactorLowerMem", new MatrixMemoryRule(releaseCount));
 //    std::cout << "Done getting memory" << "row: " << data->getRequest()->getRow() << ", " << data->getRequest()->getCol() << std::endl;
 
 //    std::cout << "Release count: " << releaseCount << " for " << data->getRequest()->getRow() << data->getRequest()->getCol() << std::endl;
 
     cublasSetMatrixAsync((int) data->getMatrixHeight(), (int) data->getMatrixWidth(), sizeof(double),
                          memoryIn, (int) leadingDimensionFullMatrix,
-                         memoryOut->get(), (int) data->getMatrixHeight(), stream);
+                         memoryOut->get(), (int) data->getMatrixHeight(), this->getStream());
 
-    auto retData = new MatrixBlockMultiData<double *>(data, memoryOut);
+    auto retData = new MatrixBlockMultiData(data, memoryOut);
     this->syncStream();
 
     this->addResult(retData);

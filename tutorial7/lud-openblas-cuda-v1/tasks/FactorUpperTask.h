@@ -7,17 +7,17 @@
 
 #include <htgs/api/ITask.hpp>
 #include <cblas.h>
-#include "../data/MatrixBlockData.h"
-#include "../data/MatrixFactorData.h"
-#include "../data/MatrixBlockMultiData.h"
-class FactorUpperTask : public htgs::ITask<MatrixFactorData<double *>, MatrixBlockMultiData<double *>>
+#include "../../common/data/MatrixBlockData.h"
+#include "../../common/data/MatrixFactorData.h"
+#include "../../common/data/MatrixBlockMultiData.h"
+class FactorUpperTask : public htgs::ITask<MatrixFactorData, MatrixBlockMultiData>
 {
  public:
 
   FactorUpperTask(int numThreads, long fullMatrixHeight, long fullMatrixWidth) : ITask(numThreads), fullMatrixHeight(fullMatrixHeight), fullMatrixWidth(fullMatrixWidth) {}
 
 
-  virtual void executeTask(std::shared_ptr<MatrixFactorData<double *>> data) {
+  virtual void executeTask(std::shared_ptr<MatrixFactorData> data) {
 
     double *matrix = data->getUnFactoredMatrix()->getMatrixData();
     double *triMatrix = data->getTriangleMatrix()->getMatrixData();
@@ -30,7 +30,7 @@ class FactorUpperTask : public htgs::ITask<MatrixFactorData<double *>, MatrixBlo
     cblas_dtrsm(CblasColMajor, CblasLeft, CblasLower, CblasNoTrans, CblasUnit, height, width, 1.0, triMatrix, fullMatrixHeight, matrix, fullMatrixHeight);
 
     // Unfactored is now factored
-    auto multiData = new MatrixBlockMultiData<double *>(data->getUnFactoredMatrix(), nullptr);
+    auto multiData = new MatrixBlockMultiData(data->getUnFactoredMatrix(), nullptr);
     addResult(multiData);
 
   }

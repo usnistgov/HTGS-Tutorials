@@ -13,7 +13,7 @@ class GausElimRuleLower : public htgs::IRule<MatrixBlockData<double *>, MatrixFa
 
  public:
 
-  GausElimRuleLower(htgs::StateContainer<std::shared_ptr<MatrixBlockData<double *>>> *matrixBlocks, int gridHeight, int gridWidth) :
+  GausElimRuleLower(htgs::StateContainer<std::shared_ptr<MatrixBlockData<double *>>> *matrixBlocks, size_t gridHeight, size_t gridWidth) :
       matrixBlocks(matrixBlocks), gridHeight(gridHeight), gridWidth(gridWidth)
   {
     this->lowerState = this->allocStateContainer<int>(gridHeight, gridWidth, 0);
@@ -23,7 +23,7 @@ class GausElimRuleLower : public htgs::IRule<MatrixBlockData<double *>, MatrixFa
     delete lowerState;
   }
 
-  virtual void applyRule(std::shared_ptr<MatrixBlockData<double *>> data, int pipelineId) {
+  virtual void applyRule(std::shared_ptr<MatrixBlockData<double *>> data, size_t pipelineId) override {
     int row = data->getRequest()->getRow();
     int col = data->getRequest()->getCol();
 
@@ -92,7 +92,7 @@ class GausElimRuleLower : public htgs::IRule<MatrixBlockData<double *>, MatrixFa
 
   }
 
-  std::string getName() {
+  std::string getName() override {
     return "GausElimRuleLower";
   }
 
@@ -101,8 +101,8 @@ class GausElimRuleLower : public htgs::IRule<MatrixBlockData<double *>, MatrixFa
   htgs::StateContainer<int> *lowerState;
   htgs::StateContainer<std::shared_ptr<MatrixBlockData<double *>>> *matrixBlocks;
 
-  int gridWidth;
-  int gridHeight;
+  size_t gridWidth;
+  size_t gridHeight;
 };
 
 

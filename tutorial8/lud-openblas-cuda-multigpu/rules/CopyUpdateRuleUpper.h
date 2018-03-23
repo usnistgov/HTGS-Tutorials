@@ -22,7 +22,7 @@ class CopyUpdateRuleUpper : public htgs::IRule<MatrixPanelData, MatrixPanelData>
   virtual ~CopyUpdateRuleUpper() {
   }
 
-  virtual void applyRule(std::shared_ptr<MatrixPanelData> data, int pipelineId) {
+  virtual void applyRule(std::shared_ptr<MatrixPanelData> data, size_t pipelineId) override {
     int panelCol = data->getPanelCol();
     int activeDiagonal = data->getPanelOperatingDiagonal();
     if (data->getPanelState() != PanelState::ALL_FACTORED && (panelCol - activeDiagonal) > windowSize) {

@@ -28,12 +28,7 @@ class CopyInPanelWindowTask : public htgs::ICudaTask<MatrixPanelData, MatrixPane
     panelCache = new htgs::StateContainer<std::shared_ptr<MatrixPanelData>>(numBlocksWidth, 1, nullptr);
   }
 
-  virtual void
-  initializeCudaGPU(CUcontext context, CUstream stream, int cudaId, int numGPUs, int pipelineId, int numPipelines) {
-    this->pipelineId = pipelineId;
-  }
-
-  virtual void executeGPUTask(std::shared_ptr<MatrixPanelData> data, CUstream stream) {
+  virtual void executeTask(std::shared_ptr<MatrixPanelData> data) override {
 
     // Received a panel that is to be used for cache.
     int panelColumn = data->getPanelCol();
@@ -70,11 +65,11 @@ class CopyInPanelWindowTask : public htgs::ICudaTask<MatrixPanelData, MatrixPane
       // Cuda Memory
       int releaseCount = panelColumn - data->getPanelOperatingDiagonal();
 
-      auto memoryOut = this->memGet<double *>(memoryEdge, new MatrixMemoryRule(releaseCount));
+      auto memoryOut = this->getMemory<double>(memoryEdge, new MatrixMemoryRule(releaseCount));
 
       cublasSetMatrixAsync((int) data->getHeight(), (int) blockSize, sizeof(double),
                            memoryIn, (int) leadingDimensionFullMatrix,
-                           memoryOut->get(), (int) leadingDimensionFullMatrix, stream);
+                           memoryOut->get(), (int) leadingDimensionFullMatrix, this->getStream());
 
       data->setOrigMemory(memoryIn);
       data->setOrigHeight(data->getHeight());
@@ -122,7 +117,6 @@ class CopyInPanelWindowTask : public htgs::ICudaTask<MatrixPanelData, MatrixPane
   std::string memoryEdge;
   PanelState panelState;
   htgs::StateContainer<std::shared_ptr<MatrixPanelData>> *panelCache;
-  int pipelineId;
 };
 
 #endif //HTGS_TUTORIALS_COPYINWINDOWPANEL_H

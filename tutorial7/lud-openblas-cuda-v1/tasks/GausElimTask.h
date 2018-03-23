@@ -8,9 +8,9 @@
 #include <htgs/api/ITask.hpp>
 #include <cblas.h>
 #include <lapacke.h>
-#include "../data/MatrixBlockData.h"
+#include "../../common/data/MatrixBlockData.h"
 #include "../../../tutorial-utils/util-matrix.h"
-class GausElimTask : public htgs::ITask<MatrixBlockData<double *>, MatrixBlockData<double *>>
+class GausElimTask : public htgs::ITask<MatrixBlockData<data_ptr>, MatrixBlockData<data_ptr>>
 {
  public:
   GausElimTask(int numThreads, long fullMatrixHeight, long fullMatrixWidth, int blockSize) :
@@ -24,7 +24,7 @@ class GausElimTask : public htgs::ITask<MatrixBlockData<double *>, MatrixBlockDa
     delete []ipiv;
   }
 
-  virtual void executeTask(std::shared_ptr<MatrixBlockData<double *>> data) {
+  virtual void executeTask(std::shared_ptr<MatrixBlockData<data_ptr>> data) {
 
     double *matrix = data->getMatrixData();
 

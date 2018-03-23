@@ -13,32 +13,32 @@
 #include <htgs/api/IData.hpp>
 
 #include "MatrixBlockData.h"
+#include "../types/MatrixTypes.h"
 
-template<class T>
 class MatrixBlockMulDataPreCopy : public htgs::IData {
  public:
 
   MatrixBlockMulDataPreCopy(std::shared_ptr<MatrixBlockData<MatrixMemoryData_t>> lowerMatrix,
-                     std::shared_ptr<MatrixBlockData<T>> upperMatrix,
-                     std::shared_ptr<MatrixBlockData<T>> resultMatrix) :
+                     std::shared_ptr<MatrixBlockData<data_ptr>> upperMatrix,
+                     std::shared_ptr<MatrixBlockData<data_ptr>> resultMatrix) :
       lowerMatrix(lowerMatrix), upperMatrix(upperMatrix), resultMatrix(resultMatrix) {}
 
   std::shared_ptr<MatrixBlockData<MatrixMemoryData_t>> getLowerMatrix() const {
     return lowerMatrix;
   }
 
-  std::shared_ptr<MatrixBlockData<T>> getUpperMatrix() const {
+  std::shared_ptr<MatrixBlockData<data_ptr>> getUpperMatrix() const {
     return upperMatrix;
   }
 
-  std::shared_ptr<MatrixBlockData<T>> getResultMatrix() const {
+  std::shared_ptr<MatrixBlockData<data_ptr>> getResultMatrix() const {
     return resultMatrix;
   }
 
  private:
   std::shared_ptr<MatrixBlockData<MatrixMemoryData_t>> lowerMatrix;
-  std::shared_ptr<MatrixBlockData<T>> upperMatrix;
-  std::shared_ptr<MatrixBlockData<T>> resultMatrix;
+  std::shared_ptr<MatrixBlockData<data_ptr>> upperMatrix;
+  std::shared_ptr<MatrixBlockData<data_ptr>> resultMatrix;
 };
 
 #endif //HTGS_MATRIXBLOCKMULDATAPRECOPY_H
