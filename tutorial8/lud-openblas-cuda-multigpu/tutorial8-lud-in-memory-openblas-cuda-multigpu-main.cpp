@@ -503,7 +503,7 @@ int main(int argc, char *argv[]) {
       double flops = operations / clk.getAverageTime(TimeVal::SEC);
       double gflops = flops / 1073741824.0;
 
-      taskGraph->writeDotToFile(std::to_string(matrixSize) + "-" + std::to_string(blockSize) + "-end-lud-multigpu-graph-blockpanel.dot", DOTGEN_COLOR_COMP_TIME, std::to_string(matrixSize) + "-" + std::to_string(blockSize) + "-MultiGPU-Block-Panel-LUD", std::to_string(gflops) + " GFLOPS");
+      taskGraph->writeDotToFile(std::to_string(matrixSize) + "-" + std::to_string(blockSize) + "-end-lud-multigpu-" + std::to_string(numGpus) + "-graph-blockpanel.dot", DOTGEN_COLOR_COMP_TIME, std::to_string(matrixSize) + "-" + std::to_string(blockSize) + "-MultiGPU-Block-Panel-LUD", std::to_string(gflops) + " GFLOPS");
 
 
 //      taskGraph->writeDotToFile(computeProfileStr, DOTGEN_FLAG_HIDE_MEM_EDGES | DOTGEN_COLOR_COMP_TIME);
