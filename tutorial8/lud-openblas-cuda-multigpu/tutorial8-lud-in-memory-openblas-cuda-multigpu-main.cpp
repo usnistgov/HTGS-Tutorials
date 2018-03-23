@@ -498,6 +498,7 @@ int main(int argc, char *argv[]) {
 
 
       runtime->waitForRuntime();
+      clk.stopAndIncrement();
 
       double operations = (2.0 * (matrixSize * matrixSize * matrixSize)) / 3.0;
       double flops = operations / clk.getAverageTime(TimeVal::SEC);
@@ -510,7 +511,6 @@ int main(int argc, char *argv[]) {
 //      taskGraph->writeDotToFile("wait-output.dot", DOTGEN_FLAG_SHOW_PROFILE_WAIT_TIME | DOTGEN_FLAG_HIDE_MEM_EDGES);
 //      taskGraph->writeDotToFile("maxq-output.dot", DOTGEN_FLAG_SHOW_PROFILE_MAX_Q_SZ | DOTGEN_FLAG_HIDE_MEM_EDGES);
 
-      clk.stopAndIncrement();
 
       delete runtime;
       delete matrixBlocks;
