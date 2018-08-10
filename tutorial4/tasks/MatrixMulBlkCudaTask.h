@@ -22,10 +22,9 @@ class MatrixMulBlkCudaTask : public htgs::ICudaTask<MatrixBlockMulData<htgs::m_d
                                                 MatrixBlockData<htgs::m_data_t<double>>> {
 
  public:
-  MatrixMulBlkCudaTask(CUcontext *contexts,
-                   int *cudaIds,
+  MatrixMulBlkCudaTask(int *cudaIds,
                    size_t numGpus) :
-      ICudaTask(contexts, cudaIds, numGpus) {
+      ICudaTask(cudaIds, numGpus) {
     alpha[0] = 1.0;
     beta[0] = 0.0;
     numOps = 0;
@@ -90,8 +89,7 @@ class MatrixMulBlkCudaTask : public htgs::ICudaTask<MatrixBlockMulData<htgs::m_d
   }
 
   MatrixMulBlkCudaTask *copy() override{
-    return new MatrixMulBlkCudaTask(this->getContexts(),
-                                this->getCudaIds(),
+    return new MatrixMulBlkCudaTask(this->getCudaIds(),
                                 this->getNumGPUs());
   }
 

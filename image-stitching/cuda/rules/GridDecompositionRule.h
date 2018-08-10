@@ -34,7 +34,6 @@ class GridDecompositionRule: public htgs::IRule<FFTData, FFTData> {
     int c = tile->getColIdx();
 
     if (gridPartition[r][c] == pipelineId) {
-      DEBUG_VERBOSE("Sending data to pipeline: " << pipelineId);
       addResult(data);
     }
   }

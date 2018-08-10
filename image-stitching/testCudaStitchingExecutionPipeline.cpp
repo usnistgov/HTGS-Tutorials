@@ -58,7 +58,6 @@ int main(int argc, char *argv[]) {
 
 
 
-  DEBUG("Building Grid");
   std::string path("/home/tjb3/datasets/image-stitching/synth_large_grid_sequential");
   TileGrid<is::CUDAImageTile> *grid = new TileGrid<is::CUDAImageTile>(startRow,
                                                                       startCol,
@@ -77,12 +76,10 @@ int main(int argc, char *argv[]) {
   tile->readTile();
   TileGridTraverser<is::CUDAImageTile> *traverser = createTraverser(grid, Traversal::DiagonalTraversal);
 
-  DEBUG("Initializing CUDA contexts");
 
 
   CUcontext *contexts = is::CUDAImageTile::initCUDA(tile, numGpus, gpuIds);
 
-  DEBUG("Setting up tasks");
   // Create ITasks
   ReadTask *readTask =
       new ReadTask(grid->getStartCol(), grid->getStartRow(), grid->getExtentWidth(), grid->getExtentHeight());
@@ -109,11 +106,9 @@ int main(int argc, char *argv[]) {
 //    Task<CCFData, VoidData> *ccfTask = new Task<CCFData, VoidData>(ccfITask, 40, false, 0, 1);
 
   // Create task graph
-  DEBUG("Creating task graph");
   TaskGraphConf<FFTData, CCFData> *taskGraph = new TaskGraphConf<FFTData, CCFData>();
 
   // Setup connections
-  DEBUG("Adding edges");
   taskGraph->addEdge(readTask, fftTask);
   taskGraph->addEdge(fftTask, bookkeeper);
   taskGraph->addRuleEdge(bookkeeper, stitchingRule, pciamTask);
@@ -147,7 +142,6 @@ int main(int argc, char *argv[]) {
 
   TaskGraphRuntime *runTime = new TaskGraphRuntime(mainGraph);
 
-  DEBUG("Producing data for graph edge");
   int count = 0;
   while (traverser->hasNext()) {
     FFTData *data = new FFTData(traverser->nextPtr(), count);

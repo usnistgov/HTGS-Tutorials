@@ -5,7 +5,9 @@
 
 add_definitions(-DUSE_CUDA)
 add_definitions(-DMAGMA_ILP64)
-
+add_definitions(-DUSE_NVTX)
+include_directories(/home/tjb3/phd-research/HTGS/nvtx/include/nvtx3)
+link_libraries(-ldl)
 
 set(TUTORIAL_UTILS_SRC
         ../../tutorial-utils/util-matrix.h

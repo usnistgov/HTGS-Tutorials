@@ -11,8 +11,8 @@
 
 class FFTTask: public htgs::ICudaTask<FFTData, FFTData> {
  public:
-  FFTTask(CUcontext *contexts, int *cudaIds, int numGpus, ImageStitching::CUDAImageTile *initTile, int startCol,
-          int startRow, int extentWidth, int extentHeight) : ICudaTask(contexts, cudaIds, numGpus) {
+  FFTTask(int *cudaIds, int numGpus, ImageStitching::CUDAImageTile *initTile, int startCol,
+          int startRow, int extentWidth, int extentHeight) : ICudaTask(cudaIds, numGpus) {
     this->initTile = initTile;
     this->startCol = startCol;
     this->startRow = startRow;

@@ -15,10 +15,9 @@
 class CudaCopyOutTask : public htgs::ICudaTask<MatrixBlockData<htgs::m_data_t<double>>, MatrixBlockData<double *>>
 {
  public:
-  CudaCopyOutTask(CUcontext *contexts,
-                 int *cudaIds,
+  CudaCopyOutTask(int *cudaIds,
                  size_t numGpus,
-                 MatrixType matrixType) : ICudaTask(contexts, cudaIds, numGpus),
+                 MatrixType matrixType) : ICudaTask(cudaIds, numGpus),
                                         matrixType(matrixType) {
     matrixName = matrixTypeToString(matrixType);
     numBytes = 0;
@@ -58,7 +57,7 @@ class CudaCopyOutTask : public htgs::ICudaTask<MatrixBlockData<htgs::m_data_t<do
                                                                 data->getLeadingDimension()));
   }
   htgs::ITask<MatrixBlockData<htgs::m_data_t<double>>, MatrixBlockData<double *>> *copy() override {
-    return new CudaCopyOutTask(this->getContexts(), this->getCudaIds(), this->getNumGPUs(), this->matrixType);
+    return new CudaCopyOutTask(this->getCudaIds(), this->getNumGPUs(), this->matrixType);
   }
 
   std::string getDotCustomProfile() override {

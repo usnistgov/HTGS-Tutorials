@@ -79,7 +79,7 @@ int main(int argc, char *argv[])
   matMulArgs.copyGpuIds(gpuIds);
 
 
-  CUcontext *contexts = initCuda(numGPUs, gpuIds);
+//  CUcontext *contexts = initCuda(numGPUs, gpuIds);
 
   std::string runtimeFileStr("runtimes");
 
@@ -139,7 +139,7 @@ int main(int argc, char *argv[])
                              sharedDim,
                              true);
 
-      MatrixMulBlkCudaTask *mmulTask = new MatrixMulBlkCudaTask(contexts, gpuIds, numGPUs);
+      MatrixMulBlkCudaTask *mmulTask = new MatrixMulBlkCudaTask(gpuIds, numGPUs);
       MatMulAccumTask *accumTask = new MatMulAccumTask(numAccumThreads, true);
 
       MatMulOutputTask *outputTask = new MatMulOutputTask(matrixC, matrixAHeight, blockSize, true);
@@ -150,10 +150,10 @@ int main(int argc, char *argv[])
       size_t blkHeightMatA = readAMatTask->getNumBlocksRows();
       size_t blkWidthMatA = readAMatTask->getNumBlocksCols();
 
-      CudaCopyInTask *cudaCopyInATask = new CudaCopyInTask(contexts, gpuIds, numGPUs, MatrixType::MatrixA, blkWidthMatB);
-      CudaCopyInTask *cudaCopyInBTask = new CudaCopyInTask(contexts, gpuIds, numGPUs, MatrixType::MatrixB, blkHeightMatA);
+      CudaCopyInTask *cudaCopyInATask = new CudaCopyInTask(gpuIds, numGPUs, MatrixType::MatrixA, blkWidthMatB);
+      CudaCopyInTask *cudaCopyInBTask = new CudaCopyInTask(gpuIds, numGPUs, MatrixType::MatrixB, blkHeightMatA);
 
-      CudaCopyOutTask *cudaCopyOutCTask = new CudaCopyOutTask(contexts, gpuIds, numGPUs, MatrixType::MatrixC);
+      CudaCopyOutTask *cudaCopyOutCTask = new CudaCopyOutTask(gpuIds, numGPUs, MatrixType::MatrixC);
 
       MatMulDistributeRule *distributeRuleMatA = new MatMulDistributeRule(MatrixType::MatrixA);
       MatMulDistributeRule *distributeRuleMatB = new MatMulDistributeRule(MatrixType::MatrixB);
@@ -199,20 +199,20 @@ int main(int argc, char *argv[])
                                           new CudaAllocator(blockSize, blockSize),
                                           blkWidthMatB+1,
                                           htgs::MMType::Static,
-                                          contexts);
+                                          gpuIds);
       taskGraph->addCudaMemoryManagerEdge(matrixTypeToString(MatrixType::MatrixB) + "Copy",
                                           cudaCopyInBTask,
                                           new CudaAllocator(blockSize, blockSize),
                                           blkHeightMatA+1,
                                           htgs::MMType::Static,
-                                          contexts);
+                                          gpuIds);
 
       taskGraph->addCudaMemoryManagerEdge(matrixTypeToString(MatrixType::MatrixC),
                                           mmulTask,
                                           new CudaAllocator(blockSize, blockSize),
                                           4,
                                           htgs::MMType::Static,
-                                          contexts);
+                                          gpuIds);
 
       htgs::TaskGraphRuntime *runtime = new htgs::TaskGraphRuntime(taskGraph);
 

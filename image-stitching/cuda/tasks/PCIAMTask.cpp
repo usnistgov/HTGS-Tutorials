@@ -11,7 +11,7 @@ std::string PCIAMTask::getName() {
 }
 
 htgs::ITask<PCIAMData, CCFData> *PCIAMTask::copy() {
-  return new PCIAMTask(this->getContexts(), this->getCudaIds(), this->getNumGPUs(), this->tile);
+  return new PCIAMTask(this->getCudaIds(), this->getNumGPUs(), this->tile);
 }
 
 void PCIAMTask::initializeCudaGPU() {
@@ -32,8 +32,6 @@ void PCIAMTask::executeTask(std::shared_ptr<PCIAMData> data) {
 
   PCIAMDirection direction = data->getDirection();
 
-  DEBUG("PCIAMTask: Computing PCIAM between " << origin->getFilename() << " and " << neighbor->getFilename()
-            << " direction: " << direction);
 
 //    ImageStitching::CorrelationTriple triple = phaseCorrelationImageAlignmentFFTW(neighbor, origin, memory);
 

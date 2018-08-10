@@ -59,6 +59,11 @@ set(STITCHING_CPP_LIBRARIES
 include_directories(.)
 include_directories(${LIB_ImageStitching_INCLUDE_DIRS})
 
+include_directories(/home/tjb3/phd-research/HTGS/nvtx/include/nvtx3)
+link_libraries(-ldl)
+
+#add_definitions(-DUSE_NVTX)
+
 add_executable(testCPUStitching testCPUStitching.cpp ${IMAGE_STITCHING_SRC} ${PARAMS_SRC})
 add_executable(testCPUStitchingWithMemory testCPUStitchingWithMemory.cpp ${IMAGE_STITCHING_SRC} ${PARAMS_SRC})
 add_executable(testStitchingAPI testStitchingAPI.cpp ${IMAGE_STITCHING_SRC})

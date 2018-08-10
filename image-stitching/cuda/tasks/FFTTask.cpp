@@ -20,8 +20,7 @@ std::string FFTTask::getName() {
 }
 
 htgs::ITask<FFTData, FFTData> *FFTTask::copy() {
-  return new FFTTask(this->getContexts(),
-                     this->getCudaIds(),
+  return new FFTTask(this->getCudaIds(),
                      this->getNumGPUs(),
                      this->initTile,
                      this->startCol,

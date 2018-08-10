@@ -46,7 +46,6 @@ class StitchingRule: public htgs::IRule<FFTData, PCIAMData> {
   void applyRule(std::shared_ptr<FFTData> data, size_t pipelineId) {
     ImageStitching::CUDAImageTile *tile = data->getTile();
 
-    DEBUG("Stitching rule received tile: " << tile->getFilename());
 
     int r = tile->getRowIdx() - this->grid->getStartRow();
     int c = tile->getColIdx() - this->grid->getStartCol();

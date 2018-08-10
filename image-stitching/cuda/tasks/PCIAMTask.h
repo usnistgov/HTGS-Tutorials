@@ -24,9 +24,7 @@ class PCIAMTask: public htgs::ICudaTask<PCIAMData, CCFData> {
   virtual void shutdownCuda();
 
 
-  PCIAMTask(CUcontext *contexts, int *cudaIds, int numGpus, ImageStitching::CUDAImageTile *tile) : ICudaTask(contexts,
-                                                                                                             cudaIds,
-                                                                                                             numGpus) {
+  PCIAMTask(int *cudaIds, int numGpus, ImageStitching::CUDAImageTile *tile) : ICudaTask(cudaIds, numGpus) {
     this->tile = tile;
   }
 
