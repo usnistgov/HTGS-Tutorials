@@ -57,7 +57,7 @@ else()
 endif()
 
 
-FIND_PATH(HTGS_INCLUDE_DIR htgs/api/TaskGraph.hpp
+FIND_PATH(HTGS_INCLUDE_DIR htgs/api/TaskGraphConf.hpp
         /usr/include
         /usr/local/include
         )
