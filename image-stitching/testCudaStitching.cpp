@@ -37,7 +37,7 @@ int main() {
   int extentHeight = 30;
   int numGpus = 1;
 
-  DEBUG("Building Grid");
+  HTGS_DEBUG("Building Grid");
   std::string path("/home/tjb3/datasets/image-stitching/1h_Wet_10Perc");
   TileGrid<is::CUDAImageTile> *grid = new TileGrid<is::CUDAImageTile>(startRow,
                                                                       startCol,
@@ -56,17 +56,16 @@ int main() {
   tile->readTile();
   TileGridTraverser<is::CUDAImageTile> *traverser = createTraverser(grid, Traversal::DiagonalTraversal);
 
-  DEBUG("Initializing CUDA contexts");
+  HTGS_DEBUG("Initializing CUDA contexts");
   int gpuIds[1] = {0};
 
   CUcontext *contexts = is::CUDAImageTile::initCUDA(tile, numGpus, gpuIds);
 
-  DEBUG("Setting up tasks");
+  HTGS_DEBUG("Setting up tasks");
   // Create ITasks
   ReadTask *readTask =
       new ReadTask(grid->getStartCol(), grid->getStartRow(), grid->getExtentWidth(), grid->getExtentHeight());
-  FFTTask *fftTask = new FFTTask(contexts,
-                                 gpuIds,
+  FFTTask *fftTask = new FFTTask(gpuIds,
                                  numGpus,
                                  tile,
                                  grid->getStartCol(),
@@ -74,7 +73,7 @@ int main() {
                                  grid->getExtentWidth(),
                                  grid->getExtentHeight());
   Bookkeeper<FFTData> *bookkeeper = new Bookkeeper<FFTData>();
-  PCIAMTask *pciamTask = new PCIAMTask(contexts, gpuIds, numGpus, tile);
+  PCIAMTask *pciamTask = new PCIAMTask(gpuIds, numGpus, tile);
   CCFTask *ccfTask = new CCFTask(40);
 
   // Create rule
@@ -88,11 +87,11 @@ int main() {
 //    Task<CCFData, VoidData> *ccfTask = new Task<CCFData, VoidData>(ccfITask, 40, false, 0, 1);
 
   // Create task graph
-  DEBUG("Creating task graph");
+  HTGS_DEBUG("Creating task graph");
   TaskGraphConf<FFTData, FFTData> *taskGraph = new TaskGraphConf<FFTData, FFTData>();
 
   // Setup connections
-  DEBUG("Adding edges");
+  HTGS_DEBUG("Adding edges");
   taskGraph->addEdge(readTask, fftTask);
   taskGraph->addEdge(fftTask, bookkeeper);
   taskGraph->addRuleEdge(bookkeeper, stitchingRule, pciamTask);
@@ -105,13 +104,13 @@ int main() {
                                       new CudaMemory(tile->fftSize),
                                       100,
                                       MMType::Static,
-                                      contexts);
+                                      gpuIds);
 
   taskGraph->writeDotToFile("/home/tjb3/cuda.dot");
 
   TaskGraphRuntime *runTime = new TaskGraphRuntime(taskGraph);
 
-  DEBUG("Producing data for graph edge");
+  HTGS_DEBUG("Producing data for graph edge");
   int count = 0;
   while (traverser->hasNext()) {
     FFTData *data = new FFTData(traverser->nextPtr(), count);

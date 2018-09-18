@@ -83,8 +83,7 @@ int main(int argc, char *argv[]) {
   // Create ITasks
   ReadTask *readTask =
       new ReadTask(grid->getStartCol(), grid->getStartRow(), grid->getExtentWidth(), grid->getExtentHeight());
-  FFTTask *fftTask = new FFTTask(contexts,
-                                 gpuIds,
+  FFTTask *fftTask = new FFTTask(gpuIds,
                                  numGpus,
                                  tile,
                                  grid->getStartCol(),
@@ -92,7 +91,7 @@ int main(int argc, char *argv[]) {
                                  grid->getExtentWidth(),
                                  grid->getExtentHeight());
   Bookkeeper<FFTData> *bookkeeper = new Bookkeeper<FFTData>();
-  PCIAMTask *pciamTask = new PCIAMTask(contexts, gpuIds, numGpus, tile);
+  PCIAMTask *pciamTask = new PCIAMTask(gpuIds, numGpus, tile);
   CCFTask *ccfTask = new CCFTask(40);
 
   // Create rule
@@ -121,7 +120,7 @@ int main(int argc, char *argv[]) {
                                       new CudaMemory(tile->fftSize),
                                       500,
                                       MMType::Static,
-                                      contexts);
+                                      gpuIds);
 
   GridDecompositionRule *decompRule = new GridDecompositionRule(grid->getStartRow(),
                                                                 grid->getStartCol(),
