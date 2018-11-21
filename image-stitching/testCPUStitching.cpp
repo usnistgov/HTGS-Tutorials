@@ -46,7 +46,7 @@ int main(int argc, char **argv) {
   int numThreadsFFT = params.getNumThreadsFFT();
   int numThreadsPCIAM = params.getNumThreadsPCIAM();
 
-  DEBUG("Building Grid");
+  HTGS_DEBUG("Building Grid");
   TileGrid<is::FFTWImageTile> *grid = new TileGrid<is::FFTWImageTile>(startRow,
                                                                       startCol,
                                                                       extentWidth,
@@ -69,7 +69,7 @@ int main(int argc, char **argv) {
 
   TileGridTraverser<is::FFTWImageTile> *traverser = createTraverser(grid, Traversal::DiagonalTraversal);
 
-  DEBUG("Setting up tasks");
+  HTGS_DEBUG("Setting up tasks");
   // Create ITasks
   ReadTask *readTask =
       new ReadTask(grid->getStartCol(), grid->getStartRow(), grid->getExtentWidth(), grid->getExtentHeight());
@@ -88,11 +88,11 @@ int main(int argc, char **argv) {
 //    Task<PCIAMData, PCIAMData> *pciamTask= new Task<PCIAMData, PCIAMData>(pciamITask, 40, false, 0, 1);
 
   // Create task graph
-  DEBUG("Creating task graph");
+  HTGS_DEBUG("Creating task graph");
   TaskGraphConf<FFTData, FFTData> *taskGraph = new TaskGraphConf<FFTData, FFTData>();
 
   // Setup connections
-  DEBUG("Adding edges");
+  HTGS_DEBUG("Adding edges");
   taskGraph->addEdge(readTask, fftTask);
   taskGraph->addEdge(fftTask, bookkeeper);
   taskGraph->addRuleEdge(bookkeeper, stitchingRule, pciamTask);
@@ -103,7 +103,7 @@ int main(int argc, char **argv) {
 
   TaskGraphRuntime *runTime = new TaskGraphRuntime(taskGraph);
 
-  DEBUG("Producing data for graph edge");
+  HTGS_DEBUG("Producing data for graph edge");
   int count = 0;
   while (traverser->hasNext()) {
     FFTData *data = new FFTData(traverser->nextPtr(), count);
