@@ -17,8 +17,8 @@
 
 class CopyInPanelTask : public htgs::ICudaTask<MatrixPanelData, MatrixPanelData> {
  public:
-  CopyInPanelTask(int blockSize, CUcontext *contexts, int *cudaIds, int numGpus, long leadingDimensionFullMatrix, int numBlocksWidth, std::string memoryEdge, PanelState panelState) :
-      ICudaTask(contexts, cudaIds, numGpus),
+  CopyInPanelTask(int blockSize, int *cudaIds, int numGpus, long leadingDimensionFullMatrix, int numBlocksWidth, std::string memoryEdge, PanelState panelState) :
+      ICudaTask(cudaIds, numGpus),
       blockSize(blockSize),
       leadingDimensionFullMatrix(leadingDimensionFullMatrix),
       numBlocksWidth(numBlocksWidth),
@@ -96,7 +96,6 @@ class CopyInPanelTask : public htgs::ICudaTask<MatrixPanelData, MatrixPanelData>
   virtual CopyInPanelTask *copy() {
     return new CopyInPanelTask(
                                 this->blockSize,
-                                this->getContexts(),
                                 this->getCudaIds(),
                                 this->getNumGPUs(),
                                 this->leadingDimensionFullMatrix,

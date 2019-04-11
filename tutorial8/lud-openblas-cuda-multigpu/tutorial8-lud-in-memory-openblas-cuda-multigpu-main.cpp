@@ -410,18 +410,18 @@ int main(int argc, char *argv[]) {
       CopyUpdateRuleUpper *copyUpperRule = new CopyUpdateRuleUpper(windowSize*numGpus);
       CopyUpdateRuleUpperWindow *copyUpperWindowRule = new CopyUpdateRuleUpperWindow(windowSize*numGpus);
 
-      CopyInPanelWindowTask *copyInUpperWindow = new CopyInPanelWindowTask(blockSize, contexts, deviceIds, numGpus, matrixSize, gridWidth, "UpdateWindowMem", PanelState::TOP_FACTORED);
-      CopyInPanelTask *copyInUpper = new CopyInPanelTask(blockSize, contexts, deviceIds, numGpus, matrixSize, gridWidth, "UpdateMem", PanelState::TOP_FACTORED);
-      CopyInPanelTask *copyInLower = new CopyInPanelTask(blockSize, contexts, deviceIds, numGpus, matrixSize, gridWidth, "FactorMem", PanelState::ALL_FACTORED);
+      CopyInPanelWindowTask *copyInUpperWindow = new CopyInPanelWindowTask(blockSize, deviceIds, numGpus, matrixSize, gridWidth, "UpdateWindowMem", PanelState::TOP_FACTORED);
+      CopyInPanelTask *copyInUpper = new CopyInPanelTask(blockSize, deviceIds, numGpus, matrixSize, gridWidth, "UpdateMem", PanelState::TOP_FACTORED);
+      CopyInPanelTask *copyInLower = new CopyInPanelTask(blockSize, deviceIds, numGpus, matrixSize, gridWidth, "FactorMem", PanelState::ALL_FACTORED);
 
 
       auto matrixMulBk = new htgs::Bookkeeper<MatrixPanelData>();
       MatrixMulRule *matrixMulRule = new MatrixMulRule(gridHeight, gridWidth, numGpus);
 
-      MatrixMulPanelTask *matrixMulTask = new MatrixMulPanelTask(contexts, deviceIds, numGpus, 1, matrixSize, matrixSize, matrixSize, matrixSize, blockSize);
+      MatrixMulPanelTask *matrixMulTask = new MatrixMulPanelTask(deviceIds, numGpus, 1, matrixSize, matrixSize, matrixSize, matrixSize, blockSize);
 
 
-      CopyOutPanelTask *copyResultBack = new CopyOutPanelTask(blockSize, contexts, deviceIds, numGpus, matrixSize, gridWidth, "FactorMem");
+      CopyOutPanelTask *copyResultBack = new CopyOutPanelTask(blockSize, deviceIds, numGpus, matrixSize, gridWidth, "FactorMem");
 
       auto matrixMulResultBk = new htgs::Bookkeeper<MatrixPanelData>();
 
@@ -448,9 +448,9 @@ int main(int argc, char *argv[]) {
 
       gpuTaskGraph->addGraphProducerTask(copyResultBack);
 
-      gpuTaskGraph->addCudaMemoryManagerEdge("FactorMem", copyInLower, new CudaMatrixAllocator(blockSize, matrixSize), numPanelsFactor, htgs::MMType::Static, contexts);
-      gpuTaskGraph->addCudaMemoryManagerEdge("UpdateMem", copyInUpper, new CudaMatrixAllocator(blockSize, matrixSize), numPanelsUpdate, htgs::MMType::Static, contexts);
-      gpuTaskGraph->addCudaMemoryManagerEdge("UpdateWindowMem", copyInUpperWindow, new CudaMatrixAllocator(blockSize, matrixSize), windowSize == 0 ? 1 : windowSize, htgs::MMType::Static, contexts);
+      gpuTaskGraph->addCudaMemoryManagerEdge("FactorMem", copyInLower, new CudaMatrixAllocator(blockSize, matrixSize), numPanelsFactor, htgs::MMType::Static, deviceIds);
+      gpuTaskGraph->addCudaMemoryManagerEdge("UpdateMem", copyInUpper, new CudaMatrixAllocator(blockSize, matrixSize), numPanelsUpdate, htgs::MMType::Static, deviceIds);
+      gpuTaskGraph->addCudaMemoryManagerEdge("UpdateWindowMem", copyInUpperWindow, new CudaMatrixAllocator(blockSize, matrixSize), windowSize == 0 ? 1 : windowSize, htgs::MMType::Static, deviceIds);
 
       auto execPipeline = new htgs::ExecutionPipeline<MatrixPanelData, MatrixPanelData>(numGpus, gpuTaskGraph);
       DecompositionRule *decompRule = new DecompositionRule(gridWidth, numGpus);

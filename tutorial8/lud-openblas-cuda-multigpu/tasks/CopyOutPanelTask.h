@@ -18,8 +18,8 @@
 
 class CopyOutPanelTask : public htgs::ICudaTask<MatrixPanelData, MatrixPanelData> {
  public:
-  CopyOutPanelTask(int blockSize, CUcontext *contexts, int *cudaIds, int numGpus, long leadingDimensionFullMatrix, int numBlocksWidth, std::string memoryEdge) :
-      ICudaTask(contexts, cudaIds, numGpus),
+  CopyOutPanelTask(int blockSize, int *cudaIds, int numGpus, long leadingDimensionFullMatrix, int numBlocksWidth, std::string memoryEdge) :
+      ICudaTask(cudaIds, numGpus),
       blockSize(blockSize),
       leadingDimensionFullMatrix(leadingDimensionFullMatrix),
       numBlocksWidth(numBlocksWidth),
@@ -79,7 +79,6 @@ class CopyOutPanelTask : public htgs::ICudaTask<MatrixPanelData, MatrixPanelData
   virtual CopyOutPanelTask *copy() {
     return new CopyOutPanelTask(
                                 this->blockSize,
-                                this->getContexts(),
                                 this->getCudaIds(),
                                 this->getNumGPUs(),
                                 this->leadingDimensionFullMatrix,

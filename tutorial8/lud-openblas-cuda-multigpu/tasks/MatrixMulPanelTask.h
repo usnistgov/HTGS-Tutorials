@@ -20,13 +20,13 @@
 class MatrixMulPanelTask : public htgs::ICudaTask<MatrixPanelMulData, MatrixPanelData> {
 
  public:
-  MatrixMulPanelTask(CUcontext *contexts, int *gpuIds, int numGpus, int numCpuThreads,
+  MatrixMulPanelTask(int *gpuIds, int numGpus, int numCpuThreads,
                    int fullMatrixWidthA,
                    int fullMatrixHeightA,
                    int fullMatrixWidthB,
                    int fullMatrixHeightB,
                    int blockSize) :
-      ICudaTask(contexts, gpuIds, numGpus), fullMatrixWidthA(fullMatrixWidthA), fullMatrixHeightA(fullMatrixHeightA),
+      ICudaTask(gpuIds, numGpus), fullMatrixWidthA(fullMatrixWidthA), fullMatrixHeightA(fullMatrixHeightA),
       fullMatrixWidthB(fullMatrixWidthB), fullMatrixHeightB(fullMatrixHeightB), blockSize(blockSize) {
 //    this->setNumThreads(numCpuThreads);
   }
@@ -101,8 +101,7 @@ class MatrixMulPanelTask : public htgs::ICudaTask<MatrixPanelMulData, MatrixPane
     return "MatrixMulPanelTask";
   }
   virtual MatrixMulPanelTask *copy() {
-    return new MatrixMulPanelTask(this->getContexts(),
-                                  this->getCudaIds(),
+    return new MatrixMulPanelTask(this->getCudaIds(),
                                   this->getNumGPUs(),
                                 this->getNumThreads(),
                                 fullMatrixWidthA,
