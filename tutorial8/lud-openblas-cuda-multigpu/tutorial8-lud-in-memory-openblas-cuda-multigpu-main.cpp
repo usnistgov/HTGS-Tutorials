@@ -321,10 +321,15 @@ int main(int argc, char *argv[]) {
         }
       }
 
-      CUcontext * contexts = initCuda(numGpus, deviceIds);
+//      CUcontext * contexts = initCuda(numGpus, deviceIds);
 
       if (!userDefinedWindowSize) {
-        size_t freeBytes = cudaGetFreeBytes(contexts[0]);
+        cudaSetDevice(deviceIds[0]);
+        size_t totalBytes;
+        size_t freeBytes;
+
+        cudaMemGetInfo(&freeBytes, &totalBytes);
+
         // Compute size of one panel
         size_t panelSize = sizeof(double) * matrixSize * blockSize;
 
@@ -514,7 +519,7 @@ int main(int argc, char *argv[]) {
 
       delete runtime;
       delete matrixBlocks;
-      shutdownCuda(numGpus, contexts);
+//      shutdownCuda(numGpus, contexts);
       endToEnd.stopAndIncrement();
     }
 
