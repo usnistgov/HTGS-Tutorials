@@ -30,6 +30,29 @@ class GausElimTask : public htgs::ITask<MatrixBlockData<double *>, MatrixBlockDa
 
     LAPACKE_dgetf2(LAPACK_COL_MAJOR, data->getMatrixHeight(), data->getMatrixWidth(), matrix, fullMatrixHeight, (int *)ipiv);
 
+//    for (int diag = 0; diag < data->getMatrixWidth()-1; diag++)
+//    {
+//      const double diagVal = 1.0 / matrix[IDX2C(diag, diag, fullMatrixHeight)];
+//
+//      for (int r = diag+1; r < data->getMatrixHeight(); r++)
+//      {
+//        matrix[IDX2C(r, diag, fullMatrixHeight)] = matrix[IDX2C(r, diag, fullMatrixHeight)] * diagVal;
+//      }
+//
+//      for (int col = diag+1; col < data->getMatrixWidth(); col++)
+//      {
+//        const double colVal = matrix[IDX2C(diag, col, fullMatrixHeight)];
+//
+//        for (int row = diag+1; row < data->getMatrixHeight(); row++)
+//        {
+//          double rowVal = matrix[IDX2C(row, diag, fullMatrixHeight)];
+//
+//          matrix[IDX2C(row,col, fullMatrixHeight)] = matrix[IDX2C(row,col, fullMatrixHeight)] - colVal * rowVal;
+//        }
+//      }
+//
+//    }
+
     addResult(data);
   }
   virtual GausElimTask *copy() {

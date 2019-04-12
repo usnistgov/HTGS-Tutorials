@@ -66,7 +66,9 @@ class CudaCopyInTask : public htgs::ICudaTask<MatrixBlockData<double *>, MatrixB
 
     double timeSec = (double)microTime / 1000000.0;
 
-    return "Performance: " + std::to_string(numGFlop / timeSec) + " GB/s";
+//    return "Performance: " + std::to_string(numGFlop / timeSec) + " GB/s";
+    return "Performance: " + std::to_string(numGFlop / timeSec) + " GB/s\n" + "Copy Time = " + std::to_string(microTime) + " us\n" + "Bytes copied: " + std::to_string(numBytes);
+
   }
 
  private:
