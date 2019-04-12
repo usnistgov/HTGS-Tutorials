@@ -306,13 +306,19 @@ int main(int argc, char *argv[])
 
     }
 
+
+    double numGflops = (2.0 * matrixAHeight *sharedDim * matrixBWidth) * 1.0e-9d;
+    double gflops = numGflops / clk.getAverageTime(TimeVal::SEC);
+
+
+
     std::cout << (runSequential ? "sequential" : "htgs") << ", " << numProdThreads
               << ", accum-threads: " << numAccumThreads << ", width-b: " << matrixBWidth << ", height-a: " << matrixAHeight
               << ", shared-dim: " << sharedDim
               << ", blockSize: " << blockSize
               << ", time:" << clk.getAverageTime(TimeVal::MILLI)
               << ", end-to-end:" << endToEnd.getAverageTime(TimeVal::MILLI)
-
+              << ", gflops: " << gflops
               << std::endl;
 
     runtimeFile << "MULTIGPU-MM" << (runSequential ? "sequential" : "htgs") << ", " << numProdThreads
